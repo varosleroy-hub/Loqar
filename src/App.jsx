@@ -27,23 +27,9 @@ const T = {
 };
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-const VEHICLES = [
-  { id:1, name:"Mercedes Classe A", brand:"Mercedes", plate:"FA-123-KE", fuel:"Essence", trans:"Automatique", km:24000, status:"en location", price:85, year:2021, seats:5, cat:"Berline" },
-  { id:2, name:"Peugeot 308",       brand:"Peugeot",  plate:"AB-456-CD", fuel:"Diesel",  trans:"Manuelle",    km:42000, status:"disponible",  price:65, year:2020, seats:5, cat:"Compacte" },
-  { id:3, name:"Renault Clio",      brand:"Renault",  plate:"EF-789-GH", fuel:"Essence", trans:"Manuelle",    km:18500, status:"disponible",  price:45, year:2022, seats:5, cat:"Citadine" },
-  { id:4, name:"BMW Série 3",       brand:"BMW",      plate:"MN-012-OP", fuel:"Hybride", trans:"Automatique", km:9800,  status:"entretien",   price:120,year:2023, seats:5, cat:"Premium" },
-];
-const CLIENTS = [
-  { id:1, firstName:"Marie",  lastName:"Dupont", email:"marie@gmail.com",       phone:"+33 6 12 34 56 78", type:"particulier", locations:4,  totalSpent:820,  licenseExpiry:"2028-03-15" },
-  { id:2, firstName:"Thomas", lastName:"Martin", email:"thomas@entreprise.fr",  phone:"+33 6 98 76 54 32", type:"entreprise",  company:"Martin & Co", locations:12, totalSpent:3200, licenseExpiry:"2026-07-22" },
-  { id:3, firstName:"Emma",   lastName:"Leroy",  email:"emma@societe.com",      phone:"+33 6 55 44 33 22", type:"entreprise",  locations:1,  totalSpent:180,  licenseExpiry:"2024-12-01", blacklist:true },
-];
-const PAYMENTS = [
-  { id:1, client:"Marie Dupont",   amount:595,  deposit:500,  status:"encaissé",   method:"Carte",   paidAt:"2025-02-10" },
-  { id:2, client:"Thomas Martin",  amount:455,  deposit:800,  status:"en attente", method:"Virement",paidAt:null },
-  { id:3, client:"Emma Leroy",     amount:135,  deposit:300,  status:"en retard",  method:"Espèces", paidAt:null },
-  { id:4, client:"Thomas Martin",  amount:1200, deposit:1000, status:"encaissé",   method:"Carte",   paidAt:"2025-01-15" },
-];
+const VEHICLES = [];
+const CLIENTS = [];
+const PAYMENTS = [];
 const RENTALS = [
   { id:1, clientId:1, vehicleId:1, startDate:"2025-02-10", endDate:"2025-02-17", status:"en cours",  total:595 },
   { id:2, clientId:2, vehicleId:2, startDate:"2025-02-05", endDate:"2025-02-12", status:"terminée",  total:455 },
