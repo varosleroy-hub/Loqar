@@ -252,7 +252,7 @@ function Card({ children, style={}, onClick }) {
 
 // ─── COMMAND BAR ─────────────────────────────────────────────────────────────
 const CMD = [
-  { cat:"Navigation",    items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:"Clients",icon:Icons.users,page:"clients"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
+  { cat:"Navigation",    items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:"Clients",icon:Icons.users,page:"clients"},{l:"Locations",icon:Icons.calendar,page:"rentals"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
   { cat:"Actions",       items:[{l:"Ajouter un véhicule",icon:Icons.plus,page:"vehicles"},{l:"Nouveau client",icon:Icons.plus,page:"clients"},{l:"Générer un contrat",icon:Icons.doc,page:"documents"}]},
 ];
 
@@ -1959,6 +1959,199 @@ function Pricing() {
   );
 }
 
+
+// ─── LOCATIONS ────────────────────────────────────────────────────────────────
+function Rentals({ rentals, setRentals, vehicles, clients, user }) {
+  const [modal, setModal] = useState(false);
+  const [sel, setSel]     = useState(null);
+  const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
+  const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
+
+  const days  = Math.ceil((new Date(form.endDate)-new Date(form.startDate))/86400000);
+  const total = (parseInt(form.pricePerDay)||0)*(days>0?days:0);
+
+  const statusColor = { "en cours":T.success, "terminée":T.muted, "annulée":T.red, "réservée":T.amber };
+
+  const handleAdd = async () => {
+    const client  = clients.find(c=>c.id===form.clientId);
+    const vehicle = vehicles.find(v=>v.id===form.vehicleId);
+    if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
+    if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
+    const newR = {
+      user_id: user.id,
+      client_id: form.clientId,
+      vehicle_id: form.vehicleId,
+      client_name: `${client.firstName} ${client.lastName}`,
+      vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
+      start_date: form.startDate,
+      end_date: form.endDate,
+      price_per_day: parseInt(form.pricePerDay)||0,
+      deposit: parseInt(form.deposit)||0,
+      total_amount: total,
+      km_start: parseInt(form.km)||0,
+      notes: form.notes,
+      status: "réservée",
+    };
+    const { data, error } = await supabase.from("rentals").insert(newR).select().single();
+    if (data) setRentals([data, ...rentals]);
+    setModal(false);
+    setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Supprimer cette location ?")) return;
+    await supabase.from("rentals").delete().eq("id", id);
+    setRentals(rentals.filter(r=>r.id!==id));
+    setSel(null);
+  };
+
+  const handleStatusChange = async (id, status) => {
+    await supabase.from("rentals").update({ status }).eq("id", id);
+    setRentals(rentals.map(r=>r.id===id?{...r,status}:r));
+    if (sel?.id===id) setSel({...sel,status});
+  };
+
+  return (
+    <Page title="Locations" sub={`${rentals.length} location(s) enregistrée(s)`}
+      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
+      
+      {/* Stats */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
+        {[
+          ["En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
+          ["Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
+          ["Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
+          ["Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
+        ].map(([label,value,color])=>(
+          <Card key={label}>
+            <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{label}</div>
+            <div style={{ fontSize:26, fontWeight:700, color, letterSpacing:"-0.03em" }}>{value}</div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{ display:"flex", gap:20 }}>
+        <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+            <thead>
+              <tr>{["Client","Véhicule","Période","Total","Statut","Actions"].map(l=>(
+                <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
+              ))}</tr>
+            </thead>
+            <tbody>
+              {rentals.length===0 && (
+                <tr><td colSpan={6} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucune location — cliquez sur "Nouvelle location" pour commencer</td></tr>
+              )}
+              {rentals.map(r=>(
+                <tr key={r.id} onClick={()=>setSel(sel?.id===r.id?null:r)}
+                  style={{ cursor:"pointer", background:sel?.id===r.id?T.goldDim:"transparent", transition:"background .1s" }}
+                  onMouseEnter={e=>{ if(sel?.id!==r.id) e.currentTarget.style.background=T.card2; }}
+                  onMouseLeave={e=>{ if(sel?.id!==r.id) e.currentTarget.style.background="transparent"; }}>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{r.client_name}</div>
+                  </td>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.sub }}>{r.vehicle_name}</td>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.sub }}>
+                    {fmtDate(r.start_date)} → {fmtDate(r.end_date)}
+                  </td>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:14, fontWeight:700, color:T.gold }}>{fmt(r.total_amount)} €</td>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
+                    <select value={r.status} onClick={e=>e.stopPropagation()} onChange={e=>handleStatusChange(r.id,e.target.value)}
+                      style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"4px 8px", color:statusColor[r.status]||T.text, fontSize:12, fontFamily:"inherit", outline:"none", cursor:"pointer" }}>
+                      {["réservée","en cours","terminée","annulée"].map(s=><option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
+                    <button onClick={e=>{e.stopPropagation();handleDelete(r.id);}}
+                      style={{ background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, padding:"5px 9px", color:T.red, cursor:"pointer", display:"flex", alignItems:"center" }}>
+                      {Icons.trash}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Detail panel */}
+        {sel && (
+          <div style={{ width:294, flexShrink:0 }}>
+            <Card>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:16 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Détail location</div>
+                <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
+              </div>
+              {[["Client",sel.client_name],["Véhicule",sel.vehicle_name],["Début",fmtDate(sel.start_date)],["Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],["Caution",sel.deposit+" €"],["Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
+                <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
+                  <span style={{ fontSize:12, color:T.muted }}>{k}</span>
+                  <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
+                </div>
+              ))}
+              {sel.notes && (
+                <div style={{ marginTop:12, padding:"10px 12px", background:T.card2, borderRadius:9 }}>
+                  <div style={{ fontSize:10, color:T.muted, marginBottom:4 }}>Notes</div>
+                  <div style={{ fontSize:12, color:T.sub }}>{sel.notes}</div>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {/* Modal nouvelle location */}
+      {modal && (
+        <Modal title="Nouvelle location" onClose={()=>setModal(false)}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
+              <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                <option value="">— Sélectionner —</option>
+                {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+              </select>
+            </div>
+
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
+              <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>x.id===e.target.value); if(v) up("pricePerDay",v.price||""); }}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                <option value="">— Sélectionner —</option>
+                {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
+              </select>
+            </div>
+
+            <Input label="Début" type="date" value={form.startDate} onChange={v=>up("startDate",v)}/>
+            <Input label="Fin" type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
+            <Input label="Prix/jour (€)" type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
+            <Input label="Caution (€)" type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
+            <Input label="Km départ" type="number" value={form.km} onChange={v=>up("km",v)}/>
+            
+            {days>0 && (
+              <div style={{ gridColumn:"1/-1", padding:"12px 14px", background:T.goldDim, border:`1px solid ${T.gold}30`, borderRadius:10 }}>
+                <span style={{ fontSize:12, color:T.muted }}>Durée : {days} jour(s) · </span>
+                <span style={{ fontSize:14, fontWeight:700, color:T.gold }}>Total : {total} €</span>
+              </div>
+            )}
+
+            <div style={{ gridColumn:"1/-1", display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Notes</label>
+              <textarea value={form.notes} onChange={e=>up("notes",e.target.value)} rows={2}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", resize:"vertical" }}/>
+            </div>
+          </div>
+
+          <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>Annuler</button>
+            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Créer la location</button>
+          </div>
+        </Modal>
+      )}
+    </Page>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
@@ -1969,6 +2162,7 @@ export default function App() {
   const [cmdOpen,        setCmdOpen]        = useState(false);
   const [vehicles,       setVehicles]       = useState([]);
   const [clients,        setClients]        = useState([]);
+  const [rentals,        setRentals]        = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
@@ -1989,12 +2183,14 @@ export default function App() {
   }, []);
 
   const fetchData = async (uid) => {
-    const [{ data: v }, { data: c }] = await Promise.all([
+    const [{ data: v }, { data: c }, { data: r }] = await Promise.all([
       supabase.from("vehicles").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("clients").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      supabase.from("rentals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
     ]);
     if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.price_per_day, cat: x.category })));
     if (c) setClients(c.map(x => ({ ...x, firstName: x.first_name, lastName: x.last_name, licenseExpiry: x.license_expiry, totalSpent: x.total_spent, locations: x.locations_count })));
+    if (r) setRentals(r);
   };
 
   const fetchProfile = async (uid) => {
@@ -2047,7 +2243,8 @@ export default function App() {
   if (!user) return <AuthScreen />;
 
   const screens = {
-    dashboard: <Dashboard vehicles={vehicles}/>,
+    dashboard: <Dashboard vehicles={vehicles} rentals={rentals}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
     payments:  <Payments/>,
