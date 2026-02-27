@@ -1349,17 +1349,54 @@ function Clients({ clients, setClients, user }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments() {
+function Payments({ payments, setPayments, clients, rentals, user }) {
   const [filter, setFilter] = useState("all");
-  const stats=[
-    {label:"Encaissé",  value:PAYMENTS.filter(p=>p.status==="encaissé").reduce((a,p)=>a+p.amount,0),   color:T.success, icon:Icons.check },
-    {label:"En attente",value:PAYMENTS.filter(p=>p.status==="en attente").reduce((a,p)=>a+p.amount,0), color:T.amber,   icon:Icons.clock  },
-    {label:"En retard", value:PAYMENTS.filter(p=>p.status==="en retard").reduce((a,p)=>a+p.amount,0),  color:T.red,     icon:Icons.alert  },
-    {label:"Cautions",  value:PAYMENTS.reduce((a,p)=>a+p.deposit,0),                                   color:T.blue,    icon:Icons.shield },
+  const [modal, setModal]   = useState(false);
+  const [form, setForm]     = useState({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
+  const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
+
+  const filtered = payments.filter(p=>filter==="all"||p.status===filter);
+  const stats = [
+    {label:"Encaissé",   value:payments.filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0),  color:T.success, icon:Icons.check },
+    {label:"En attente", value:payments.filter(p=>p.status==="en attente").reduce((a,p)=>a+(p.amount||0),0),color:T.amber,   icon:Icons.clock  },
+    {label:"En retard",  value:payments.filter(p=>p.status==="en retard").reduce((a,p)=>a+(p.amount||0),0), color:T.red,     icon:Icons.alert  },
+    {label:"Cautions",   value:payments.reduce((a,p)=>a+(p.deposit||0),0),                                   color:T.blue,    icon:Icons.shield },
   ];
 
+  const handleAdd = async () => {
+    const client = clients.find(c=>c.id===form.clientId);
+    const newP = {
+      user_id: user.id,
+      client_id: form.clientId,
+      rental_id: form.rentalId||null,
+      client_name: client?`${client.firstName} ${client.lastName}`:"—",
+      amount: parseInt(form.amount)||0,
+      deposit: parseInt(form.deposit)||0,
+      method: form.method,
+      status: form.status,
+      paid_at: form.paidAt||new Date().toISOString().split("T")[0],
+    };
+    const { data } = await supabase.from("payments").insert(newP).select().single();
+    if (data) setPayments([data, ...payments]);
+    setModal(false);
+    setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
+  };
+
+  const handleEncaisser = async (id) => {
+    await supabase.from("payments").update({ status:"encaissé" }).eq("id", id);
+    setPayments(payments.map(p=>p.id===id?{...p,status:"encaissé"}:p));
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Supprimer ce paiement ?")) return;
+    await supabase.from("payments").delete().eq("id", id);
+    setPayments(payments.filter(p=>p.id!==id));
+  };
+
   return (
-    <Page title="Paiements" sub="Encaissements, transactions et cautions">
+    <Page title="Paiements" sub="Encaissements, transactions et cautions"
+      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouveau paiement</button>}>
+      
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
         {stats.map(s=>{ const c=useCounter(s.value,900); return (
           <Card key={s.label}>
@@ -1375,7 +1412,7 @@ function Payments() {
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-        {[["all","Toutes"],["encaissé","Encaissé"],["en attente","En attente"],["en retard","En retard"]].map(([k,l])=>(
+        {[["all","Tous"],["encaissé","Encaissé"],["en attente","En attente"],["en retard","En retard"]].map(([k,l])=>(
           <button key={k} onClick={()=>setFilter(k)}
             style={{ padding:"7px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:filter===k?T.goldDim:T.card, border:`1px solid ${filter===k?T.gold:T.border}`, color:filter===k?T.gold:T.sub, transition:"all .15s", fontFamily:"inherit" }}>{l}</button>
         ))}
@@ -1384,34 +1421,92 @@ function Payments() {
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
-            <tr>{["Client","Montant","Caution","Méthode","Date","Statut",""].map(l=>(
+            <tr>{["Client","Montant","Caution","Méthode","Date","Statut","Actions"].map(l=>(
               <th key={l} style={{ textAlign:"left", padding:"10px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
             ))}</tr>
           </thead>
           <tbody>
-            {PAYMENTS.filter(p=>filter==="all"||p.status===filter).map(p=>(
+            {filtered.length===0 && (
+              <tr><td colSpan={7} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucun paiement — cliquez sur "Nouveau paiement" pour commencer</td></tr>
+            )}
+            {filtered.map(p=>(
               <tr key={p.id} style={{ transition:"background .1s" }}
                 onMouseEnter={e=>e.currentTarget.style.background=T.card2}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <Avatar name={p.client} size={32}/>
-                    <span style={{ fontSize:13, fontWeight:600, color:T.text }}>{p.client}</span>
+                    <Avatar name={p.client_name||"?"} size={32}/>
+                    <span style={{ fontSize:13, fontWeight:600, color:T.text }}>{p.client_name||"—"}</span>
                   </div>
                 </td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:15, fontWeight:700, color:T.gold }}>{fmt(p.amount)} €</td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:13, color:T.sub }}>{fmt(p.deposit)} €</td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.sub }}>{p.method}</td>
-                <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.muted }}>{fmtDate(p.paidAt)}</td>
+                <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.muted }}>{fmtDate(p.paid_at)}</td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}><StatusBadge status={p.status}/></td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
-                  {p.status!=="encaissé" && <Btn label="Encaisser" variant="outline" size="sm"/>}
+                  <div style={{ display:"flex", gap:6 }}>
+                    {p.status!=="encaissé" && (
+                      <button onClick={()=>handleEncaisser(p.id)}
+                        style={{ padding:"5px 10px", background:T.successDim, border:`1px solid ${T.success}30`, borderRadius:8, color:T.success, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+                        Encaisser
+                      </button>
+                    )}
+                    <button onClick={()=>handleDelete(p.id)}
+                      style={{ padding:"5px 9px", background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, color:T.red, cursor:"pointer", display:"flex" }}>
+                      {Icons.trash}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {modal && (
+        <Modal title="Nouveau paiement" onClose={()=>setModal(false)}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
+              <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                <option value="">— Sélectionner —</option>
+                {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+              </select>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Location associée</label>
+              <select value={form.rentalId} onChange={e=>up("rentalId",e.target.value)}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                <option value="">— Optionnel —</option>
+                {rentals.map(r=><option key={r.id} value={r.id}>{r.client_name} — {r.vehicle_name}</option>)}
+              </select>
+            </div>
+            <Input label="Montant (€)" type="number" value={form.amount} onChange={v=>up("amount",v)}/>
+            <Input label="Caution (€)" type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Méthode</label>
+              <select value={form.method} onChange={e=>up("method",e.target.value)}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                {["Espèces","Carte bancaire","Virement","Chèque","PayPal"].map(m=><option key={m}>{m}</option>)}
+              </select>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Statut</label>
+              <select value={form.status} onChange={e=>up("status",e.target.value)}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                {["en attente","encaissé","en retard"].map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <Input label="Date" type="date" value={form.paidAt} onChange={v=>up("paidAt",v)}/>
+          </div>
+          <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>Annuler</button>
+            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Enregistrer</button>
+          </div>
+        </Modal>
+      )}
     </Page>
   );
 }
@@ -2164,6 +2259,7 @@ export default function App() {
   const [vehicles,       setVehicles]       = useState([]);
   const [clients,        setClients]        = useState([]);
   const [rentals,        setRentals]        = useState([]);
+  const [payments,       setPayments]       = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
@@ -2184,14 +2280,16 @@ export default function App() {
   }, []);
 
   const fetchData = async (uid) => {
-    const [{ data: v }, { data: c }, { data: r }] = await Promise.all([
+    const [{ data: v }, { data: c }, { data: r }, { data: py }] = await Promise.all([
       supabase.from("vehicles").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("clients").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("rentals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
     ]);
     if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.price_per_day, cat: x.category })));
     if (c) setClients(c.map(x => ({ ...x, firstName: x.first_name, lastName: x.last_name, licenseExpiry: x.license_expiry, totalSpent: x.total_spent, locations: x.locations_count })));
     if (r) setRentals(r);
+    if (py) setPayments(py);
   };
 
   const fetchProfile = async (uid) => {
@@ -2248,7 +2346,7 @@ export default function App() {
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
-    payments:  <Payments/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
     signature: <SignaturePage/>,
     pricing:   <Pricing/>,
