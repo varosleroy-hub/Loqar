@@ -888,7 +888,7 @@ function AuthScreen() {
   );
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ vehicles }) {
+function Dashboard({ vehicles, rentals, onNav }) {
   const revenue = PAYMENTS.filter(p=>p.status==="encaissé").reduce((a,p)=>a+p.amount,0);
   const revCount = useCounter(revenue, 1300);
   const activeRentals = RENTALS.filter(r=>r.status==="en cours");
@@ -896,7 +896,7 @@ function Dashboard({ vehicles }) {
 
   return (
     <Page title="Tableau de bord" sub={`${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})} · Bienvenue sur Loqar`}
-      actions={<Btn label="Nouvelle location" variant="primary" icon={Icons.plus}/>}>
+      actions={<button onClick={()=>onNav&&onNav("rentals")} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
 
       {/* ── Hero revenue banner ── */}
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:18, padding:"32px 36px", marginBottom:22, position:"relative", overflow:"hidden" }}>
@@ -2243,7 +2243,7 @@ export default function App() {
   if (!user) return <AuthScreen />;
 
   const screens = {
-    dashboard: <Dashboard vehicles={vehicles} rentals={rentals}/>,
+    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} onNav={p=>setPage(p)}/>,
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
