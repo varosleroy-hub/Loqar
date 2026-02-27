@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { supabase } from "./supabase.js";
 
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@ const TR = {
     signatures:"Signatures",pricing:"Abonnements",settings:t.settings||"Paramètres",
     welcome:t.welcome||"Bienvenue sur Loqar",newRental:t.newRental||"Nouvelle location",
     addVehicle:t.addVehicle||"Ajouter un véhicule",newClient:t.newClient||"Nouveau client",
-    newPayment:t.newPayment||"Nouveau paiement",save:t.save||"Enregistrer",cancel:t.cancel||"Annuler",
+    newPayment:t.newPayment||"Nouveau paiement",save:t.save||"Enregistrer",cancel:t.cancel||t.cancel||"Annuler",
     delete:t.delete||"Supprimer",edit:t.edit||"Modifier",add:t.add||"Ajouter",
     search:t.search||"Rechercher…",loading:"Chargement…",
     noVehicles:"Aucun véhicule trouvé",noClients:"Aucun client",
@@ -24,13 +24,13 @@ const TR = {
     revenue:t.revenue||"Revenus encaissés",activeRentals:t.activeRentals||"Locations actives",
     availableVehicles:t.availableVehicles||"Véhicules disponibles",generateContract:"Générer un contrat",
     downloadPDF:t.downloadPDF||"Télécharger PDF",sendEmail:"Envoyer par email",
-    contract:t.contract||"Contrat",invoice:t.invoice||"Facture",inspection:t.inspection||"État des lieux",quote:t.quote||"Devis",
+    contract:t.contract||"Contrat",invoice:t.invoice||t.invoice||"Facture",inspection:t.inspection||"État des lieux",quote:t.quote||"Devis",
     firstName:"Prénom",lastName:"Nom",email:"Email",phone:"Téléphone",
     licenseExpiry:"Expiration du permis",type:t.type||"Type",individual:t.individual||"Particulier",company:t.company||"Entreprise",
     collect:t.collect||"Encaisser",livePreview:t.livePreview||"Aperçu en direct",
-    agencyName:"Nom de l'agence",address:"Adresse",siret:"SIRET",
+    agencyName:t.agencyName||"Nom de l'agence",address:t.address||"Adresse",siret:"SIRET",
     saveProfile:t.saveProfile||"Sauvegarder le profil",profile:"Profil agence",
-    logout:t.logout||"Déconnexion",planPro:"Plan Pro",fleetStatus:t.fleetStatus||"Flotte",totalVehicles:t.totalVehicles||"Total véhicules",
+    logout:t.logout||"Déconnexion",planPro:t.planPro||"Plan Pro",fleetStatus:t.fleetStatus||"Flotte",totalVehicles:t.totalVehicles||"Total véhicules",
   },
   en: {
     dashboard:"Dashboard",vehicles:"Vehicles",clients:t.clients||"Clients",
@@ -62,6 +62,9 @@ const TR = {
     logout:"Logout",planPro:"Pro Plan",fleetStatus:"Fleet",totalVehicles:"Total vehicles",
   }
 };
+
+const LangContext = createContext({ lang:"fr", t:TR.fr, setLang:()=>{} });
+const useLang = () => useContext(LangContext);
 
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
 const T = {
@@ -474,7 +477,8 @@ function OnboardingScreen({ onDone, onNav }) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
-function Settings({ agencyProfile, setAgencyProfile, t={} }) {
+function Settings({ agencyProfile, setAgencyProfile }) {
+  const { t, lang } = useLang();
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
@@ -509,7 +513,7 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
+            {[[t.agencyName||t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                 <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -566,8 +570,8 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10, paddingBottom:10, borderBottom:"1px solid #DDD5C8" }}>
                 <div style={{ fontSize:22 }}>{form.logo||"🚗"}</div>
                 <div>
-                  <div style={{ fontSize:14, fontWeight:700, letterSpacing:"-.02em" }}>{form.name||"Nom de l'agence"}</div>
-                  <div style={{ fontSize:10, color:"#888" }}>{form.address||"Adresse"}</div>
+                  <div style={{ fontSize:14, fontWeight:700, letterSpacing:"-.02em" }}>{form.name||t.agencyName||"Nom de l'agence"}</div>
+                  <div style={{ fontSize:10, color:"#888" }}>{form.address||t.address||"Adresse"}</div>
                 </div>
                 <div style={{ marginLeft:"auto", textAlign:"right" }}>
                   <div style={{ fontSize:10, color:"#888" }}>{form.phone||"Téléphone"}</div>
@@ -590,6 +594,7 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
 function SignaturePage() {
+  const { t, lang } = useLang();
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
   const [signed, setSigned] = useState([]);
@@ -635,7 +640,7 @@ function SignaturePage() {
             </div>
 
             <div style={{ display:"flex", gap:10 }}>
-              <Btn label=t.cancel||"Annuler" variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
+              <Btn label=t.cancel||t.cancel||"Annuler" variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
               <Btn label={hasDrawn?"Confirmer la signature":"Signer d'abord…"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.5 }}/>
             </div>
           </div>
@@ -741,7 +746,8 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, lang, setLang, t }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount }) {
+  const { t, lang, setLang } = useLang();
   const lateP = PAYMENTS.filter(p=>p.status==="en retard").length;
   return (
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
@@ -826,7 +832,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
           <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Plan Pro</span>
         </div>
         <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>API, rapports avancés et marque blanche.</p>
-        <Btn label="Passer au Pro" variant="primary" size="sm" full/>
+        <Btn label=t.lang==="en"?"Upgrade to Pro":"Passer au Pro" variant="primary" size="sm" full/>
       </div>
 
       {/* Language toggle */}
@@ -968,7 +974,8 @@ function AuthScreen() {
   );
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ vehicles, rentals, onNav, t={} }) {
+function Dashboard({ vehicles, rentals, onNav }) {
+  const { t, lang } = useLang();
   const revenue = PAYMENTS.filter(p=>p.status==="encaissé").reduce((a,p)=>a+p.amount,0);
   const revCount = useCounter(revenue, 1300);
   const activeRentals = RENTALS.filter(r=>r.status==="en cours");
@@ -1125,7 +1132,8 @@ function Dashboard({ vehicles, rentals, onNav, t={} }) {
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user, t={} }) {
+function Vehicles({ vehicles, setVehicles, user }) {
+  const { t, lang } = useLang();
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -1276,7 +1284,7 @@ function Vehicles({ vehicles, setVehicles, user, t={} }) {
             </div>
             <Input label="Immatriculation" value={form.plate} onChange={v=>setForm({...form,plate:v})} placeholder="AB-123-CD"/>
             <Input label="Année" type="number" value={form.year} onChange={v=>setForm({...form,year:v})} placeholder="2023"/>
-            <Input label="Kilométrage" type="number" value={form.km} onChange={v=>setForm({...form,km:v})} placeholder="15000"/>
+            <Input label={t.km||"Kilométrage"} type="number" value={form.km} onChange={v=>setForm({...form,km:v})} placeholder="15000"/>
             <Input label="Prix / jour (€)" type="number" value={form.price} onChange={v=>setForm({...form,price:v})} placeholder="65"/>
             {[["Carburant","fuel",["Essence","Diesel","Hybride","Électrique"]],["Transmission","trans",["Manuelle","Automatique"]],["Catégorie","cat",["Citadine","Compacte","Berline","Premium","SUV"]]].map(([lbl,key,opts])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -1289,7 +1297,7 @@ function Vehicles({ vehicles, setVehicles, user, t={} }) {
             ))}
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <Btn label=t.cancel||"Annuler" onClick={()=>setModal(false)} variant="secondary"/>
+            <Btn label=t.cancel||t.cancel||"Annuler" onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label=t.add||"Ajouter" onClick={async ()=>{
               const newV = { user_id: user.id, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
@@ -1304,7 +1312,8 @@ function Vehicles({ vehicles, setVehicles, user, t={} }) {
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
-function Clients({ clients, setClients, user, t={} }) {
+function Clients({ clients, setClients, user }) {
+  const { t, lang } = useLang();
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
   const [modal, setModal]  = useState(false);
@@ -1316,7 +1325,7 @@ function Clients({ clients, setClients, user, t={} }) {
       actions={<Btn label=t.newClient||"Nouveau client" variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
       <div style={{ position:"relative", marginBottom:16 }}>
         <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un client…"
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t.lang==="en"?"Search client…":"Rechercher un client…"}
           style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px 10px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
       </div>
 
@@ -1325,7 +1334,7 @@ function Clients({ clients, setClients, user, t={} }) {
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr>
-                {["Client",t.lang==="en"?"Contact":"Contact",t.lang==="en"?"License":"Permis",t.rentals||t.rentals||"Locations",t.lang==="en"?"Total spent":"Total dépensé",t.type||"Type"].map(l=>(
+                {["Client",t.lang==="en"?t.lang==="en"?"Contact":"Contact":t.lang==="en"?"Contact":"Contact",t.lang==="en"?"License":t.lang==="en"?"License":"Permis",t.rentals||t.rentals||"Locations",t.lang==="en"?"Total spent":t.lang==="en"?"Total spent":"Total dépensé",t.type||"Type"].map(l=>(
                   <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
                 ))}
               </tr>
@@ -1413,7 +1422,7 @@ function Clients({ clients, setClients, user, t={} }) {
             <Input label="Expiration du permis" type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <Btn label=t.cancel||"Annuler" onClick={()=>setModal(false)} variant="secondary"/>
+            <Btn label=t.cancel||t.cancel||"Annuler" onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label=t.save||"Créer le client" onClick={async ()=>{
               const newC = { user_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
               const { data, error } = await supabase.from("clients").insert(newC).select().single();
@@ -1428,7 +1437,8 @@ function Clients({ clients, setClients, user, t={} }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
+function Payments({ payments, setPayments, clients, rentals, user }) {
+  const { t, lang } = useLang();
   const [filter, setFilter] = useState("all");
   const [modal, setModal]   = useState(false);
   const [form, setForm]     = useState({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
@@ -1550,7 +1560,7 @@ function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">— Sélectionner —</option>
+                <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
               </select>
             </div>
@@ -1558,12 +1568,12 @@ function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Location associée</label>
               <select value={form.rentalId} onChange={e=>up("rentalId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">— Optionnel —</option>
+                <option value="">{t.lang==="en"?"— Optional —":"— Optionnel —"}</option>
                 {rentals.map(r=><option key={r.id} value={r.id}>{r.client_name} — {r.vehicle_name}</option>)}
               </select>
             </div>
-            <Input label="Montant (€)" type="number" value={form.amount} onChange={v=>up("amount",v)}/>
-            <Input label="Caution (€)" type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
+            <Input label={t.amount||"Montant (€)"} type="number" value={form.amount} onChange={v=>up("amount",v)}/>
+            <Input label={t.deposit||"Caution (€)"} type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Méthode</label>
               <select value={form.method} onChange={e=>up("method",e.target.value)}
@@ -1581,8 +1591,8 @@ function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
             <Input label=t.date||"Date" type="date" value={form.paidAt} onChange={v=>up("paidAt",v)}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>Annuler</button>
-            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Enregistrer</button>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||t.cancel||"Annuler"}</button>
+            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Enregistrer"}</button>
           </div>
         </Modal>
       )}
@@ -1591,7 +1601,8 @@ function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
 }
 
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
-function Documents({ agencyProfile, vehicles, clients, t={} }) {
+function Documents({ agencyProfile, vehicles, clients }) {
+  const { t, lang } = useLang();
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
@@ -1618,7 +1629,7 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
 
   const docTypes = [
     {id:"contrat", l:t.contract||"Contrat", d:t.lang==="en"?"Car rental":"Location auto"},
-    {id:"facture", l:t.invoice||"Facture", d:t.lang==="en"?"Official document":"Document officiel"},
+    {id:"facture", l:t.invoice||t.invoice||"Facture", d:t.lang==="en"?"Official document":"Document officiel"},
     {id:"etat",    l:t.inspection||"État des lieux", d:t.lang==="en"?"Before / After":"Avant / Après"},
     {id:"devis",   l:t.quote||"Devis", d:t.lang==="en"?"Price proposal":"Proposition de prix"},
   ];
@@ -1659,7 +1670,7 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
                 <select value={p.clientId} onChange={e=>up("clientId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                  <option value="">— Sélectionner —</option>
+                  <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
                   {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                 </select>
               </div>
@@ -1669,17 +1680,17 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
                 <select value={p.vehicleId} onChange={e=>up("vehicleId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                  <option value="">— Sélectionner —</option>
+                  <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
                   {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
                 </select>
               </div>
 
-              <Input label="Prix/jour (€)" value={p.price} onChange={v=>up("price",v)} type="number"/>
-              <Input label="Caution (€)" value={p.deposit} onChange={v=>up("deposit",v)} type="number"/>
-              <Input label="Km départ" value={p.km} onChange={v=>up("km",v)} type="number"/>
-              {(docType==="etat"||docType==="contrat") && <Input label="Km retour" value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
-              <Input label="Début" type="date" value={p.startDate} onChange={v=>up("startDate",v)}/>
-              <Input label="Fin" type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
+              <Input label={t.price||"Prix/jour (€)"} value={p.price} onChange={v=>up("price",v)} type="number"/>
+              <Input label={t.deposit||"Caution (€)"} value={p.deposit} onChange={v=>up("deposit",v)} type="number"/>
+              <Input label={t.lang==="en"?"Start mileage":"Km départ"} value={p.km} onChange={v=>up("km",v)} type="number"/>
+              {(docType==="etat"||docType==="contrat") && <Input label={t.lang==="en"?"End mileage":"Km retour"} value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
+              <Input label={t.start||"Début"} type="date" value={p.startDate} onChange={v=>up("startDate",v)}/>
+              <Input label={t.end||"Fin"} type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
 
               {/* Fuel level */}
               {(docType==="etat"||docType==="contrat") && (
@@ -1733,7 +1744,7 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
-                  {{contrat:t.lang==="en"?"Rental Contract":"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
+                  {{contrat:t.lang==="en"?"Rental Contract":"Contrat de Location",facture:t.invoice||t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
                 </div>
                 <div style={{ fontSize:10, color:"#888", marginTop:3 }}>N° {docNum}</div>
                 <div style={{ fontSize:10, color:"#888" }}>Date : {new Date().toLocaleDateString("fr-FR")}</div>
@@ -1776,7 +1787,7 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
 
             {/* Location details */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
-              {[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
+              {[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} {t.lang==="en"?"day(s)":"jour(s)"}`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                   <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
                   <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
@@ -2026,6 +2037,7 @@ function FaqItem({ q, a }) {
 }
 
 function Pricing() {
+  const { t, lang } = useLang();
   const [annual, setAnnual] = useState(false);
   return (
     <Page title="Abonnements" sub="Choisissez le plan adapté à votre activité">
@@ -2136,7 +2148,8 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
+function Rentals({ rentals, setRentals, vehicles, clients, user }) {
+  const { t, lang } = useLang();
   const [modal, setModal] = useState(false);
   const [sel, setSel]     = useState(null);
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
@@ -2210,7 +2223,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
-              <tr>{["Client","Véhicule",t.lang==="en"?"Period":"Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
+              <tr>{["Client","Véhicule",t.lang==="en"?"Period":t.lang==="en"?"Period":"Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
                 <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
               ))}</tr>
             </thead>
@@ -2283,7 +2296,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">— Sélectionner —</option>
+                <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
               </select>
             </div>
@@ -2292,20 +2305,20 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
               <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>x.id===e.target.value); if(v) up("pricePerDay",v.price||""); }}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">— Sélectionner —</option>
+                <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
               </select>
             </div>
 
-            <Input label="Début" type="date" value={form.startDate} onChange={v=>up("startDate",v)}/>
-            <Input label="Fin" type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
-            <Input label="Prix/jour (€)" type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
-            <Input label="Caution (€)" type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
-            <Input label="Km départ" type="number" value={form.km} onChange={v=>up("km",v)}/>
+            <Input label={t.start||"Début"} type="date" value={form.startDate} onChange={v=>up("startDate",v)}/>
+            <Input label={t.end||"Fin"} type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
+            <Input label={t.price||"Prix/jour (€)"} type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
+            <Input label={t.deposit||"Caution (€)"} type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
+            <Input label={t.lang==="en"?"Start mileage":"Km départ"} type="number" value={form.km} onChange={v=>up("km",v)}/>
             
             {days>0 && (
               <div style={{ gridColumn:"1/-1", padding:"12px 14px", background:T.goldDim, border:`1px solid ${T.gold}30`, borderRadius:10 }}>
-                <span style={{ fontSize:12, color:T.muted }}>Durée : {days} jour(s) · </span>
+                <span style={{ fontSize:12, color:T.muted }}>{t.duration||"Durée"} : {days} {t.lang==="en"?"day(s)":"jour(s)"} · </span>
                 <span style={{ fontSize:14, fontWeight:700, color:T.gold }}>Total : {total} €</span>
               </div>
             )}
@@ -2318,8 +2331,8 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
           </div>
 
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>Annuler</button>
-            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Créer la location</button>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||t.cancel||"Annuler"}</button>
+            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Créer la location"}</button>
           </div>
         </Modal>
       )}
@@ -2435,14 +2448,17 @@ export default function App() {
   };
 
   return (
+    <LangContext.Provider value={{ lang, t, setLang }}>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} lang={lang} setLang={setLang} t={t}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
     </div>
+    </div>
+    </LangContext.Provider>
   );
 }
