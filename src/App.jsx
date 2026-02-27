@@ -5,7 +5,7 @@ import { supabase } from "./supabase.js";
 const TR = {
   fr: {
     dashboard:t.dashboard||"Tableau de bord",vehicles:t.vehicles||"Véhicules",clients:t.clients||"Clients",
-    rentals:t.rentals||"Locations",payments:t.payments||"Paiements",documents:t.documents||"Documents",
+    rentals:t.rentals||t.rentals||"Locations",payments:t.payments||"Paiements",documents:t.documents||"Documents",
     signatures:"Signatures",pricing:"Abonnements",settings:t.settings||"Paramètres",
     welcome:t.welcome||"Bienvenue sur Loqar",newRental:t.newRental||"Nouvelle location",
     addVehicle:t.addVehicle||"Ajouter un véhicule",newClient:t.newClient||"Nouveau client",
@@ -14,23 +14,23 @@ const TR = {
     search:t.search||"Rechercher…",loading:"Chargement…",
     noVehicles:"Aucun véhicule trouvé",noClients:"Aucun client",
     noRentals:"Aucune location",noPayments:"Aucun paiement",
-    available:t.available||"Disponible",rented:t.rented||"En location",maintenance:t.maintenance||"Entretien",
+    available:t.available||t.available||"Disponible",rented:t.rented||t.rented||"En location",maintenance:t.maintenance||t.maintenance||"Entretien",
     inProgress:t.inProgress||"En cours",reserved:"Réservée",completed:"Terminée",cancelled:"Annulée",
     collected:t.collected||"Encaissé",pending:t.pending||"En attente",late:t.late||"En retard",
     client:"Client",vehicle:"Véhicule",start:"Début",end:"Fin",
     price:"Prix/jour (€)",deposit:"Caution (€)",km:"Kilométrage",
     notes:t.notes||"Notes",total:t.total||"Total",duration:"Durée",method:t.method||"Méthode",
     amount:t.amount||"Montant",date:t.date||"Date",status:t.status||"Statut",actions:t.actions||"Actions",
-    revenue:"Revenus encaissés",activeRentals:"Locations actives",
-    availableVehicles:"Véhicules disponibles",generateContract:"Générer un contrat",
+    revenue:t.revenue||"Revenus encaissés",activeRentals:t.activeRentals||"Locations actives",
+    availableVehicles:t.availableVehicles||"Véhicules disponibles",generateContract:"Générer un contrat",
     downloadPDF:t.downloadPDF||"Télécharger PDF",sendEmail:"Envoyer par email",
     contract:t.contract||"Contrat",invoice:t.invoice||"Facture",inspection:t.inspection||"État des lieux",quote:t.quote||"Devis",
     firstName:"Prénom",lastName:"Nom",email:"Email",phone:"Téléphone",
-    licenseExpiry:"Expiration du permis",type:"Type",individual:"Particulier",company:"Entreprise",
+    licenseExpiry:"Expiration du permis",type:t.type||"Type",individual:t.individual||"Particulier",company:t.company||"Entreprise",
     collect:t.collect||"Encaisser",livePreview:t.livePreview||"Aperçu en direct",
     agencyName:"Nom de l'agence",address:"Adresse",siret:"SIRET",
     saveProfile:t.saveProfile||"Sauvegarder le profil",profile:"Profil agence",
-    logout:t.logout||"Déconnexion",planPro:"Plan Pro",fleetStatus:"Flotte",totalVehicles:"Total véhicules",
+    logout:t.logout||"Déconnexion",planPro:"Plan Pro",fleetStatus:t.fleetStatus||"Flotte",totalVehicles:t.totalVehicles||"Total véhicules",
   },
   en: {
     dashboard:"Dashboard",vehicles:"Vehicles",clients:t.clients||"Clients",
@@ -55,7 +55,7 @@ const TR = {
     downloadPDF:"Download PDF",sendEmail:"Send by email",
     contract:"Contract",invoice:"Invoice",inspection:"Inspection report",quote:"Quote",
     firstName:"First name",lastName:"Last name",email:"Email",phone:"Phone",
-    licenseExpiry:"License expiry",type:"Type",individual:"Individual",company:"Company",
+    licenseExpiry:"License expiry",type:t.type||"Type",individual:"Individual",company:"Company",
     collect:"Collect",livePreview:"Live preview",
     agencyName:"Agency name",address:"Address",siret:"SIRET",
     saveProfile:"Save profile",profile:"Agency profile",
@@ -218,9 +218,9 @@ function Badge({ label, color=T.gold, bg, dot=false }) {
 
 function StatusBadge({ status }) {
   const m = {
-    "disponible":  { c:T.success, l:t.available||"Disponible" },
-    "en location": { c:T.gold,    l:t.rented||"En location" },
-    "entretien":   { c:T.red,     l:t.maintenance||"Entretien"   },
+    "disponible":  { c:T.success, l:t.available||t.available||"Disponible" },
+    "en location": { c:T.gold,    l:t.rented||t.rented||"En location" },
+    "entretien":   { c:T.red,     l:t.maintenance||t.maintenance||"Entretien"   },
     "en cours":    { c:T.gold,    l:t.inProgress||"En cours"    },
     "terminée":    { c:T.muted,   l:"Terminée"    },
     "réservée":    { c:T.blue,    l:"Réservée"    },
@@ -314,7 +314,7 @@ function Card({ children, style={}, onClick }) {
 
 // ─── COMMAND BAR ─────────────────────────────────────────────────────────────
 const CMD = [
-  { cat:"Navigation",    items:[{l:t.dashboard||"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:t.vehicles||"Véhicules",icon:Icons.car,page:"vehicles"},{l:t.clients||"Clients",icon:Icons.users,page:"clients"},{l:t.rentals||"Locations",icon:Icons.calendar,page:"rentals"},{l:t.payments||"Paiements",icon:Icons.dollar,page:"payments"},{l:t.documents||"Documents",icon:Icons.doc,page:"documents"}]},
+  { cat:"Navigation",    items:[{l:t.dashboard||"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:t.vehicles||"Véhicules",icon:Icons.car,page:"vehicles"},{l:t.clients||"Clients",icon:Icons.users,page:"clients"},{l:t.rentals||t.rentals||"Locations",icon:Icons.calendar,page:"rentals"},{l:t.payments||"Paiements",icon:Icons.dollar,page:"payments"},{l:t.documents||"Documents",icon:Icons.doc,page:"documents"}]},
   { cat:t.actions||"Actions",       items:[{l:t.addVehicle||"Ajouter un véhicule",icon:Icons.plus,page:"vehicles"},{l:t.newClient||"Nouveau client",icon:Icons.plus,page:"clients"},{l:"Générer un contrat",icon:Icons.doc,page:"documents"}]},
 ];
 
@@ -481,13 +481,13 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
   const save = () => { setAgencyProfile(form); setSaved(true); setTimeout(()=>setSaved(false),2500); };
 
   return (
-    <Page title=t.settings||"Paramètres" sub="Informations de votre agence · apparaissent sur vos contrats PDF">
+    <Page title={t.settings||"Paramètres"} sub="Informations de votre agence · apparaissent sur vos contrats PDF">
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
 
         {/* Infos agence */}
         <Card>
           <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ color:T.gold }}>{Icons.building}</span> Agence
+            <span style={{ color:T.gold }}>{Icons.building}</span> {t.profile||"Agence"}
           </div>
 
           {/* Logo upload zone */}
@@ -509,7 +509,7 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-            {[["Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],["Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
+            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                 <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -524,10 +524,10 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
           {/* Coordonnées bancaires */}
           <Card>
             <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:T.gold }}>{Icons.dollar}</span> Coordonnées bancaires
+              <span style={{ color:T.gold }}>{Icons.dollar}</span> {t.lang==="en"?"Banking details":"Coordonnées bancaires"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-              {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],["Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
+              {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],[t.lang==="en"?"Account holder":"Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
                 <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                   <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                   <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -541,7 +541,7 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
           {/* Mentions légales contrat */}
           <Card>
             <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:T.gold }}>{Icons.doc}</span> Mentions contrat
+              <span style={{ color:T.gold }}>{Icons.doc}</span> {t.lang==="en"?"Contract terms":"Mentions contrat"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -582,7 +582,7 @@ function Settings({ agencyProfile, setAgencyProfile, t={} }) {
 
       <div style={{ display:"flex", gap:10, marginTop:24, justifyContent:"flex-end", alignItems:"center" }}>
         {saved && <span style={{ fontSize:13, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Enregistré !</span>}
-        <Btn label="Enregistrer les modifications" variant="primary" onClick={save} icon={Icons.check}/>
+        <Btn label=t.saveProfile||"Enregistrer les modifications" variant="primary" onClick={save} icon={Icons.check}/>
       </div>
     </Page>
   );
@@ -800,7 +800,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
       {/* Fleet health */}
       <div style={{ fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", padding:"12px 10px 8px" }}>Flotte</div>
       <div style={{ padding:"12px 14px", background:T.card, border:`1px solid ${T.border}`, borderRadius:12, margin:"0 0 4px" }}>
-        {[{l:t.available||"Disponible",s:"disponible",c:T.success},{l:t.rented||"En location",s:"en location",c:T.gold},{l:t.maintenance||"Entretien",s:"entretien",c:T.red}].map(g=>{
+        {[{l:t.available||t.available||"Disponible",s:"disponible",c:T.success},{l:t.rented||t.rented||"En location",s:"en location",c:T.gold},{l:t.maintenance||t.maintenance||"Entretien",s:"entretien",c:T.red}].map(g=>{
           const count = vehicles.filter(v=>v.status===g.s).length;
           return (
             <div key={g.s} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
@@ -1013,8 +1013,8 @@ function Dashboard({ vehicles, rentals, onNav, t={} }) {
       {/* ── Stats row ── */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:22 }}>
         {[
-          {label:"Locations actives", value:activeRentals.length, color:T.gold,    icon:Icons.calendar, sub:t.inProgress||"En cours"},
-          {label:"Véhicules disponibles", value:vehicles.filter(v=>v.status==="disponible").length, color:T.success, icon:Icons.car, sub:`Sur ${vehicles.length} total`},
+          {label:t.activeRentals||"Locations actives", value:activeRentals.length, color:T.gold,    icon:Icons.calendar, sub:t.inProgress||"En cours"},
+          {label:t.availableVehicles||"Véhicules disponibles", value:vehicles.filter(v=>v.status==="disponible").length, color:T.success, icon:Icons.car, sub:`Sur ${vehicles.length} total`},
           {label:t.clients||"Clients", value:CLIENTS.length, color:T.blue, icon:Icons.users, sub:"Dont 1 liste noire"},
         ].map(s=>{
           const c = useCounter(s.value, 900);
@@ -1163,7 +1163,7 @@ function Vehicles({ vehicles, setVehicles, user, t={} }) {
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher un véhicule ou immatriculation…"
             style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
         </div>
-        {[["all","Tous"],["disponible",t.available||"Disponible"],["en location",t.rented||"En location"],["entretien",t.maintenance||"Entretien"]].map(([k,l])=>{
+        {[["all",t.lang==="en"?"All":"Tous"],["disponible",t.available||t.available||"Disponible"],["en location",t.rented||t.rented||"En location"],["entretien",t.maintenance||t.maintenance||"Entretien"]].map(([k,l])=>{
           const cnt=k==="all"?vehicles.length:vehicles.filter(v=>v.status===k).length;
           const active=filter===k;
           return (
@@ -1325,7 +1325,7 @@ function Clients({ clients, setClients, user, t={} }) {
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr>
-                {["Client","Contact","Permis",t.rentals||"Locations","Total dépensé","Type"].map(l=>(
+                {["Client",t.lang==="en"?"Contact":"Contact",t.lang==="en"?"License":"Permis",t.rentals||t.rentals||"Locations",t.lang==="en"?"Total spent":"Total dépensé",t.type||"Type"].map(l=>(
                   <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
                 ))}
               </tr>
@@ -1357,7 +1357,7 @@ function Clients({ clients, setClients, user, t={} }) {
                     <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:13, fontWeight:600, color:T.text }}>{c.locations}</td>
                     <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:13, fontWeight:700, color:T.gold }}>{fmt(c.totalSpent)} €</td>
                     <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
-                      <Badge label={c.type==="entreprise"?"Entreprise":"Particulier"} color={c.type==="entreprise"?T.blue:T.sub}/>
+                      <Badge label={c.type==="entreprise"?t.company||"Entreprise":t.individual||"Particulier"} color={c.type==="entreprise"?T.blue:T.sub}/>
                     </td>
                   </tr>
                 );
@@ -1491,7 +1491,7 @@ function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-        {[["all","Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
+        {[["all",t.lang==="en"?"All":"Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
           <button key={k} onClick={()=>setFilter(k)}
             style={{ padding:"7px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:filter===k?T.goldDim:T.card, border:`1px solid ${filter===k?T.gold:T.border}`, color:filter===k?T.gold:T.sub, transition:"all .15s", fontFamily:"inherit" }}>{l}</button>
         ))}
@@ -1500,7 +1500,7 @@ function Payments({ payments, setPayments, clients, rentals, user, t={} }) {
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
-            <tr>{["Client",t.amount||"Montant","Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
+            <tr>{["Client",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
               <th key={l} style={{ textAlign:"left", padding:"10px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
             ))}</tr>
           </thead>
@@ -1617,10 +1617,10 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
   };
 
   const docTypes = [
-    {id:"contrat", l:t.contract||"Contrat", d:"Location auto"},
-    {id:"facture", l:t.invoice||"Facture", d:"Document officiel"},
-    {id:"etat",    l:t.inspection||"État des lieux", d:"Avant / Après"},
-    {id:"devis",   l:t.quote||"Devis", d:"Proposition de prix"},
+    {id:"contrat", l:t.contract||"Contrat", d:t.lang==="en"?"Car rental":"Location auto"},
+    {id:"facture", l:t.invoice||"Facture", d:t.lang==="en"?"Official document":"Document officiel"},
+    {id:"etat",    l:t.inspection||"État des lieux", d:t.lang==="en"?"Before / After":"Avant / Après"},
+    {id:"devis",   l:t.quote||"Devis", d:t.lang==="en"?"Price proposal":"Proposition de prix"},
   ];
 
   const checkItems = [
@@ -1632,7 +1632,7 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
   const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
 
   return (
-    <Page title=t.documents||"Documents" sub="Générez contrats, devis et factures légalement conformes">
+    <Page title=t.documents||"Documents" sub=t.lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes">
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
         {docTypes.map(dt=>{
           const active=docType===dt.id;
@@ -1733,7 +1733,7 @@ function Documents({ agencyProfile, vehicles, clients, t={} }) {
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
-                  {{contrat:"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
+                  {{contrat:t.lang==="en"?"Rental Contract":"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
                 </div>
                 <div style={{ fontSize:10, color:"#888", marginTop:3 }}>N° {docNum}</div>
                 <div style={{ fontSize:10, color:"#888" }}>Date : {new Date().toLocaleDateString("fr-FR")}</div>
@@ -2187,7 +2187,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
   };
 
   return (
-    <Page title=t.rentals||"Locations" sub={`${rentals.length} location(s) enregistrée(s)`}
+    <Page title=t.rentals||t.rentals||"Locations" sub={`${rentals.length} location(s) enregistrée(s)`}
       actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
       
       {/* Stats */}
@@ -2196,7 +2196,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
           [t.inProgress||"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
           [t.reserved||"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
           [t.completed||"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
-          ["Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
+          [t.lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
         ].map(([label,value,color])=>(
           <Card key={label}>
             <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{label}</div>
@@ -2210,7 +2210,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
-              <tr>{["Client","Véhicule","Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
+              <tr>{["Client","Véhicule",t.lang==="en"?"Period":"Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
                 <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
               ))}</tr>
             </thead>
@@ -2257,7 +2257,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, t={} }) {
                 <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Détail location</div>
                 <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
               </div>
-              {[["Client",sel.client_name],["Véhicule",sel.vehicle_name],["Début",fmtDate(sel.start_date)],["Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],["Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
+              {[["Client",sel.client_name],["Véhicule",sel.vehicle_name],["Début",fmtDate(sel.start_date)],["Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                   <span style={{ fontSize:12, color:T.muted }}>{k}</span>
                   <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
