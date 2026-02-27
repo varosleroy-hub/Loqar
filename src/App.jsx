@@ -201,7 +201,7 @@ function Btn({ label, onClick, variant="primary", icon, style={}, size="md", ful
     <button onClick={onClick}
       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       style={{ display:"inline-flex", alignItems:"center", fontWeight:600, fontFamily:"inherit", cursor:"pointer", transition:"all .15s", transform:hov&&variant!=="ghost"?"translateY(-1px)":"none", letterSpacing:"0.01em", width:full?"100%":"auto", justifyContent:full?"center":"flex-start", ...sz, ...v, ...style }}>
-      {icon && icon}{label}
+      {icon && <span style={{display:"flex"}}>{icon}</span>}{label && <span>{label}</span>}
     </button>
   );
 }
@@ -1170,7 +1170,7 @@ function Vehicles({ vehicles, setVehicles, user }) {
                   <ProgressBar value={sel.km} max={150000} color={sel.km>100000?T.red:sel.km>70000?T.amber:T.gold}/>
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                  <Btn label="Modifier" variant="secondary" icon={Icons.edit} style={{ flex:1, justifyContent:"center" }}/>
+                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{Icons.edit} Modifier</button>
                   <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); }}/>
                 </div>
               </div>
