@@ -670,6 +670,7 @@ const NAV = [
   { id:"dashboard",  label:"Tableau de bord", icon:Icons.dash },
   { id:"vehicles",   label:"Véhicules",        icon:Icons.car  },
   { id:"clients",    label:"Clients",          icon:Icons.users},
+  { id:"rentals",    label:"Locations",        icon:Icons.calendar},
   { id:"payments",   label:"Paiements",        icon:Icons.dollar},
   { id:"documents",  label:"Documents",        icon:Icons.doc  },
   { id:"signature",  label:"Signatures",       icon:Icons.pen  },
