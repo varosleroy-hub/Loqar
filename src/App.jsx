@@ -1,6 +1,68 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase.js";
 
+// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
+const TR = {
+  fr: {
+    dashboard:"Tableau de bord",vehicles:"Véhicules",clients:"Clients",
+    rentals:"Locations",payments:"Paiements",documents:"Documents",
+    signatures:"Signatures",pricing:"Abonnements",settings:"Paramètres",
+    welcome:"Bienvenue sur Loqar",newRental:"Nouvelle location",
+    addVehicle:"Ajouter un véhicule",newClient:"Nouveau client",
+    newPayment:"Nouveau paiement",save:"Enregistrer",cancel:"Annuler",
+    delete:"Supprimer",edit:"Modifier",add:"Ajouter",
+    search:"Rechercher…",loading:"Chargement…",
+    noVehicles:"Aucun véhicule trouvé",noClients:"Aucun client",
+    noRentals:"Aucune location",noPayments:"Aucun paiement",
+    available:"Disponible",rented:"En location",maintenance:"Entretien",
+    inProgress:"En cours",reserved:"Réservée",completed:"Terminée",cancelled:"Annulée",
+    collected:"Encaissé",pending:"En attente",late:"En retard",
+    client:"Client",vehicle:"Véhicule",start:"Début",end:"Fin",
+    price:"Prix/jour (€)",deposit:"Caution (€)",km:"Kilométrage",
+    notes:"Notes",total:"Total",duration:"Durée",method:"Méthode",
+    amount:"Montant",date:"Date",status:"Statut",actions:"Actions",
+    revenue:"Revenus encaissés",activeRentals:"Locations actives",
+    availableVehicles:"Véhicules disponibles",generateContract:"Générer un contrat",
+    downloadPDF:"Télécharger PDF",sendEmail:"Envoyer par email",
+    contract:"Contrat",invoice:"Facture",inspection:"État des lieux",quote:"Devis",
+    firstName:"Prénom",lastName:"Nom",email:"Email",phone:"Téléphone",
+    licenseExpiry:"Expiration du permis",type:"Type",individual:"Particulier",company:"Entreprise",
+    collect:"Encaisser",livePreview:"Aperçu en direct",
+    agencyName:"Nom de l'agence",address:"Adresse",siret:"SIRET",
+    saveProfile:"Sauvegarder le profil",profile:"Profil agence",
+    logout:"Déconnexion",planPro:"Plan Pro",fleetStatus:"Flotte",totalVehicles:"Total véhicules",
+  },
+  en: {
+    dashboard:"Dashboard",vehicles:"Vehicles",clients:"Clients",
+    rentals:"Rentals",payments:"Payments",documents:"Documents",
+    signatures:"Signatures",pricing:"Pricing",settings:"Settings",
+    welcome:"Welcome to Loqar",newRental:"New rental",
+    addVehicle:"Add vehicle",newClient:"New client",
+    newPayment:"New payment",save:"Save",cancel:"Cancel",
+    delete:"Delete",edit:"Edit",add:"Add",
+    search:"Search…",loading:"Loading…",
+    noVehicles:"No vehicles found",noClients:"No clients",
+    noRentals:"No rentals",noPayments:"No payments",
+    available:"Available",rented:"Rented",maintenance:"Maintenance",
+    inProgress:"In progress",reserved:"Reserved",completed:"Completed",cancelled:"Cancelled",
+    collected:"Collected",pending:"Pending",late:"Late",
+    client:"Client",vehicle:"Vehicle",start:"Start",end:"End",
+    price:"Price/day (€)",deposit:"Deposit (€)",km:"Mileage",
+    notes:"Notes",total:"Total",duration:"Duration",method:"Method",
+    amount:"Amount",date:"Date",status:"Status",actions:"Actions",
+    revenue:"Revenue collected",activeRentals:"Active rentals",
+    availableVehicles:"Available vehicles",generateContract:"Generate contract",
+    downloadPDF:"Download PDF",sendEmail:"Send by email",
+    contract:"Contract",invoice:"Invoice",inspection:"Inspection report",quote:"Quote",
+    firstName:"First name",lastName:"Last name",email:"Email",phone:"Phone",
+    licenseExpiry:"License expiry",type:"Type",individual:"Individual",company:"Company",
+    collect:"Collect",livePreview:"Live preview",
+    agencyName:"Agency name",address:"Address",siret:"SIRET",
+    saveProfile:"Save profile",profile:"Agency profile",
+    logout:"Logout",planPro:"Pro Plan",fleetStatus:"Fleet",totalVehicles:"Total vehicles",
+  }
+};
+
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
 const T = {
   bg:       "#141210",
@@ -666,19 +728,20 @@ function SignaturePage() {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-const NAV = [
-  { id:"dashboard",  label:"Tableau de bord", icon:Icons.dash },
-  { id:"vehicles",   label:"Véhicules",        icon:Icons.car  },
-  { id:"clients",    label:"Clients",          icon:Icons.users},
-  { id:"rentals",    label:"Locations",        icon:Icons.calendar},
-  { id:"payments",   label:"Paiements",        icon:Icons.dollar},
-  { id:"documents",  label:"Documents",        icon:Icons.doc  },
-  { id:"signature",  label:"Signatures",       icon:Icons.pen  },
-  { id:"pricing",    label:"Abonnements",      icon:Icons.zap  },
-  { id:"settings",   label:"Paramètres",       icon:Icons.settings },
+const NAV_KEYS = [
+  { id:"dashboard",  labelKey:"dashboard", icon:Icons.dash },
+  { id:"vehicles",   labelKey:"vehicles",  icon:Icons.car  },
+  { id:"clients",    labelKey:"clients",   icon:Icons.users},
+  { id:"rentals",    labelKey:"rentals",   icon:Icons.calendar},
+  { id:"payments",   labelKey:"payments",  icon:Icons.dollar},
+  { id:"documents",  labelKey:"documents", icon:Icons.doc  },
+  { id:"signature",  labelKey:"signatures",icon:Icons.pen  },
+  { id:"pricing",    labelKey:"pricing",   icon:Icons.zap  },
+  { id:"settings",   labelKey:"settings",  icon:Icons.settings },
 ];
+const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, lang, setLang, t }) {
   const lateP = PAYMENTS.filter(p=>p.status==="en retard").length;
   return (
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
@@ -714,8 +777,9 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
 
       {/* Nav */}
       <div style={{ fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", padding:"0 10px", marginBottom:8 }}>Menu</div>
-      {NAV.map(item => {
+      {NAV_KEYS.map(item => {
         const active = page===item.id;
+        const label = t?.[item.labelKey]||item.labelKey;
         return (
           <button key={item.id} onClick={()=>onNav(item.id)}
             style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"9px 12px", borderRadius:9, marginBottom:2, background:active?T.goldDim:"transparent", border:"none", color:active?T.gold:T.sub, fontSize:13, fontWeight:active?600:400, cursor:"pointer", transition:"all .15s", position:"relative", fontFamily:"inherit" }}
@@ -723,7 +787,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
             onMouseLeave={e=>{if(!active)e.currentTarget.style.background="transparent"}}>
             {active && <div style={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)", width:2, height:16, background:T.gold, borderRadius:99 }}/>}
             <span style={{ color:active?T.gold:T.muted }}>{item.icon}</span>
-            {item.label}
+            {label}
             {item.id==="payments" && lateP>0 && (
               <span style={{ marginLeft:"auto", width:16, height:16, borderRadius:"50%", background:T.red, fontSize:9, fontWeight:700, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center" }}>{lateP}</span>
             )}
@@ -763,6 +827,21 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
         </div>
         <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>API, rapports avancés et marque blanche.</p>
         <Btn label="Passer au Pro" variant="primary" size="sm" full/>
+      </div>
+
+      {/* Language toggle */}
+      <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 10px", marginBottom:6 }}>
+        <span style={{ fontSize:11, color:T.muted, flex:1 }}>{lang==="fr"?"Langue":"Language"}</span>
+        <button onClick={()=>setLang("fr")}
+          style={{ padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
+            background:lang==="fr"?T.goldDim:"transparent", border:`1px solid ${lang==="fr"?T.gold:T.border}`, color:lang==="fr"?T.gold:T.muted }}>
+          🇫🇷 FR
+        </button>
+        <button onClick={()=>setLang("en")}
+          style={{ padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
+            background:lang==="en"?T.goldDim:"transparent", border:`1px solid ${lang==="en"?T.gold:T.border}`, color:lang==="en"?T.gold:T.muted }}>
+          🇬🇧 EN
+        </button>
       </div>
 
       {/* User */}
@@ -2252,6 +2331,8 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
 export default function App() {
+  const [lang,           setLang]           = useState("fr");
+  const t = TR[lang];
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
   const [page,           setPage]           = useState("dashboard");
@@ -2358,7 +2439,7 @@ export default function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} lang={lang} setLang={setLang} t={t}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
