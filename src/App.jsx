@@ -190,18 +190,19 @@ function Btn({ label, onClick, variant="primary", icon, style={}, size="md", ful
     md: { padding:"9px 18px", fontSize:13, borderRadius:10, gap:7 },
     lg: { padding:"12px 26px", fontSize:14, borderRadius:11, gap:8 },
   }[size];
-  const v = {
-    primary:   { bg:hov?"#D9BC84":T.gold,    color:"#0F0D0B",  border:"none"                               },
-    secondary: { bg:hov?T.card2:T.card,       color:T.text,    border:`1px solid ${T.border2}`             },
-    ghost:     { bg:hov?T.card2:"transparent",color:T.sub,     border:"none"                               },
-    danger:    { bg:hov?T.red+"25":T.redDim,  color:T.red,     border:`1px solid ${T.red}30`               },
-    outline:   { bg:hov?T.goldDim:"transparent",color:T.gold,  border:`1px solid ${T.gold}60`              },
-  }[variant]||{};
+  const colors = {
+    primary:   { backgroundColor:hov?"#D9BC84":T.gold,      color:"#0F0D0B",  border:"none"                      },
+    secondary: { backgroundColor:hov?T.card2:T.card,         color:"#E8E4DF",  border:`1px solid ${T.border2}`    },
+    ghost:     { backgroundColor:hov?T.card2:"transparent",  color:T.sub,      border:"none"                      },
+    danger:    { backgroundColor:hov?T.red+"25":T.redDim,    color:T.red,      border:`1px solid ${T.red}30`      },
+    outline:   { backgroundColor:hov?T.goldDim:"transparent",color:T.gold,     border:`1px solid ${T.gold}60`     },
+  }[variant]||{ backgroundColor:T.card, color:T.text, border:`1px solid ${T.border2}` };
   return (
     <button onClick={onClick}
       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-      style={{ display:"inline-flex", alignItems:"center", fontWeight:600, fontFamily:"inherit", cursor:"pointer", transition:"all .15s", transform:hov&&variant!=="ghost"?"translateY(-1px)":"none", letterSpacing:"0.01em", width:full?"100%":"auto", justifyContent:full?"center":"flex-start", ...sz, ...v, ...style }}>
-      {icon && <span style={{display:"flex"}}>{icon}</span>}{label && <span>{label}</span>}
+      style={{ display:"inline-flex", alignItems:"center", gap:7, fontWeight:600, fontFamily:"inherit", cursor:"pointer", transition:"all .15s", transform:hov&&variant!=="ghost"?"translateY(-1px)":"none", letterSpacing:"0.01em", width:full?"100%":"auto", justifyContent:full?"center":"flex-start", ...sz, ...colors, ...style }}>
+      {icon && <span style={{display:"flex",alignItems:"center"}}>{icon}</span>}
+      {label && <span style={{color:"inherit"}}>{label}</span>}
     </button>
   );
 }
