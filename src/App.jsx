@@ -1309,7 +1309,7 @@ function Clients({ clients, setClients, user }) {
                 <div style={{ fontSize:26, fontWeight:700, color:T.gold, letterSpacing:"-0.03em" }}>{fmt(sel.totalSpent)} €</div>
               </div>
               <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                <Btn label="Modifier" variant="secondary" icon={Icons.edit} style={{ flex:1, justifyContent:"center" }}/>
+                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{Icons.edit} Modifier</button>
                 <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ 
                   if(!window.confirm("Supprimer ce client ?")) return;
                   await supabase.from("clients").delete().eq("id", sel.id); 
