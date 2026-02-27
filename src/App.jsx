@@ -1416,17 +1416,50 @@ function Payments() {
 }
 
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
-function Documents() {
+function Documents({ agencyProfile, vehicles, clients }) {
   const [docType, setDocType] = useState("contrat");
-  const [p, setP] = useState({client:"",vehicle:"",startDate:"",endDate:"",price:"",deposit:"",km:"",notes:""});
+  const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
   const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
   const total = (parseInt(p.price)||0)*(days>0?days:0);
+  const tva   = Math.round(total * 0.20);
+  const totalHT = total - tva;
+  const selectedClient  = clients.find(c=>c.id===p.clientId)||null;
+  const selectedVehicle = vehicles.find(v=>v.id===p.vehicleId)||null;
+  const agencyName = agencyProfile?.agency_name || "Mon Agence";
+  const agencyAddress = agencyProfile?.address || "Adresse de l'agence";
+  const agencySiret = agencyProfile?.siret || "SIRET : XX XXX XXX XXXXX";
+  const docNum = `LQ-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
+
+  const printDoc = () => {
+    const el = document.getElementById("doc-preview");
+    if (!el) return;
+    const w = window.open("","_blank");
+    w.document.write(`<html><head><title>Document Loqar</title><style>body{margin:0;font-family:Arial,sans-serif;color:#1A1510;}@media print{body{margin:0}}</style></head><body>${el.innerHTML}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(()=>{ w.print(); w.close(); }, 400);
+  };
+
+  const docTypes = [
+    {id:"contrat", l:"Contrat", d:"Location auto"},
+    {id:"facture", l:"Facture", d:"Document officiel"},
+    {id:"etat",    l:"État des lieux", d:"Avant / Après"},
+    {id:"devis",   l:"Devis", d:"Proposition de prix"},
+  ];
+
+  const checkItems = [
+    "Carrosserie avant","Carrosserie arrière","Carrosserie gauche","Carrosserie droite",
+    "Toit","Pare-brise","Vitres","Rétroviseurs","Pneus et jantes","Intérieur / Sièges",
+    "Tableau de bord","Coffre","Roue de secours","Documents du véhicule","Clés"
+  ];
+  const [checks, setChecks] = useState({});
+  const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
 
   return (
-    <Page title="Documents" sub="Générez contrats, devis et factures en temps réel">
+    <Page title="Documents" sub="Générez contrats, devis et factures légalement conformes">
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
-        {[{id:"devis",l:"Devis",d:"Proposition de prix"},{id:"contrat",l:"Contrat",d:"Location auto"},{id:"etat",l:"État des lieux",d:"Avant / Après"},{id:"facture",l:"Facture",d:"Document officiel"}].map(dt=>{
+        {docTypes.map(dt=>{
           const active=docType===dt.id;
           return (
             <div key={dt.id} onClick={()=>setDocType(dt.id)}
@@ -1445,37 +1478,62 @@ function Documents() {
           <Card>
             <div style={{ fontSize:11, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", marginBottom:16 }}>Paramètres</div>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              {[["Client","client","text"],["Véhicule","vehicle","text"],["Prix/jour (€)","price","number"],["Caution (€)","deposit","number"],["Kilométrage","km","number"]].map(([lbl,key,type])=>(
-                <Input key={key} label={lbl} value={p[key]} onChange={v=>up(key,v)} type={type}/>
-              ))}
+              
+              {/* Client selector */}
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
+                <select value={p.clientId} onChange={e=>up("clientId",e.target.value)}
+                  style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                  <option value="">— Sélectionner —</option>
+                  {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                </select>
+              </div>
+
+              {/* Vehicle selector */}
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
+                <select value={p.vehicleId} onChange={e=>up("vehicleId",e.target.value)}
+                  style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                  <option value="">— Sélectionner —</option>
+                  {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
+                </select>
+              </div>
+
+              <Input label="Prix/jour (€)" value={p.price} onChange={v=>up("price",v)} type="number"/>
+              <Input label="Caution (€)" value={p.deposit} onChange={v=>up("deposit",v)} type="number"/>
+              <Input label="Km départ" value={p.km} onChange={v=>up("km",v)} type="number"/>
+              {(docType==="etat"||docType==="contrat") && <Input label="Km retour" value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
               <Input label="Début" type="date" value={p.startDate} onChange={v=>up("startDate",v)}/>
               <Input label="Fin" type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
+
+              {/* Fuel level */}
+              {(docType==="etat"||docType==="contrat") && (
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                  {[["fuelLevel","Carburant départ"],["fuelReturn","Carburant retour"]].map(([key,lbl])=>(
+                    <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                      <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
+                      <select value={p[key]} onChange={e=>up(key,e.target.value)}
+                        style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"8px 10px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none" }}>
+                        {["Plein","3/4","1/2","1/4","Vide"].map(o=><option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Notes</label>
+                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Notes / Observations</label>
                 <textarea value={p.notes} onChange={e=>up("notes",e.target.value)} rows={3}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", resize:"vertical", lineHeight:1.6 }}/>
               </div>
             </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:18 }}>
-              <Btn label="Télécharger PDF" variant="primary" icon={Icons.download} full/>
-              <Btn label="Envoyer par email" variant="secondary" icon={Icons.mail} full/>
-            </div>
-          </Card>
 
-          <Card style={{ marginTop:14 }}>
-            <div style={{ fontSize:13, fontWeight:700, color:T.text, marginBottom:12 }}>Documents récents</div>
-            {[].map(([type,client,date,status])=>(
-              <div key={date}
-                style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 10px", background:T.card2, borderRadius:9, marginBottom:6, cursor:"pointer", transition:"background .15s" }}
-                onMouseEnter={e=>e.currentTarget.style.background="#2A2824"}
-                onMouseLeave={e=>e.currentTarget.style.background=T.card2}>
-                <div>
-                  <div style={{ fontSize:12, fontWeight:600, color:T.text }}>{type} · {client}</div>
-                  <div style={{ fontSize:10, color:T.muted, marginTop:1 }}>{date}</div>
-                </div>
-                <Badge label={status} color={T.success}/>
-              </div>
-            ))}
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:18 }}>
+              <button onClick={printDoc}
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                {Icons.download} Télécharger PDF
+              </button>
+            </div>
           </Card>
         </div>
 
@@ -1488,61 +1546,184 @@ function Documents() {
               <span style={{ fontSize:11, color:T.success }}>Live</span>
             </div>
           </div>
-          <div style={{ background:"#FDFBF7", borderRadius:14, padding:30, color:"#1A1510", fontSize:12, lineHeight:1.7, boxShadow:"0 2px 30px #00000025" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:26, paddingBottom:16, borderBottom:"1.5px solid #1A1510" }}>
+
+          <div id="doc-preview" style={{ background:"#FDFBF7", borderRadius:14, padding:40, color:"#1A1510", fontSize:12, lineHeight:1.7, boxShadow:"0 2px 30px #00000025" }}>
+            
+            {/* Header */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:26, paddingBottom:16, borderBottom:"2px solid #1A1510" }}>
               <div>
-                <div style={{ fontSize:20, fontWeight:700, letterSpacing:"-0.03em", color:"#1A1510" }}>LOQAR</div>
-                <div style={{ fontSize:9, color:"#888", letterSpacing:".1em", textTransform:"uppercase", marginTop:2 }}>Location Automobile Professionnelle</div>
+                <div style={{ fontSize:22, fontWeight:700, letterSpacing:"-0.03em", color:"#1A1510" }}>{agencyName}</div>
+                <div style={{ fontSize:10, color:"#666", marginTop:2 }}>{agencyAddress}</div>
+                <div style={{ fontSize:10, color:"#666" }}>{agencySiret}</div>
               </div>
               <div style={{ textAlign:"right" }}>
-                <div style={{ fontSize:15, fontWeight:700, letterSpacing:"0.04em", textTransform:"uppercase", color:"#1A1510" }}>{{devis:"Devis",contrat:"Contrat de Location",etat:"État des Lieux",facture:"Facture"}[docType]}</div>
-                <div style={{ fontSize:10, color:"#888", marginTop:2 }}>N° LQ-2025-0042 · {new Date().toLocaleDateString("fr-FR")}</div>
+                <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
+                  {{contrat:"Contrat de Location",facture:"Facture",etat:"État des Lieux",devis:"Devis"}[docType]}
+                </div>
+                <div style={{ fontSize:10, color:"#888", marginTop:3 }}>N° {docNum}</div>
+                <div style={{ fontSize:10, color:"#888" }}>Date : {new Date().toLocaleDateString("fr-FR")}</div>
               </div>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
-              {[["Client",p.client||"—"],["Véhicule",p.vehicle||"—"],["Période",days>0?`${fmtDate(p.startDate)} → ${fmtDate(p.endDate)} (${days}j)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([lbl,val])=>(
-                <div key={lbl} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
-                  <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:3 }}>{lbl}</div>
-                  <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{val}</div>
+
+            {/* Parties */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
+              <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
+                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>Loueur</div>
+                <div style={{ fontWeight:700, fontSize:13 }}>{agencyName}</div>
+                <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{agencyAddress}</div>
+                <div style={{ fontSize:11, color:"#555" }}>{agencySiret}</div>
+              </div>
+              <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
+                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>Locataire</div>
+                {selectedClient ? <>
+                  <div style={{ fontWeight:700, fontSize:13 }}>{selectedClient.firstName} {selectedClient.lastName}</div>
+                  <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{selectedClient.email}</div>
+                  <div style={{ fontSize:11, color:"#555" }}>{selectedClient.phone}</div>
+                  <div style={{ fontSize:11, color:"#555" }}>Permis : {fmtDate(selectedClient.licenseExpiry)}</div>
+                </> : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>Sélectionnez un client</div>}
+              </div>
+            </div>
+
+            {/* Vehicle info */}
+            <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8, marginBottom:20 }}>
+              <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>Véhicule</div>
+              {selectedVehicle ? (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+                  {[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans]].map(([k,v])=>(
+                    <div key={k}>
+                      <div style={{ fontSize:9, color:"#888" }}>{k}</div>
+                      <div style={{ fontWeight:700, fontSize:11 }}>{v||"—"}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>Sélectionnez un véhicule</div>}
+            </div>
+
+            {/* Location details */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
+              {[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
+                <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
+                  <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
+                  <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
                 </div>
               ))}
             </div>
-            <table style={{ width:"100%", borderCollapse:"collapse", marginBottom:16 }}>
-              <thead>
-                <tr style={{ background:"#1A1510" }}>
-                  {[["Description","left"],["Qté","right"],["P.U.","right"],["Total","right"]].map(([l,a])=>(
-                    <th key={l} style={{ padding:"8px 12px", textAlign:a, fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:".06em", color:"#EDE5D4" }}>{l}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[["Location véhicule",days>0?days+"j":"—",p.price?p.price+" €":"—",total>0?total+" €":"—"],["Caution","1",p.deposit?p.deposit+" €":"—",p.deposit?p.deposit+" €":"—"]].map(([desc,qty,pu,tot],i)=>(
-                  <tr key={i} style={{ background:i%2===0?"#fff":"#FAF7F0" }}>
-                    <td style={{ padding:"8px 12px", fontSize:12, color:"#1A1510" }}>{desc}</td>
-                    <td style={{ padding:"8px 12px", fontSize:12, color:"#666", textAlign:"right" }}>{qty}</td>
-                    <td style={{ padding:"8px 12px", fontSize:12, color:"#666", textAlign:"right" }}>{pu}</td>
-                    <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, color:"#1A1510", textAlign:"right" }}>{tot}</td>
-                  </tr>
+
+            {/* Carburant */}
+            {(docType==="etat"||docType==="contrat") && (
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:20 }}>
+                {[["Niveau carburant départ",p.fuelLevel],["Niveau carburant retour",p.fuelReturn]].map(([k,v])=>(
+                  <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
+                    <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
+                  </div>
                 ))}
-                <tr style={{ background:"#1A1510" }}>
-                  <td colSpan={3} style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", color:"#EDE5D4", letterSpacing:".04em", textTransform:"uppercase" }}>Total TTC</td>
-                  <td style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", fontSize:15, color:T.gold }}>{total>0?total+" €":"—"}</td>
-                </tr>
-              </tbody>
-            </table>
+              </div>
+            )}
+
+            {/* Checklist état des lieux */}
+            {docType==="etat" && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#1A1510", marginBottom:10, textTransform:"uppercase", letterSpacing:".08em" }}>Contrôle de l'état du véhicule</div>
+                <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                  <thead>
+                    <tr style={{ background:"#1A1510" }}>
+                      <th style={{ padding:"6px 10px", textAlign:"left", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Élément</th>
+                      <th style={{ padding:"6px 10px", textAlign:"center", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Bon état</th>
+                      <th style={{ padding:"6px 10px", textAlign:"center", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Dommage</th>
+                      <th style={{ padding:"6px 10px", textAlign:"left", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Observations</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {checkItems.map((item,i)=>(
+                      <tr key={item} style={{ background:i%2===0?"#fff":"#FAF7F0" }}>
+                        <td style={{ padding:"6px 10px", fontSize:11, fontWeight:600 }}>{item}</td>
+                        <td style={{ padding:"6px 10px", textAlign:"center" }}>
+                          <input type="radio" name={item} value="ok" checked={checks[item]==="ok"} onChange={()=>toggleCheck(item,"ok")}/>
+                        </td>
+                        <td style={{ padding:"6px 10px", textAlign:"center" }}>
+                          <input type="radio" name={item} value="dmg" checked={checks[item]==="dmg"} onChange={()=>toggleCheck(item,"dmg")}/>
+                        </td>
+                        <td style={{ padding:"6px 10px" }}>
+                          <input placeholder="..." style={{ border:"none", borderBottom:"1px solid #DDD", background:"transparent", width:"100%", fontSize:10, outline:"none" }}/>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Financial table */}
+            {(docType==="contrat"||docType==="facture"||docType==="devis") && (
+              <table style={{ width:"100%", borderCollapse:"collapse", marginBottom:16 }}>
+                <thead>
+                  <tr style={{ background:"#1A1510" }}>
+                    {[["Description","left"],["Qté","right"],["P.U. HT","right"],["TVA 20%","right"],["Total TTC","right"]].map(([l,a])=>(
+                      <th key={l} style={{ padding:"8px 12px", textAlign:a, fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:".06em", color:"#EDE5D4" }}>{l}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ background:"#fff" }}>
+                    <td style={{ padding:"8px 12px", fontSize:12 }}>Location {selectedVehicle?.name||"véhicule"}</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{days>0?days+"j":"—"}</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price?Math.round(parseInt(p.price)/1.2)+" €":"—"}</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price?Math.round(parseInt(p.price)*days*0.2/days)+" €":"—"}</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, textAlign:"right" }}>{total>0?total+" €":"—"}</td>
+                  </tr>
+                  <tr style={{ background:"#FAF7F0" }}>
+                    <td style={{ padding:"8px 12px", fontSize:12 }}>Caution (remboursable)</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>1</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right", color:"#888" }}>—</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right", color:"#888" }}>exonérée</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, textAlign:"right" }}>{p.deposit?p.deposit+" €":"—"}</td>
+                  </tr>
+                  <tr style={{ background:"#1A1510" }}>
+                    <td colSpan={4} style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", color:"#EDE5D4", textTransform:"uppercase", letterSpacing:".04em" }}>Total TTC</td>
+                    <td style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", fontSize:15, color:"#C9A55A" }}>{total>0?total+" €":"—"}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+
             {p.notes && (
-              <div style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6, borderLeft:`3px solid ${T.gold}`, marginBottom:14 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:3 }}>Notes</div>
+              <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, borderLeft:"3px solid #C9A55A", marginBottom:20 }}>
+                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:4 }}>Notes / Observations</div>
                 <div style={{ fontSize:12, color:"#444" }}>{p.notes}</div>
               </div>
             )}
-            <div style={{ marginTop:24, display:"grid", gridTemplateColumns:"1fr 1fr", gap:24, paddingTop:16, borderTop:"1px solid #DDD5C8" }}>
+
+            {/* Clauses légales contrat */}
+            {docType==="contrat" && (
+              <div style={{ marginBottom:20, padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
+                <div style={{ fontSize:10, fontWeight:700, color:"#1A1510", marginBottom:8, textTransform:"uppercase", letterSpacing:".08em" }}>Conditions générales de location</div>
+                <div style={{ fontSize:9, color:"#555", lineHeight:1.6 }}>
+                  <p style={{ margin:"0 0 6px" }}>1. <strong>Responsabilité</strong> — Le locataire est responsable de tous les dommages causés au véhicule pendant la durée de la location, y compris en cas de vol.</p>
+                  <p style={{ margin:"0 0 6px" }}>2. <strong>Carburant</strong> — Le véhicule doit être restitué avec le même niveau de carburant qu'au départ. Tout déficit sera facturé.</p>
+                  <p style={{ margin:"0 0 6px" }}>3. <strong>Kilométrage</strong> — Tout dépassement du kilométrage convenu sera facturé selon le tarif en vigueur.</p>
+                  <p style={{ margin:"0 0 6px" }}>4. <strong>Caution</strong> — La caution sera restituée dans un délai de 7 jours après la restitution du véhicule, sous réserve d'absence de dommages.</p>
+                  <p style={{ margin:"0 0 6px" }}>5. <strong>Assurance</strong> — Le locataire doit être titulaire d'un permis de conduire valide. Le véhicule est couvert par l'assurance du loueur (RC + dommages tous accidents avec franchise).</p>
+                  <p style={{ margin:"0 0 0" }}>6. <strong>Restitution</strong> — Le véhicule doit être restitué aux date, heure et lieu convenus. Tout retard non signalé pourra faire l'objet d'une facturation supplémentaire.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Signatures */}
+            <div style={{ marginTop:30, display:"grid", gridTemplateColumns:"1fr 1fr", gap:40, paddingTop:20, borderTop:"1px solid #DDD5C8" }}>
               {["Signature du loueur","Signature du locataire"].map(l=>(
                 <div key={l}>
-                  <div style={{ fontSize:10, color:"#888", marginBottom:16 }}>{l} :</div>
-                  <div style={{ height:34, borderBottom:"1px solid #C8B89A" }}/>
+                  <div style={{ fontSize:10, color:"#888", marginBottom:4 }}>{l} :</div>
+                  <div style={{ fontSize:9, color:"#AAA", marginBottom:20, fontStyle:"italic" }}>Lu et approuvé</div>
+                  <div style={{ height:50, borderBottom:"1px solid #C8B89A" }}/>
+                  <div style={{ fontSize:9, color:"#AAA", marginTop:4 }}>Date : _______________</div>
                 </div>
               ))}
+            </div>
+
+            {/* Footer légal */}
+            <div style={{ marginTop:24, paddingTop:12, borderTop:"1px solid #EEE", textAlign:"center" }}>
+              <div style={{ fontSize:9, color:"#AAA" }}>{agencyName} — {agencySiret} — Document généré par Loqar</div>
             </div>
           </div>
         </div>
@@ -1555,7 +1736,7 @@ function Documents() {
 const PLANS = [
   {
     id:"starter", name:"Starter", tagline:"Pour démarrer seul",
-    monthlyPrice:49, annualPrice:39, color:T.blue, colorDim:T.blueDim,
+    monthlyPrice:29, annualPrice:23, color:T.blue, colorDim:T.blueDim,
     highlight:false, cta:"Commencer l'essai", note:"14 jours · Aucune CB requise",
     features:[
       {t:"Jusqu'à 3 véhicules",ok:true},{t:"Clients illimités",ok:true},
@@ -1567,7 +1748,7 @@ const PLANS = [
   },
   {
     id:"pro", name:"Pro", tagline:"Pour l'agence qui grandit", badge:"Le plus populaire",
-    monthlyPrice:129, annualPrice:99, color:T.gold, colorDim:T.goldDim,
+    monthlyPrice:79, annualPrice:63, color:T.gold, colorDim:T.goldDim,
     highlight:true, cta:"Essayer le Pro", note:"14 jours · Aucune CB requise",
     features:[
       {t:"Jusqu'à 15 véhicules",ok:true},{t:"Clients illimités",ok:true},
@@ -1578,8 +1759,8 @@ const PLANS = [
     ],
   },
   {
-    id:"agence", name:"Agence", tagline:"Pour les structures multi-sites",
-    monthlyPrice:249, annualPrice:199, color:T.amber, colorDim:T.amberDim,
+    id:"enterprise", name:"Enterprise", tagline:"Pour les structures multi-sites",
+    monthlyPrice:199, annualPrice:159, color:T.amber, colorDim:T.amberDim,
     highlight:false, cta:"Nous contacter", note:"Onboarding personnalisé inclus",
     features:[
       {t:"Véhicules illimités",ok:true},{t:"Clients illimités",ok:true},
@@ -1870,7 +2051,7 @@ export default function App() {
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
     payments:  <Payments/>,
-    documents: <Documents agencyProfile={agencyProfile}/>,
+    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
     signature: <SignaturePage/>,
     pricing:   <Pricing/>,
     settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
