@@ -1966,14 +1966,13 @@ function PlanCard({ plan, annual }) {
         ))}
       </div>
       <button
-        onClick={async ()=>{
-          if(plan.id==="enterprise"){ window.location.href="mailto:contact@loqar.fr?subject=Plan Enterprise"; return; }
-          try {
-            const res = await fetch("/api/create-checkout", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({plan:plan.id}) });
-            const data = await res.json();
-            if(data.url) window.location.href = data.url;
-            else alert("Erreur: "+data.error);
-          } catch(e) { alert("Erreur de connexion"); }
+        onClick={()=>{
+          const links = {
+            starter:    "https://buy.stripe.com/test_eVqcMYemD1n24Ac59adEs02",
+            pro:        "https://buy.stripe.com/test_eVqcMY0vN6Hm7MogRSdEs01",
+            enterprise: "https://buy.stripe.com/test_8x27sEa6n5Di2s4fNOdEs00",
+          };
+          window.location.href = links[plan.id] || "mailto:contact@loqar.fr";
         }}
         style={{ width:"100%", padding:"11px 16px", borderRadius:9, fontWeight:600, fontSize:13, fontFamily:"inherit", cursor:"pointer", transition:"all .15s", background:plan.highlight?plan.color:plan.colorDim, color:plan.highlight?T.bg:plan.color, border:`1px solid ${plan.color}40` }}
         onMouseEnter={e=>{e.currentTarget.style.background=plan.color; e.currentTarget.style.color=T.bg;}}
