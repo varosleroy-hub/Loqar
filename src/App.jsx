@@ -1,74 +1,35 @@
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase.js";
 
-// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
-const TR = {
-  fr: {
-    dashboard:t.dashboard||"Tableau de bord",vehicles:t.vehicles||"Véhicules",clients:t.clients||"Clients",
-    rentals:t.rentals||t.rentals||"Locations",payments:t.payments||"Paiements",documents:t.documents||"Documents",
-    signatures:"Signatures",pricing:"Abonnements",settings:t.settings||"Paramètres",
-    welcome:t.welcome||"Bienvenue sur Loqar",newRental:t.newRental||"Nouvelle location",
-    addVehicle:t.addVehicle||"Ajouter un véhicule",newClient:t.newClient||"Nouveau client",
-    newPayment:t.newPayment||"Nouveau paiement",save:t.save||"Enregistrer",cancel:t.cancel||"Annuler",
-    delete:t.delete||"Supprimer",edit:t.edit||"Modifier",add:t.add||"Ajouter",
-    search:t.search||"Rechercher…",loading:"Chargement…",
-    noVehicles:"Aucun véhicule trouvé",noClients:"Aucun client",
-    noRentals:"Aucune location",noPayments:"Aucun paiement",
-    available:t.available||"Disponible",rented:t.rented||"En location",maintenance:t.maintenance||"Entretien",
-    inProgress:t.inProgress||"En cours",reserved:"Réservée",completed:"Terminée",cancelled:"Annulée",
-    collected:t.collected||"Encaissé",pending:t.pending||"En attente",late:t.late||"En retard",
-    client:"Client",vehicle:"Véhicule",start:"Début",end:"Fin",
-    price:"Prix/jour (€)",deposit:"Caution (€)",km:"Kilométrage",
-    notes:t.notes||"Notes",total:t.total||"Total",duration:"Durée",method:t.method||"Méthode",
-    amount:t.amount||"Montant",date:t.date||"Date",status:t.status||"Statut",actions:t.actions||"Actions",
-    revenue:t.revenue||"Revenus encaissés",activeRentals:t.activeRentals||"Locations actives",
-    availableVehicles:t.availableVehicles||"Véhicules disponibles",generateContract:"Générer un contrat",
-    downloadPDF:t.downloadPDF||"Télécharger PDF",sendEmail:"Envoyer par email",
-    contract:t.contract||"Contrat",invoice:t.invoice||t.invoice||"Facture",inspection:t.inspection||"État des lieux",quote:t.quote||"Devis",
-    firstName:"Prénom",lastName:"Nom",email:"Email",phone:"Téléphone",
-    licenseExpiry:"Expiration du permis",type:t.type||"Type",individual:t.individual||"Particulier",company:t.company||"Entreprise",
-    collect:t.collect||"Encaisser",livePreview:t.livePreview||"Aperçu en direct",
-    agencyName:t.agencyName||"Nom de l'agence",address:t.address||"Adresse",siret:"SIRET",
-    saveProfile:t.saveProfile||"Sauvegarder le profil",profile:"Profil agence",
-    logout:t.logout||"Déconnexion",planPro:t.planPro||"Plan Pro",fleetStatus:t.fleetStatus||"Flotte",totalVehicles:t.totalVehicles||"Total véhicules",
-  },
-  en: {
-    dashboard:"Dashboard",vehicles:"Vehicles",clients:t.clients||"Clients",
-    rentals:"Rentals",payments:"Payments",documents:t.documents||"Documents",
-    signatures:"Signatures",pricing:"Pricing",settings:"Settings",
-    welcome:"Welcome to Loqar",newRental:"New rental",
-    addVehicle:"Add vehicle",newClient:"New client",
-    newPayment:"New payment",save:"Save",cancel:"Cancel",
-    delete:"Delete",edit:"Edit",add:"Add",
-    search:"Search…",loading:"Loading…",
-    noVehicles:"No vehicles found",noClients:"No clients",
-    noRentals:"No rentals",noPayments:"No payments",
-    available:"Available",rented:"Rented",maintenance:"Maintenance",
-    inProgress:"In progress",reserved:"Reserved",completed:"Completed",cancelled:"Cancelled",
-    collected:"Collected",pending:"Pending",late:"Late",
-    client:"Client",vehicle:"Vehicle",start:"Start",end:"End",
-    price:"Price/day (€)",deposit:"Deposit (€)",km:"Mileage",
-    notes:t.notes||"Notes",total:t.total||"Total",duration:"Duration",method:"Method",
-    amount:"Amount",date:t.date||"Date",status:"Status",actions:t.actions||"Actions",
-    revenue:"Revenue collected",activeRentals:"Active rentals",
-    availableVehicles:"Available vehicles",generateContract:"Generate contract",
-    downloadPDF:"Download PDF",sendEmail:"Send by email",
-    contract:"Contract",invoice:"Invoice",inspection:"Inspection report",quote:"Quote",
-    firstName:"First name",lastName:"Last name",email:"Email",phone:"Phone",
-    licenseExpiry:"License expiry",type:t.type||"Type",individual:"Individual",company:"Company",
-    collect:"Collect",livePreview:"Live preview",
-    agencyName:"Agency name",address:"Address",siret:"SIRET",
-    saveProfile:"Save profile",profile:"Agency profile",
-    logout:"Logout",planPro:"Pro Plan",fleetStatus:"Fleet",totalVehicles:"Total vehicles",
-  }
-};
+const TR = { fr: {
+  dashboard:"Tableau de bord", vehicles:"Véhicules", clients:"Clients",
+  rentals:"Locations", payments:"Paiements", documents:"Documents",
+  signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres",
+  welcome:"Bienvenue sur Loqar", newRental:"Nouvelle location",
+  addVehicle:"Ajouter un véhicule", newClient:"Nouveau client",
+  newPayment:"Nouveau paiement", save:"Enregistrer", cancel:"Annuler",
+  delete:"Supprimer", edit:"Modifier", add:"Ajouter",
+  search:"Rechercher…", available:"Disponible", rented:"En location",
+  maintenance:"Entretien", inProgress:"En cours", reserved:"Réservée",
+  completed:"Terminée", cancelled:"Annulée", collected:"Encaissé",
+  pending:"En attente", late:"En retard", client:"Client", vehicle:"Véhicule",
+  start:"Début", end:"Fin", price:"Prix/jour (€)", deposit:"Caution (€)",
+  km:"Kilométrage", notes:"Notes", total:"Total", method:"Méthode",
+  amount:"Montant", date:"Date", status:"Statut", actions:"Actions",
+  revenue:"Revenus encaissés", activeRentals:"Locations actives",
+  availableVehicles:"Véhicules disponibles", downloadPDF:"Télécharger PDF",
+  contract:"Contrat", invoice:"Facture", inspection:"État des lieux", quote:"Devis",
+  firstName:"Prénom", lastName:"Nom", email:"Email", phone:"Téléphone",
+  licenseExpiry:"Expiration du permis", type:"Type", individual:"Particulier",
+  company:"Entreprise", collect:"Encaisser", livePreview:"Aperçu en direct",
+  agencyName:"Nom de l'agence", address:"Adresse", siret:"SIRET",
+  saveProfile:"Sauvegarder le profil", profile:"Profil agence",
+  logout:"Déconnexion", planPro:"Plan Pro", fleetStatus:"Flotte",
+  totalVehicles:"Total véhicules", noRentals:"Aucune location active",
+}};
 
-const LangContext = createContext({ lang:"fr", t:TR.fr, setLang:()=>{} });
-const useLang = () => {
-  const ctx = useContext(LangContext);
-  if (!ctx || !ctx.t) return { lang:"fr", t:TR.fr, setLang:()=>{} };
-  return ctx;
-};
+
+
 
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
 const T = {
@@ -482,7 +443,8 @@ function OnboardingScreen({ onDone, onNav }) {
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function Settings({ agencyProfile, setAgencyProfile }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
@@ -598,7 +560,8 @@ function Settings({ agencyProfile, setAgencyProfile }) {
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
 function SignaturePage() {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
   const [signed, setSigned] = useState([]);
@@ -751,7 +714,8 @@ const NAV_KEYS = [
 const NAV = NAV_KEYS; // backward compat
 
 function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount }) {
-  const { t, lang, setLang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const lateP = PAYMENTS.filter(p=>p.status==="en retard").length;
   return (
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
@@ -837,21 +801,6 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
         </div>
         <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>API, rapports avancés et marque blanche.</p>
         <Btn label={t.lang==="en"?"Upgrade to Pro":"Passer au Pro"} variant="primary" size="sm" full/>
-      </div>
-
-      {/* Language toggle */}
-      <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 10px", marginBottom:6 }}>
-        <span style={{ fontSize:11, color:T.muted, flex:1 }}>{lang==="fr"?"Langue":"Language"}</span>
-        <button onClick={()=>setLang("fr")}
-          style={{ padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
-            background:lang==="fr"?T.goldDim:"transparent", border:`1px solid ${lang==="fr"?T.gold:T.border}`, color:lang==="fr"?T.gold:T.muted }}>
-          🇫🇷 FR
-        </button>
-        <button onClick={()=>setLang("en")}
-          style={{ padding:"3px 8px", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
-            background:lang==="en"?T.goldDim:"transparent", border:`1px solid ${lang==="en"?T.gold:T.border}`, color:lang==="en"?T.gold:T.muted }}>
-          🇬🇧 EN
-        </button>
       </div>
 
       {/* User */}
@@ -979,7 +928,8 @@ function AuthScreen() {
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ vehicles, rentals, onNav }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const revenue = PAYMENTS.filter(p=>p.status==="encaissé").reduce((a,p)=>a+p.amount,0);
   const revCount = useCounter(revenue, 1300);
   const activeRentals = RENTALS.filter(r=>r.status==="en cours");
@@ -1137,7 +1087,8 @@ function Dashboard({ vehicles, rentals, onNav }) {
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
 function Vehicles({ vehicles, setVehicles, user }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -1317,7 +1268,8 @@ function Vehicles({ vehicles, setVehicles, user }) {
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
 function Clients({ clients, setClients, user }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
   const [modal, setModal]  = useState(false);
@@ -1442,7 +1394,8 @@ function Clients({ clients, setClients, user }) {
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 function Payments({ payments, setPayments, clients, rentals, user }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [filter, setFilter] = useState("all");
   const [modal, setModal]   = useState(false);
   const [form, setForm]     = useState({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
@@ -1606,7 +1559,8 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
 
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
 function Documents({ agencyProfile, vehicles, clients }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
@@ -2050,7 +2004,8 @@ function FaqItem({ q, a }) {
 }
 
 function Pricing() {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [annual, setAnnual] = useState(false);
   return (
     <Page title="Abonnements" sub="Choisissez le plan adapté à votre activité">
@@ -2162,7 +2117,8 @@ function Pricing() {
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
 function Rentals({ rentals, setRentals, vehicles, clients, user }) {
-  const { t, lang } = useLang();
+  const t = TR.fr;
+  const lang = "fr";
   const [modal, setModal] = useState(false);
   const [sel, setSel]     = useState(null);
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
@@ -2357,8 +2313,6 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
 export default function App() {
-  const [lang,           setLang]           = useState("fr");
-  const t = TR[lang];
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
   const [page,           setPage]           = useState("dashboard");
@@ -2449,19 +2403,18 @@ export default function App() {
   if (!user) return <AuthScreen />;
 
   const screens = {
-    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} onNav={p=>setPage(p)} t={t}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} t={t}/>,
-    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} t={t}/>,
-    clients:   <Clients   clients={clients}   setClients={setClients} user={user} t={t}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} t={t}/>,
-    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} t={t}/>,
-    signature: <SignaturePage t={t}/>,
-    pricing:   <Pricing t={t}/>,
-    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} t={t}/>,
+    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} onNav={p=>setPage(p)}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user}/>,
+    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
+    clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
+    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
+    signature: <SignaturePage/>,
+    pricing:   <Pricing/>,
+    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
   };
 
   return (
-    <LangContext.Provider value={{ lang, t, setLang }}>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
@@ -2471,6 +2424,5 @@ export default function App() {
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
     </div>
-    </LangContext.Provider>
   );
 }
