@@ -186,15 +186,15 @@ function Badge({ label, color=T.gold, bg, dot=false }) {
 
 function StatusBadge({ status }) {
   const m = {
-    "disponible":  { c:T.success, l:t.available||"Disponible" },
-    "en location": { c:T.gold,    l:t.rented||"En location" },
-    "entretien":   { c:T.red,     l:t.maintenance||"Entretien"   },
-    "en cours":    { c:T.gold,    l:t.inProgress||"En cours"    },
-    "terminée":    { c:T.muted,   l:"Terminée"    },
-    "réservée":    { c:T.blue,    l:"Réservée"    },
-    "encaissé":    { c:T.success, l:t.collected||"Encaissé"    },
-    "en attente":  { c:T.amber,   l:t.pending||"En attente"  },
-    "en retard":   { c:T.red,     l:t.late||"En retard"   },
+    "disponible":  { c:T.success, l:"Disponible" },
+    "en location": { c:T.gold,    l:"En location" },
+    "entretien":   { c:T.red,     l:"Entretien" },
+    "en cours":    { c:T.gold,    l:"En cours" },
+    "terminée":    { c:T.muted,   l:"Terminée" },
+    "réservée":    { c:T.blue,    l:"Réservée" },
+    "encaissé":    { c:T.success, l:"Encaissé" },
+    "en attente":  { c:T.amber,   l:"En attente" },
+    "en retard":   { c:T.red,     l:"En retard" },
   };
   const s = m[status]||{c:T.sub, l:status};
   return <Badge label={s.l} color={s.c} dot/>;
@@ -282,8 +282,8 @@ function Card({ children, style={}, onClick }) {
 
 // ─── COMMAND BAR ─────────────────────────────────────────────────────────────
 const CMD = [
-  { cat:"Navigation",    items:[{l:t.dashboard||"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:t.vehicles||"Véhicules",icon:Icons.car,page:"vehicles"},{l:t.clients||"Clients",icon:Icons.users,page:"clients"},{l:t.rentals||t.rentals||"Locations",icon:Icons.calendar,page:"rentals"},{l:t.payments||"Paiements",icon:Icons.dollar,page:"payments"},{l:t.documents||"Documents",icon:Icons.doc,page:"documents"}]},
-  { cat:t.actions||"Actions",       items:[{l:t.addVehicle||"Ajouter un véhicule",icon:Icons.plus,page:"vehicles"},{l:t.newClient||"Nouveau client",icon:Icons.plus,page:"clients"},{l:"Générer un contrat",icon:Icons.doc,page:"documents"}]},
+  { cat:"Navigation", items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:"Clients",icon:Icons.users,page:"clients"},{l:"Locations",icon:Icons.calendar,page:"rentals"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
+  { cat:"Actions",    items:[{l:"Ajouter un véhicule",icon:Icons.plus,page:"vehicles"},{l:"Nouveau client",icon:Icons.plus,page:"clients"},{l:"Générer un contrat",icon:Icons.doc,page:"documents"}]},
 ];
 
 function CommandBar({ onClose, onNav }) {
