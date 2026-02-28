@@ -9,12 +9,12 @@ const TR = {
     signatures:"Signatures",pricing:"Abonnements",settings:t.settings||"Paramètres",
     welcome:t.welcome||"Bienvenue sur Loqar",newRental:t.newRental||"Nouvelle location",
     addVehicle:t.addVehicle||"Ajouter un véhicule",newClient:t.newClient||"Nouveau client",
-    newPayment:t.newPayment||"Nouveau paiement",save:t.save||"Enregistrer",cancel:t.cancel||t.cancel||"Annuler",
+    newPayment:t.newPayment||"Nouveau paiement",save:t.save||"Enregistrer",cancel:t.cancel||"Annuler",
     delete:t.delete||"Supprimer",edit:t.edit||"Modifier",add:t.add||"Ajouter",
     search:t.search||"Rechercher…",loading:"Chargement…",
     noVehicles:"Aucun véhicule trouvé",noClients:"Aucun client",
     noRentals:"Aucune location",noPayments:"Aucun paiement",
-    available:t.available||t.available||"Disponible",rented:t.rented||t.rented||"En location",maintenance:t.maintenance||t.maintenance||"Entretien",
+    available:t.available||"Disponible",rented:t.rented||"En location",maintenance:t.maintenance||"Entretien",
     inProgress:t.inProgress||"En cours",reserved:"Réservée",completed:"Terminée",cancelled:"Annulée",
     collected:t.collected||"Encaissé",pending:t.pending||"En attente",late:t.late||"En retard",
     client:"Client",vehicle:"Véhicule",start:"Début",end:"Fin",
@@ -221,9 +221,9 @@ function Badge({ label, color=T.gold, bg, dot=false }) {
 
 function StatusBadge({ status }) {
   const m = {
-    "disponible":  { c:T.success, l:t.available||t.available||"Disponible" },
-    "en location": { c:T.gold,    l:t.rented||t.rented||"En location" },
-    "entretien":   { c:T.red,     l:t.maintenance||t.maintenance||"Entretien"   },
+    "disponible":  { c:T.success, l:t.available||"Disponible" },
+    "en location": { c:T.gold,    l:t.rented||"En location" },
+    "entretien":   { c:T.red,     l:t.maintenance||"Entretien"   },
     "en cours":    { c:T.gold,    l:t.inProgress||"En cours"    },
     "terminée":    { c:T.muted,   l:"Terminée"    },
     "réservée":    { c:T.blue,    l:"Réservée"    },
@@ -531,7 +531,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
               <span style={{ color:T.gold }}>{Icons.dollar}</span> {t.lang==="en"?"Banking details":"Coordonnées bancaires"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-              {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],[t.lang==="en"?"Account holder":"Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
+              {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],["Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
                 <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                   <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                   <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -640,7 +640,7 @@ function SignaturePage() {
             </div>
 
             <div style={{ display:"flex", gap:10 }}>
-              <Btn label={t.cancel||t.cancel||"Annuler"} variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
+              <Btn label={t.cancel||"Annuler"} variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
               <Btn label={hasDrawn?"Confirmer la signature":"Signer d'abord…"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.5 }}/>
             </div>
           </div>
@@ -806,7 +806,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
       {/* Fleet health */}
       <div style={{ fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", padding:"12px 10px 8px" }}>Flotte</div>
       <div style={{ padding:"12px 14px", background:T.card, border:`1px solid ${T.border}`, borderRadius:12, margin:"0 0 4px" }}>
-        {[{l:t.available||t.available||"Disponible",s:"disponible",c:T.success},{l:t.rented||t.rented||"En location",s:"en location",c:T.gold},{l:t.maintenance||t.maintenance||"Entretien",s:"entretien",c:T.red}].map(g=>{
+        {[{l:t.available||"Disponible",s:"disponible",c:T.success},{l:t.rented||"En location",s:"en location",c:T.gold},{l:t.maintenance||"Entretien",s:"entretien",c:T.red}].map(g=>{
           const count = vehicles.filter(v=>v.status===g.s).length;
           return (
             <div key={g.s} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
@@ -1171,7 +1171,7 @@ function Vehicles({ vehicles, setVehicles, user }) {
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher un véhicule ou immatriculation…"
             style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
         </div>
-        {[["all",t.lang==="en"?"All":"Tous"],["disponible",t.available||t.available||"Disponible"],["en location",t.rented||t.rented||"En location"],["entretien",t.maintenance||t.maintenance||"Entretien"]].map(([k,l])=>{
+        {[["all",t.lang==="en"?"All":"Tous"],["disponible",t.available||"Disponible"],["en location",t.rented||"En location"],["entretien",t.maintenance||"Entretien"]].map(([k,l])=>{
           const cnt=k==="all"?vehicles.length:vehicles.filter(v=>v.status===k).length;
           const active=filter===k;
           return (
@@ -1297,7 +1297,7 @@ function Vehicles({ vehicles, setVehicles, user }) {
             ))}
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <Btn label={t.cancel||t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
+            <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.add||"Ajouter"} onClick={async ()=>{
               const newV = { user_id: user.id, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
@@ -1334,7 +1334,7 @@ function Clients({ clients, setClients, user }) {
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr>
-                {["Client",t.lang==="en"?t.lang==="en"?"Contact":"Contact":t.lang==="en"?"Contact":"Contact",t.lang==="en"?"License":t.lang==="en"?"License":"Permis",t.rentals||t.rentals||"Locations",t.lang==="en"?"Total spent":t.lang==="en"?"Total spent":"Total dépensé",t.type||"Type"].map(l=>(
+                {["Client","Contact",t.lang==="en"?"License":t.lang==="en"?"License":"Permis",t.rentals||t.rentals||"Locations",t.lang==="en"?"Total spent":t.lang==="en"?"Total spent":"Total dépensé",t.type||"Type"].map(l=>(
                   <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
                 ))}
               </tr>
@@ -1422,7 +1422,7 @@ function Clients({ clients, setClients, user }) {
             <Input label="Expiration du permis" type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <Btn label={t.cancel||t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
+            <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.save||"Créer le client"} onClick={async ()=>{
               const newC = { user_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
               const { data, error } = await supabase.from("clients").insert(newC).select().single();
@@ -1591,7 +1591,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
             <Input label={t.date||"Date"} type="date" value={form.paidAt} onChange={v=>up("paidAt",v)}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||t.cancel||"Annuler"}</button>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||"Annuler"}</button>
             <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Enregistrer"}</button>
           </div>
         </Modal>
@@ -1744,7 +1744,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
-                  {{contrat:t.lang==="en"?"Rental Contract":"Contrat de Location",facture:t.invoice||t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
+                  {{contrat:t.lang==="en"?"Rental Contract":"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
                 </div>
                 <div style={{ fontSize:10, color:"#888", marginTop:3 }}>N° {docNum}</div>
                 <div style={{ fontSize:10, color:"#888" }}>Date : {new Date().toLocaleDateString("fr-FR")}</div>
@@ -2340,7 +2340,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
           </div>
 
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||t.cancel||"Annuler"}</button>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||"Annuler"}</button>
             <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Créer la location"}</button>
           </div>
         </Modal>
@@ -2466,7 +2466,6 @@ export default function App() {
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
-    </div>
     </div>
     </LangContext.Provider>
   );
