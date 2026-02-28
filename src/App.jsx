@@ -535,7 +535,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
                 <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                   <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                   <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
-                    style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", fontFamily:"monospace", transition:"border-color .15s" }}
+                    style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", transition:"border-color .15s" }}
                     onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
                 </div>
               ))}
