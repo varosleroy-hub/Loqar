@@ -982,7 +982,7 @@ function Dashboard({ vehicles, rentals, onNav }) {
   const DAYS=28, MS=new Date("2025-02-01");
 
   return (
-    <Page title=t.dashboard||"Tableau de bord" sub={`${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})} · Bienvenue sur Loqar`}
+    <Page title={t.dashboard||"Tableau de bord"} sub={`${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})} · Bienvenue sur Loqar`}
       actions={<button onClick={()=>onNav&&onNav("rentals")} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
 
       {/* ── Hero revenue banner ── */}
@@ -1161,7 +1161,7 @@ function Vehicles({ vehicles, setVehicles, user }) {
   });
 
   return (
-    <Page title=t.vehicles||"Véhicules" sub={`${vehicles.length} ${t.vehicles||"véhicules"}`}
+    <Page title={t.vehicles||"Véhicules"} sub={`${vehicles.length} ${t.vehicles||"véhicules"}`}
       actions={<Btn label={t.addVehicle||"Ajouter un véhicule"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
 
       {/* Filters */}
@@ -1269,7 +1269,7 @@ function Vehicles({ vehicles, setVehicles, user }) {
       </div>
 
       {modal && (
-        <Modal title=t.addVehicle||"Ajouter un véhicule" onClose={()=>setModal(false)}>
+        <Modal title={t.addVehicle||"Ajouter un véhicule"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ gridColumn:"1/-1" }}><Input label="Nom du véhicule" value={form.name} onChange={v=>setForm({...form,name:v})} placeholder="Renault Clio"/></div>
             <div style={{ gridColumn:"1/-1" }}>
@@ -1321,7 +1321,7 @@ function Clients({ clients, setClients, user }) {
   const filtered = clients.filter(c=>!search||`${c.firstName} ${c.lastName} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <Page title=t.clients||"Clients" sub={`${clients.length} ${t.clients||"clients"}`}
+    <Page title={t.clients||"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
       actions={<Btn label={t.newClient||"Nouveau client"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
       <div style={{ position:"relative", marginBottom:16 }}>
         <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
@@ -1413,7 +1413,7 @@ function Clients({ clients, setClients, user }) {
       </div>
 
       {modal && (
-        <Modal title=t.newClient||"Nouveau client" onClose={()=>setModal(false)}>
+        <Modal title={t.newClient||"Nouveau client"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <Input label="Prénom" value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
             <Input label="Nom" value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
@@ -1483,7 +1483,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
   };
 
   return (
-    <Page title=t.payments||"Paiements" sub="Encaissements, transactions et cautions"
+    <Page title={t.payments||"Paiements"} sub="Encaissements, transactions et cautions"
       actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouveau paiement</button>}>
       
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
@@ -1554,7 +1554,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
       </div>
 
       {modal && (
-        <Modal title=t.newPayment||"Nouveau paiement" onClose={()=>setModal(false)}>
+        <Modal title={t.newPayment||"Nouveau paiement"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
@@ -1643,7 +1643,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
 
   return (
-    <Page title=t.documents||"Documents" sub=t.lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes">
+    <Page title={t.documents||"Documents"} sub={t.lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
         {docTypes.map(dt=>{
           const active=docType===dt.id;
@@ -2209,7 +2209,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
   };
 
   return (
-    <Page title=t.rentals||t.rentals||"Locations" sub={`${rentals.length} location(s) enregistrée(s)`}
+    <Page title={t.rentals||"Locations"} sub={`${rentals.length} location(s) enregistrée(s)`}
       actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
       
       {/* Stats */}
@@ -2298,7 +2298,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
 
       {/* Modal nouvelle location */}
       {modal && (
-        <Modal title=t.newRental||"Nouvelle location" onClose={()=>setModal(false)}>
+        <Modal title={t.newRental||"Nouvelle location"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
