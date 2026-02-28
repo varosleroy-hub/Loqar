@@ -1968,9 +1968,9 @@ function PlanCard({ plan, annual }) {
       <button
         onClick={()=>{
           const links = {
-            starter:    "https://buy.stripe.com/test_eVqcMYemD1n24Ac59adEs02",
-            pro:        "https://buy.stripe.com/test_eVqcMY0vN6Hm7MogRSdEs01",
-            enterprise: "https://buy.stripe.com/test_8x27sEa6n5Di2s4fNOdEs00",
+            starter:    "https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05",
+            pro:        "https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03",
+            enterprise: "https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04",
           };
           window.location.href = links[plan.id] || "mailto:contact@loqar.fr";
         }}
