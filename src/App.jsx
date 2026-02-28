@@ -64,7 +64,11 @@ const TR = {
 };
 
 const LangContext = createContext({ lang:"fr", t:TR.fr, setLang:()=>{} });
-const useLang = () => useContext(LangContext);
+const useLang = () => {
+  const ctx = useContext(LangContext);
+  if (!ctx || !ctx.t) return { lang:"fr", t:TR.fr, setLang:()=>{} };
+  return ctx;
+};
 
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
 const T = {
