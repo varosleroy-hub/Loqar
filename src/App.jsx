@@ -586,7 +586,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
 
       <div style={{ display:"flex", gap:10, marginTop:24, justifyContent:"flex-end", alignItems:"center" }}>
         {saved && <span style={{ fontSize:13, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Enregistré !</span>}
-        <Btn label=t.saveProfile||"Enregistrer les modifications" variant="primary" onClick={save} icon={Icons.check}/>
+        <Btn label={t.saveProfile||"Enregistrer les modifications"} variant="primary" onClick={save} icon={Icons.check}/>
       </div>
     </Page>
   );
@@ -640,7 +640,7 @@ function SignaturePage() {
             </div>
 
             <div style={{ display:"flex", gap:10 }}>
-              <Btn label=t.cancel||t.cancel||"Annuler" variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
+              <Btn label={t.cancel||t.cancel||"Annuler"} variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
               <Btn label={hasDrawn?"Confirmer la signature":"Signer d'abord…"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.5 }}/>
             </div>
           </div>
@@ -832,7 +832,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
           <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Plan Pro</span>
         </div>
         <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>API, rapports avancés et marque blanche.</p>
-        <Btn label=t.lang==="en"?"Upgrade to Pro":"Passer au Pro" variant="primary" size="sm" full/>
+        <Btn label={t.lang==="en"?"Upgrade to Pro":"Passer au Pro"} variant="primary" size="sm" full/>
       </div>
 
       {/* Language toggle */}
@@ -1162,7 +1162,7 @@ function Vehicles({ vehicles, setVehicles, user }) {
 
   return (
     <Page title=t.vehicles||"Véhicules" sub={`${vehicles.length} ${t.vehicles||"véhicules"}`}
-      actions={<Btn label=t.addVehicle||"Ajouter un véhicule" variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
+      actions={<Btn label={t.addVehicle||"Ajouter un véhicule"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
 
       {/* Filters */}
       <div style={{ display:"flex", gap:8, marginBottom:22, alignItems:"center", flexWrap:"wrap" }}>
@@ -1297,8 +1297,8 @@ function Vehicles({ vehicles, setVehicles, user }) {
             ))}
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <Btn label=t.cancel||t.cancel||"Annuler" onClick={()=>setModal(false)} variant="secondary"/>
-            <Btn label=t.add||"Ajouter" onClick={async ()=>{
+            <Btn label={t.cancel||t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
+            <Btn label={t.add||"Ajouter"} onClick={async ()=>{
               const newV = { user_id: user.id, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
               if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.category }]);
@@ -1322,7 +1322,7 @@ function Clients({ clients, setClients, user }) {
 
   return (
     <Page title=t.clients||"Clients" sub={`${clients.length} ${t.clients||"clients"}`}
-      actions={<Btn label=t.newClient||"Nouveau client" variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
+      actions={<Btn label={t.newClient||"Nouveau client"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
       <div style={{ position:"relative", marginBottom:16 }}>
         <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t.lang==="en"?"Search client…":"Rechercher un client…"}
@@ -1422,8 +1422,8 @@ function Clients({ clients, setClients, user }) {
             <Input label="Expiration du permis" type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
-            <Btn label=t.cancel||t.cancel||"Annuler" onClick={()=>setModal(false)} variant="secondary"/>
-            <Btn label=t.save||"Créer le client" onClick={async ()=>{
+            <Btn label={t.cancel||t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
+            <Btn label={t.save||"Créer le client"} onClick={async ()=>{
               const newC = { user_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
               const { data, error } = await supabase.from("clients").insert(newC).select().single();
               if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
@@ -1588,7 +1588,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
                 {["en attente","encaissé","en retard"].map(s=><option key={s}>{s}</option>)}
               </select>
             </div>
-            <Input label=t.date||"Date" type="date" value={form.paidAt} onChange={v=>up("paidAt",v)}/>
+            <Input label={t.date||"Date"} type="date" value={form.paidAt} onChange={v=>up("paidAt",v)}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||t.cancel||"Annuler"}</button>
