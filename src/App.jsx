@@ -2008,6 +2008,15 @@ function PlanCard({ plan, annual }) {
         ))}
       </div>
       <button
+        onClick={async ()=>{
+          if(plan.id==="enterprise"){ window.location.href="mailto:contact@loqar.fr?subject=Plan Enterprise"; return; }
+          try {
+            const res = await fetch("/api/create-checkout", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({plan:plan.id}) });
+            const data = await res.json();
+            if(data.url) window.location.href = data.url;
+            else alert("Erreur: "+data.error);
+          } catch(e) { alert("Erreur de connexion"); }
+        }}
         style={{ width:"100%", padding:"11px 16px", borderRadius:9, fontWeight:600, fontSize:13, fontFamily:"inherit", cursor:"pointer", transition:"all .15s", background:plan.highlight?plan.color:plan.colorDim, color:plan.highlight?T.bg:plan.color, border:`1px solid ${plan.color}40` }}
         onMouseEnter={e=>{e.currentTarget.style.background=plan.color; e.currentTarget.style.color=T.bg;}}
         onMouseLeave={e=>{e.currentTarget.style.background=plan.highlight?plan.color:plan.colorDim; e.currentTarget.style.color=plan.highlight?T.bg:plan.color;}}>
