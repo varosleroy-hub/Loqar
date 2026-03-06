@@ -1153,56 +1153,90 @@ function AuthScreen() {
   );
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ vehicles, rentals, onNav }) {
+function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
   const t = TR.fr;
-  const lang = "fr";
-  const revenue = PAYMENTS.filter(p=>p.status==="encaissé").reduce((a,p)=>a+p.amount,0);
-  const revCount = useCounter(revenue, 1300);
-  const activeRentals = RENTALS.filter(r=>r.status==="en cours");
-  const DAYS=28, MS=new Date("2025-02-01");
+
+  // Real data calculations
+  const totalRevenue = (payments||[]).filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0);
+  const activeRentals = (rentals||[]).filter(r=>r.status==="en cours");
+  const availableVehicles = (vehicles||[]).filter(v=>v.status==="disponible");
+  const pendingPayments = (payments||[]).filter(p=>p.status==="en attente");
+  const latePayments = (payments||[]).filter(p=>p.status==="en retard");
+
+  // Monthly revenue for chart (last 6 months)
+  const monthlyRevenue = () => {
+    const months = [];
+    for (let i=5; i>=0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      const label = d.toLocaleDateString('fr-FR', { month:'short' });
+      const total = (payments||[])
+        .filter(p => p.status==="encaissé" && p.date && p.date.startsWith(key))
+        .reduce((a,p) => a+(p.amount||0), 0);
+      months.push({ label, total, key });
+    }
+    return months;
+  };
+  const monthData = monthlyRevenue();
+  const maxRev = Math.max(...monthData.map(m=>m.total), 1);
+
+  // Rental status breakdown
+  const statusCount = {
+    "en cours": (rentals||[]).filter(r=>r.status==="en cours").length,
+    "réservée": (rentals||[]).filter(r=>r.status==="réservée").length,
+    "terminée": (rentals||[]).filter(r=>r.status==="terminée").length,
+  };
+
+  const revCount = useCounter(totalRevenue, 1300);
 
   return (
-    <Page title={t.dashboard||"Tableau de bord"} sub={`${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})} · Bienvenue sur Loqar`}
+    <Page title="Tableau de bord"
+      sub={`${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})} · Bienvenue sur Loqar`}
       actions={<button onClick={()=>onNav&&onNav("rentals")} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
 
-      {/* ── Hero revenue banner ── */}
-      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:18, padding:"32px 36px", marginBottom:22, position:"relative", overflow:"hidden" }}>
-        {/* Warm diagonal sweep */}
+      {/* ── Revenue banner ── */}
+      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:18, padding:"28px 32px", marginBottom:18, position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", inset:0, background:`linear-gradient(115deg,${T.gold}08 0%,transparent 55%)`, pointerEvents:"none" }}/>
-        {/* Car silhouette watermark */}
-        <div style={{ position:"absolute", right:220, top:"50%", transform:"translateY(-50%)", opacity:.05, pointerEvents:"none" }}>
-          <CarSilhouette cat="Premium" color={T.cream} size={380}/>
-        </div>
-
-        <div style={{ position:"relative", display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:30, flexWrap:"wrap" }}>
+        <div style={{ position:"relative", display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:24, flexWrap:"wrap" }}>
           <div>
-            <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".12em", textTransform:"uppercase", marginBottom:10 }}>Revenus encaissés · Février 2025</div>
-            <div style={{ fontSize:62, fontWeight:700, letterSpacing:"-0.04em", color:T.gold, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>
-              {fmt(revCount)} <span style={{ fontSize:28, color:T.sub }}>€</span>
+            <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".12em", textTransform:"uppercase", marginBottom:8 }}>Revenus encaissés · Total</div>
+            <div style={{ fontSize:56, fontWeight:700, letterSpacing:"-0.04em", color:T.gold, lineHeight:1 }}>
+              {fmt(revCount)} <span style={{ fontSize:24, color:T.sub }}>€</span>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:12 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:10 }}>
               <span style={{ display:"inline-flex", alignItems:"center", gap:5, background:T.success+"18", border:`1px solid ${T.success}30`, color:T.success, padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600 }}>
-                {Icons.trend} +18% vs janvier
+                {Icons.trend} {(payments||[]).filter(p=>p.status==="encaissé").length} transactions
               </span>
-              <span style={{ fontSize:12, color:T.muted }}>{PAYMENTS.filter(p=>p.status==="encaissé").length} transactions</span>
+              {latePayments.length > 0 && (
+                <span style={{ display:"inline-flex", alignItems:"center", gap:5, background:T.red+"18", border:`1px solid ${T.red}30`, color:T.red, padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600 }}>
+                  ⚠ {latePayments.length} en retard
+                </span>
+              )}
             </div>
           </div>
+          {/* Mini bar chart */}
           <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
-            <div style={{ fontSize:10, color:T.muted, letterSpacing:".1em", textTransform:"uppercase" }}>Évolution 12 mois</div>
-            <Sparkline data={REVENUE} w={190} h={48}/>
-            <div style={{ display:"flex", justifyContent:"space-between", width:190 }}>
-              {["Mar '24","—","Fév '25"].map(m=><span key={m} style={{ fontSize:9, color:T.muted }}>{m}</span>)}
+            <div style={{ fontSize:10, color:T.muted, letterSpacing:".1em", textTransform:"uppercase" }}>Revenus 6 derniers mois</div>
+            <div style={{ display:"flex", alignItems:"flex-end", gap:5, height:52 }}>
+              {monthData.map((m,i)=>(
+                <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+                  <div style={{ width:22, background: i===5 ? T.gold : T.gold+"40", borderRadius:"4px 4px 0 0", height: maxRev>0 ? `${Math.max(4,(m.total/maxRev)*44)}px` : "4px", transition:"height .5s" }}/>
+                  <span style={{ fontSize:9, color:T.muted }}>{m.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Stats row ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:22 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:18 }}>
         {[
-          {label:t.activeRentals||"Locations actives", value:activeRentals.length, color:T.gold,    icon:Icons.calendar, sub:t.inProgress||"En cours"},
-          {label:t.availableVehicles||"Véhicules disponibles", value:vehicles.filter(v=>v.status==="disponible").length, color:T.success, icon:Icons.car, sub:`Sur ${vehicles.length} total`},
-          {label:t.clients||"Clients", value:CLIENTS.length, color:T.blue, icon:Icons.users, sub:"Dont 1 liste noire"},
+          { label:"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:"En cours" },
+          { label:"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:`Sur ${(vehicles||[]).length} total` },
+          { label:"Clients",                value:(clients||[]).length,       color:T.blue,    icon:Icons.users,    sub:"Enregistrés" },
+          { label:"Paiements en attente",   value:pendingPayments.length,    color:T.amber,   icon:Icons.dollar,   sub:`${pendingPayments.reduce((a,p)=>a+(p.amount||0),0)} €` },
         ].map(s=>{
           const c = useCounter(s.value, 900);
           return (
@@ -1210,101 +1244,136 @@ function Dashboard({ vehicles, rentals, onNav }) {
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
                 <div>
                   <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{s.label}</div>
-                  <div style={{ fontSize:34, fontWeight:700, color:s.color, letterSpacing:"-0.03em", lineHeight:1 }}>{c}</div>
+                  <div style={{ fontSize:32, fontWeight:700, color:s.color, letterSpacing:"-0.03em", lineHeight:1 }}>{c}</div>
                   {s.sub && <div style={{ fontSize:11, color:T.muted, marginTop:5 }}>{s.sub}</div>}
                 </div>
-                <div style={{ width:40, height:40, borderRadius:10, background:s.color+"15", display:"flex", alignItems:"center", justifyContent:"center", color:s.color, flexShrink:0 }}>{s.icon}</div>
+                <div style={{ width:38, height:38, borderRadius:10, background:s.color+"15", display:"flex", alignItems:"center", justifyContent:"center", color:s.color, flexShrink:0 }}>{s.icon}</div>
               </div>
             </Card>
           );
         })}
       </div>
 
-      {/* ── Gantt + side ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 350px", gap:18 }}>
-        <Card>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-            <div>
-              <h3 style={{ fontSize:15, fontWeight:700, marginBottom:2, color:T.text }}>Calendrier des locations</h3>
-              <p style={{ fontSize:12, color:T.sub }}>Février 2025 · Vue Gantt</p>
+      {/* ── Main grid ── */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 320px", gap:16 }}>
+
+        {/* Left — rentals en cours */}
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+          {/* Locations actives */}
+          <Card>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <h3 style={{ fontSize:15, fontWeight:700, color:T.text }}>Locations en cours</h3>
+              <button onClick={()=>onNav&&onNav("rentals")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir tout →</button>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <div style={{ width:6, height:6, borderRadius:"50%", background:T.success }}/>
-              <span style={{ fontSize:11, color:T.muted }}>Aujourd'hui : 22 fév</span>
-            </div>
-          </div>
-          {/* Day ruler */}
-          <div style={{ display:"flex", marginLeft:108, marginBottom:6 }}>
-            {Array.from({length:DAYS},(_,i)=>i+1).map(d=>(
-              <div key={d} style={{ flex:1, textAlign:"center", fontSize:9, color:d===22?T.gold:T.muted, fontWeight:d===22?700:400, minWidth:13 }}>{d%5===0||d===1||d===22?d:""}</div>
-            ))}
-          </div>
-          {vehicles.map(v=>(
-            <div key={v.id} style={{ display:"flex", alignItems:"center", marginBottom:9 }}>
-              <div style={{ width:108, flexShrink:0, display:"flex", alignItems:"center", gap:7, paddingRight:10 }}>
-                <div style={{ width:6, height:6, borderRadius:"50%", flexShrink:0, background:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}/>
-                <span style={{ fontSize:11, color:T.sub, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v.name.replace("Classe ","").replace("Série ","")}</span>
-              </div>
-              <div style={{ flex:1, height:26, background:T.card2, borderRadius:7, position:"relative", overflow:"hidden" }}>
-                {/* Today */}
-                <div style={{ position:"absolute", left:`${((22-1)/DAYS)*100}%`, top:0, bottom:0, width:1, background:T.gold+"70", zIndex:2 }}/>
-                {RENTALS.filter(r=>r.vehicleId===v.id).map(r=>{
-                  const sd=Math.max(0,(new Date(r.startDate)-MS)/86400000);
-                  const ed=Math.min(DAYS,(new Date(r.endDate)-MS)/86400000);
-                  if(ed<0||sd>DAYS)return null;
-                  const col=r.status==="en cours"?T.gold:r.status==="réservée"?T.blue:T.muted;
-                  const cl=CLIENTS.find(c=>c.id===r.clientId);
+            {activeRentals.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"32px 0", color:T.muted, fontSize:13 }}>Aucune location active pour le moment</div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {activeRentals.slice(0,5).map(r=>{
+                  const cl = (clients||[]).find(c=>c.id===r.client_id);
+                  const veh = (vehicles||[]).find(v=>v.id===r.vehicle_id);
+                  const dl = r.end_date ? Math.ceil((new Date(r.end_date)-new Date())/86400000) : null;
                   return (
-                    <div key={r.id}
-                      style={{ position:"absolute", left:`${(sd/DAYS)*100}%`, width:`${((ed-sd)/DAYS)*100}%`, top:2, bottom:2, background:col+"20", border:`1px solid ${col}50`, borderRadius:5, display:"flex", alignItems:"center", padding:"0 7px", fontSize:10, fontWeight:600, color:col, whiteSpace:"nowrap", overflow:"hidden", cursor:"pointer" }}
-                      onMouseEnter={e=>e.currentTarget.style.background=col+"35"}
-                      onMouseLeave={e=>e.currentTarget.style.background=col+"20"}>
-                      {cl?.firstName}
+                    <div key={r.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:T.card2, borderRadius:10, transition:"background .15s", cursor:"pointer" }}
+                      onMouseEnter={e=>e.currentTarget.style.background="#2A2824"}
+                      onMouseLeave={e=>e.currentTarget.style.background=T.card2}>
+                      <Avatar name={r.client_name||"?"} size={34}/>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{r.client_name||"—"}</div>
+                        <div style={{ fontSize:11, color:T.muted }}>{r.vehicle_name||"—"}</div>
+                      </div>
+                      <div style={{ textAlign:"right" }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>{r.total_amount||0} €</div>
+                        {dl !== null && <div style={{ fontSize:10, color:dl<=2?T.red:T.muted }}>J-{dl}</div>}
+                      </div>
+                      <StatusBadge status={r.status}/>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          ))}
-        </Card>
-
-        {/* Side */}
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-          <Card>
-            <h3 style={{ fontSize:14, fontWeight:700, marginBottom:14, color:T.text }}>Locations en cours</h3>
-            {activeRentals.length===0 && <p style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"20px 0" }}>Aucune location active</p>}
-            {activeRentals.map(r=>{
-              const cl=CLIENTS.find(c=>c.id===r.clientId), veh=vehicles.find(v=>v.id===r.vehicleId);
-              const dl=Math.ceil((new Date(r.endDate)-new Date())/86400000);
-              return (
-                <div key={r.id}
-                  style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:T.card2, borderRadius:10, marginBottom:7, cursor:"pointer", transition:"background .15s" }}
-                  onMouseEnter={e=>e.currentTarget.style.background="#2A2824"}
-                  onMouseLeave={e=>e.currentTarget.style.background=T.card2}>
-                  <Avatar name={`${cl?.firstName} ${cl?.lastName}`} size={32}/>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{cl?.firstName} {cl?.lastName}</div>
-                    <div style={{ fontSize:11, color:T.muted }}>{veh?.name}</div>
-                  </div>
-                  <div style={{ textAlign:"right", flexShrink:0 }}>
-                    <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>{r.total} €</div>
-                    <div style={{ fontSize:10, color:dl<=2?T.red:T.muted }}>J-{dl}</div>
-                  </div>
-                </div>
-              );
-            })}
+            )}
           </Card>
 
+          {/* Statut locations */}
           <Card>
-            <h3 style={{ fontSize:14, fontWeight:700, marginBottom:14, color:T.text }}>Alertes</h3>
-            {[
-            ].map((a,i)=>(
-              <div key={i} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:a.c+"0C", border:`1px solid ${a.c}25` }}>
-                <span style={{ color:a.c, flexShrink:0 }}>{a.icon}</span>
-                <span style={{ fontSize:12, color:T.sub }}>{a.msg}</span>
+            <h3 style={{ fontSize:15, fontWeight:700, color:T.text, marginBottom:16 }}>Répartition des locations</h3>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {[
+                { label:"En cours",  value:statusCount["en cours"],  color:T.gold,    total:(rentals||[]).length },
+                { label:"Réservées", value:statusCount["réservée"],  color:T.blue,    total:(rentals||[]).length },
+                { label:"Terminées", value:statusCount["terminée"],  color:T.success, total:(rentals||[]).length },
+              ].map(s=>(
+                <div key={s.label}>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:T.sub, marginBottom:5 }}>
+                    <span>{s.label}</span>
+                    <span style={{ color:s.color, fontWeight:600 }}>{s.value}</span>
+                  </div>
+                  <ProgressBar value={s.value} max={Math.max(s.total,1)} color={s.color}/>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Right column */}
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+          {/* Flotte */}
+          <Card>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <h3 style={{ fontSize:14, fontWeight:700, color:T.text }}>État de la flotte</h3>
+              <button onClick={()=>onNav&&onNav("vehicles")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir →</button>
+            </div>
+            {(vehicles||[]).slice(0,4).map(v=>(
+              <div key={v.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, background:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}/>
+                <div style={{ flex:1, fontSize:12, color:T.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v.name||v.make}</div>
+                <span style={{ fontSize:10, fontWeight:600, color:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}>{v.status==="disponible"?"Dispo":v.status==="en location"?"Loué":"Entretien"}</span>
               </div>
             ))}
+            {(vehicles||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>Aucun véhicule</div>}
           </Card>
+
+          {/* Paiements récents */}
+          <Card>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <h3 style={{ fontSize:14, fontWeight:700, color:T.text }}>Paiements récents</h3>
+              <button onClick={()=>onNav&&onNav("payments")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir →</button>
+            </div>
+            {(payments||[]).slice(0,4).map(p=>(
+              <div key={p.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:T.text }}>{p.client_name||"—"}</div>
+                  <div style={{ fontSize:10, color:T.muted }}>{p.date||""}</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:p.status==="encaissé"?T.success:p.status==="en retard"?T.red:T.amber }}>{p.amount||0} €</div>
+                  <StatusBadge status={p.status}/>
+                </div>
+              </div>
+            ))}
+            {(payments||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>Aucun paiement</div>}
+          </Card>
+
+          {/* Alertes */}
+          {(latePayments.length > 0 || (vehicles||[]).filter(v=>v.status==="entretien").length > 0) && (
+            <Card>
+              <h3 style={{ fontSize:14, fontWeight:700, color:T.text, marginBottom:12 }}>Alertes</h3>
+              {latePayments.map(p=>(
+                <div key={p.id} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:T.red+"0C", border:`1px solid ${T.red}25` }}>
+                  {Icons.alert}
+                  <span style={{ fontSize:12, color:T.sub }}>Paiement en retard · {p.client_name} · {p.amount}€</span>
+                </div>
+              ))}
+              {(vehicles||[]).filter(v=>v.status==="entretien").map(v=>(
+                <div key={v.id} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:T.amber+"0C", border:`1px solid ${T.amber}25` }}>
+                  {Icons.alert}
+                  <span style={{ fontSize:12, color:T.sub }}>{v.name} en entretien</span>
+                </div>
+              ))}
+            </Card>
+          )}
         </div>
       </div>
     </Page>
@@ -2642,7 +2711,7 @@ export default function App() {
   if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
 
   const screens = {
-    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} onNav={p=>setPage(p)}/>,
+    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
