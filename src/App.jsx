@@ -837,6 +837,232 @@ function Page({ title, sub, actions, children }) {
   );
 }
 
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({ onGetStarted }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", fn);
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  const features = [
+    { icon:Icons.car,      title:"Gestion de flotte", desc:"Ajoutez vos véhicules, suivez leur statut en temps réel et gérez les disponibilités." },
+    { icon:Icons.users,    title:"Gestion clients", desc:"Base de données complète avec historique de locations et permis de conduire." },
+    { icon:Icons.calendar, title:"Locations", desc:"Créez des locations, gérez les statuts et suivez les kilométrages facilement." },
+    { icon:Icons.doc,      title:"Contrats légaux", desc:"Générez des contrats, factures et états des lieux conformes en PDF en un clic." },
+    { icon:Icons.dollar,   title:"Paiements", desc:"Suivez les encaissements, gérez les cautions et envoyez des rappels automatiques." },
+    { icon:Icons.mail,     title:"Emails automatiques", desc:"Confirmations de location et rappels de paiement envoyés automatiquement." },
+  ];
+
+  const plans = [
+    { name:"Starter", desc:"Pour débuter", price:29, color:T.blue, link:"https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05",
+      features:["5 véhicules","50 locations/mois","Documents PDF","Support email"] },
+    { name:"Pro", desc:"Pour les agences", price:79, color:T.gold, featured:true, link:"https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03",
+      features:["Véhicules illimités","Locations illimitées","Emails automatiques","Support prioritaire"] },
+    { name:"Enterprise", desc:"Pour les grandes agences", price:199, color:T.amber, link:"https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04",
+      features:["Multi-agences","API accès","Marque blanche","Onboarding dédié"] },
+  ];
+
+  const navStyle = { position:"fixed", top:0, left:0, right:0, zIndex:200, height:58, padding:"0 28px", display:"flex", alignItems:"center", justifyContent:"space-between", background:T.surface, borderBottom:`1px solid ${T.border}` };
+
+  return (
+    <div style={{ background:T.bg, color:T.text, fontFamily:"'Plus Jakarta Sans',sans-serif", minHeight:"100vh", overflowX:"hidden" }}>
+
+      {/* NAV */}
+      <nav style={navStyle}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ width:36, height:36, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, color:T.gold }}>{Icons.car}</div>
+          <div>
+            <div style={{ fontSize:16, fontWeight:800, color:T.text, letterSpacing:"-0.02em" }}>Loqar</div>
+            <div style={{ fontSize:10, color:T.muted, fontWeight:600, textTransform:"uppercase", letterSpacing:".1em" }}>Location Auto</div>
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn label="Se connecter" variant="secondary" onClick={onGetStarted}/>
+          <Btn label="Essai gratuit →" variant="primary" onClick={onGetStarted}/>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", padding:"100px 24px 80px", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse 70% 50% at 50% 10%, ${T.goldDim}, transparent)`, pointerEvents:"none" }}/>
+        <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:99, padding:"5px 14px", fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:28 }}>
+          🚗 &nbsp;Logiciel de gestion de location auto
+        </div>
+        <h1 style={{ fontSize:"clamp(38px,6vw,70px)", fontWeight:800, letterSpacing:"-0.04em", lineHeight:1.06, maxWidth:760, marginBottom:20 }}>
+          Gérez votre agence de location <span style={{ color:T.gold }}>sans effort</span>
+        </h1>
+        <p style={{ fontSize:"clamp(15px,1.8vw,17px)", color:T.sub, maxWidth:480, lineHeight:1.7, marginBottom:40 }}>
+          Loqar centralise votre flotte, vos clients, vos contrats et vos paiements dans une seule plateforme intuitive.
+        </p>
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center" }}>
+          <button onClick={onGetStarted} style={{ background:T.gold, color:"#0F0D0B", padding:"11px 26px", borderRadius:9, fontSize:14, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.background="#D9BC84"}
+            onMouseLeave={e=>e.currentTarget.style.background=T.gold}>
+            Commencer gratuitement →
+          </button>
+          <button onClick={onGetStarted} style={{ background:"transparent", color:T.sub, padding:"10px 22px", borderRadius:9, fontSize:14, fontWeight:600, border:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit" }}>
+            Voir la démo
+          </button>
+        </div>
+        <div style={{ display:"flex", gap:24, marginTop:44, flexWrap:"wrap", justifyContent:"center" }}>
+          {["Sans carte requise","14 jours d'essai","Annulation facile"].map(t=>(
+            <span key={t} style={{ fontSize:13, color:T.muted, display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ color:T.success, fontWeight:800 }}>✓</span>{t}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* STATS */}
+      <div style={{ background:T.surface, borderTop:`1px solid ${T.border}`, borderBottom:`1px solid ${T.border}`, padding:"30px 24px" }}>
+        <div style={{ maxWidth:860, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, textAlign:"center" }}>
+          {[["500+","Véhicules gérés"],["2 min","Pour créer un contrat"],["100%","Conforme légalement"],["24/7","Accès en ligne"]].map(([n,l])=>(
+            <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:14, padding:20 }}>
+              <div style={{ fontSize:32, fontWeight:800, color:T.gold, letterSpacing:"-0.04em" }}>{n}</div>
+              <div style={{ fontSize:11, color:T.muted, marginTop:6, fontWeight:600, textTransform:"uppercase", letterSpacing:".06em" }}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FEATURES */}
+      <div style={{ padding:"72px 24px", maxWidth:1080, margin:"0 auto" }}>
+        <div style={{ textAlign:"center", marginBottom:44 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:10 }}>Fonctionnalités</div>
+          <h2 style={{ fontSize:"clamp(24px,3.5vw,36px)", fontWeight:800, letterSpacing:"-0.03em", marginBottom:10 }}>Tout ce dont vous avez besoin</h2>
+          <p style={{ fontSize:14, color:T.sub, lineHeight:1.6, maxWidth:440, margin:"0 auto" }}>Une plateforme complète pour gérer votre activité de A à Z</p>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))", gap:14 }}>
+          {features.map((f,i)=>(
+            <div key={i} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:22, transition:"all .2s", cursor:"default" }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=T.border2; e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 12px 40px #00000050";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=T.border; e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none";}}>
+              <div style={{ width:38, height:38, borderRadius:10, background:T.goldDim, border:`1px solid ${T.gold}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, marginBottom:14 }}>{f.icon}</div>
+              <div style={{ fontSize:14, fontWeight:700, color:T.text, marginBottom:7 }}>{f.title}</div>
+              <div style={{ fontSize:13, color:T.sub, lineHeight:1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MOCKUP */}
+      <div style={{ background:T.surface, borderTop:`1px solid ${T.border}`, borderBottom:`1px solid ${T.border}`, padding:"60px 24px" }}>
+        <div style={{ maxWidth:900, margin:"0 auto" }}>
+          <div style={{ textAlign:"center", marginBottom:32 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:10 }}>Interface</div>
+            <h2 style={{ fontSize:"clamp(24px,3.5vw,36px)", fontWeight:800, letterSpacing:"-0.03em" }}>Simple et intuitif</h2>
+          </div>
+          <div style={{ background:T.bg, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden", boxShadow:"0 32px 100px #00000080" }}>
+            <div style={{ background:T.card, borderBottom:`1px solid ${T.border}`, padding:"10px 14px", display:"flex", alignItems:"center", gap:7 }}>
+              {["#E05555","#C8A96E","#6AAF7A"].map(c=><div key={c} style={{ width:10, height:10, borderRadius:"50%", background:c }}/>)}
+              <div style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:6, padding:"4px 12px", fontSize:11, color:T.muted, marginLeft:8 }}>loqar.fr</div>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"200px 1fr", minHeight:340 }}>
+              <div style={{ background:T.surface, borderRight:`1px solid ${T.border}`, padding:"14px 10px", display:"flex", flexDirection:"column", gap:3 }}>
+                {[[Icons.dash,"Tableau de bord",true],[Icons.car,"Véhicules"],[Icons.users,"Clients"],[Icons.calendar,"Locations"],[Icons.dollar,"Paiements"],[Icons.doc,"Documents"]].map(([icon,label,active])=>(
+                  <div key={label} style={{ padding:"8px 10px", borderRadius:9, fontSize:12, fontWeight:600, color:active?T.gold:T.sub, background:active?T.goldDim:"transparent", display:"flex", alignItems:"center", gap:9 }}>
+                    <div style={{ width:28, height:28, borderRadius:7, background:active?T.goldDim:T.card2, display:"flex", alignItems:"center", justifyContent:"center", color:active?T.gold:T.muted }}>{icon}</div>
+                    {label}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding:22 }}>
+                <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", marginBottom:3 }}>Tableau de bord</div>
+                <div style={{ fontSize:12, color:T.muted, marginBottom:18 }}>Mercredi 5 mars · Bienvenue sur Loqar</div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:16 }}>
+                  {[["Revenus","4 280 €",T.gold,"↑ +12%"],["Locations","12",T.blue,"actives"],["Véhicules","8",T.success,"disponibles"],["Clients","24",T.amber,"total"]].map(([l,v,c,s])=>(
+                    <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:11, padding:12 }}>
+                      <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", marginBottom:5 }}>{l}</div>
+                      <div style={{ fontSize:20, fontWeight:800, color:c, letterSpacing:"-0.03em" }}>{v}</div>
+                      <div style={{ fontSize:9, color:T.success, marginTop:3 }}>{s}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:11, overflow:"hidden" }}>
+                  <div style={{ padding:"9px 14px", background:T.card2, display:"grid", gridTemplateColumns:"1fr 1fr 80px", fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", fontWeight:700 }}>
+                    <span>Client</span><span>Véhicule</span><span>Statut</span>
+                  </div>
+                  {[["Martin Dupont","Peugeot 308",T.gold,"En cours"],["Sarah Leroy","Renault Clio",T.blue,"Réservée"],["Pierre Martin","BMW 320i",T.success,"Terminée"]].map(([n,v,c,s])=>(
+                    <div key={n} style={{ padding:"10px 14px", borderTop:`1px solid ${T.border}`, display:"grid", gridTemplateColumns:"1fr 1fr 80px", alignItems:"center", fontSize:12 }}>
+                      <span>{n}</span>
+                      <span style={{ color:T.sub }}>{v}</span>
+                      <span style={{ padding:"3px 9px", borderRadius:6, fontSize:10, fontWeight:700, background:c+"18", color:c, display:"inline-block" }}>{s}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* PRICING */}
+      <div style={{ padding:"72px 24px", maxWidth:1080, margin:"0 auto" }}>
+        <div style={{ textAlign:"center", marginBottom:44 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:10 }}>Tarifs</div>
+          <h2 style={{ fontSize:"clamp(24px,3.5vw,36px)", fontWeight:800, letterSpacing:"-0.03em", marginBottom:10 }}>Simple et transparent</h2>
+          <p style={{ fontSize:14, color:T.sub }}>Commencez gratuitement, évoluez selon vos besoins</p>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))", gap:14, maxWidth:860, margin:"0 auto" }}>
+          {plans.map((p,i)=>(
+            <div key={i} style={{ background:p.featured?T.card2:T.card, border:`1.5px solid ${p.featured?p.color:T.border}`, borderRadius:16, padding:"26px 22px", position:"relative", transition:"all .2s" }}
+              onMouseEnter={e=>e.currentTarget.style.transform="translateY(-3px)"}
+              onMouseLeave={e=>e.currentTarget.style.transform="none"}>
+              {p.featured && <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:T.gold, color:"#0F0D0B", fontSize:10, fontWeight:700, padding:"3px 14px", borderRadius:99, whiteSpace:"nowrap" }}>⭐ Plus populaire</div>}
+              <div style={{ fontSize:15, fontWeight:800, color:p.color, marginBottom:3 }}>{p.name}</div>
+              <div style={{ fontSize:11, color:T.muted, marginBottom:16 }}>{p.desc}</div>
+              <div style={{ display:"flex", alignItems:"baseline", gap:3, marginBottom:18 }}>
+                <span style={{ fontSize:44, fontWeight:800, color:p.color, letterSpacing:"-0.04em", lineHeight:1 }}>{p.price}</span>
+                <span style={{ fontSize:13, color:T.sub }}>€/mois</span>
+              </div>
+              <div style={{ height:1, background:T.border, margin:"16px 0" }}/>
+              {p.features.map((f,j)=>(
+                <div key={j} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:9, fontSize:13, color:T.sub }}>
+                  <div style={{ width:16, height:16, borderRadius:99, background:p.color+"18", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:p.color, flexShrink:0 }}>✓</div>
+                  {f}
+                </div>
+              ))}
+              <button onClick={()=>window.location.href=p.link} style={{ width:"100%", marginTop:18, padding:10, borderRadius:9, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit", background:p.featured?p.color:"transparent", color:p.featured?"#0F0D0B":p.color, border:p.featured?"none":`1.5px solid ${p.color}`, transition:"all .15s" }}>
+                Commencer →
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ padding:"80px 24px" }}>
+        <div style={{ maxWidth:580, margin:"0 auto", background:T.card, border:`1px solid ${T.border}`, borderRadius:20, padding:"56px 40px", textAlign:"center", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse 80% 60% at 50% 0%, ${T.goldDim}, transparent)`, pointerEvents:"none" }}/>
+          <h2 style={{ fontSize:"clamp(22px,3vw,32px)", fontWeight:800, letterSpacing:"-0.03em", marginBottom:12, position:"relative" }}>Prêt à simplifier votre gestion ?</h2>
+          <p style={{ color:T.sub, fontSize:14, lineHeight:1.7, marginBottom:32, position:"relative" }}>Rejoignez les agences qui font confiance à Loqar pour gérer leur flotte au quotidien.</p>
+          <button onClick={onGetStarted} style={{ background:T.gold, color:"#0F0D0B", padding:"13px 32px", borderRadius:9, fontSize:15, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit", position:"relative" }}
+            onMouseEnter={e=>e.currentTarget.style.background="#D9BC84"}
+            onMouseLeave={e=>e.currentTarget.style.background=T.gold}>
+            Démarrer gratuitement →
+          </button>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop:`1px solid ${T.border}`, padding:"24px 28px", background:T.surface, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:14 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ width:30, height:30, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, color:T.gold }}>{Icons.car}</div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:800, color:T.text }}>Loqar</div>
+            <div style={{ fontSize:10, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>Location Auto</div>
+          </div>
+        </div>
+        <span style={{ fontSize:12, color:T.muted }}>© 2025 Loqar · Logiciel de gestion de location de véhicules</span>
+        <Btn label="Se connecter" variant="secondary" onClick={onGetStarted}/>
+      </footer>
+    </div>
+  );
+}
+
+
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 function AuthScreen() {
   const [mode, setMode] = useState("login");
@@ -2334,6 +2560,7 @@ export default function App() {
   const [rentals,        setRentals]        = useState([]);
   const [payments,       setPayments]       = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
   const unread = NOTIFS.filter(n=>!n.read).length;
@@ -2412,7 +2639,7 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <AuthScreen />;
+  if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} onNav={p=>setPage(p)}/>,
