@@ -856,7 +856,7 @@ function AuthScreen() {
     } else {
       const { error } = await supabase.auth.signUp({ email, password: pw, options: { data: { name } } });
       if (error) setError(error.message);
-      else setSuccess("Compte créé ! Vérifiez votre email pour confirmer.");
+      else { setSuccess("Compte créé ! Vérifiez votre email pour confirmer."); sendEmail("welcome", email, { name }); }
     }
     setLoading(false);
   };
@@ -1496,6 +1496,15 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
                       <button onClick={()=>handleEncaisser(p.id)}
                         style={{ padding:"5px 10px", background:T.successDim, border:`1px solid ${T.success}30`, borderRadius:8, color:T.success, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
                         Encaisser
+                      </button>
+                    )}
+                    {p.status==="en retard" && (
+                      <button onClick={async ()=>{
+                        const client = clients.find(c=>c.id===p.client_id);
+                        if(client?.email) { await sendEmail("payment_reminder", client.email, { clientName:p.client_name, amount:p.amount }); alert("Rappel envoyé !"); }
+                        else alert("Email client introuvable");
+                      }} style={{ padding:"5px 10px", background:T.amberDim||"#2A2010", border:`1px solid ${T.amber}30`, borderRadius:8, color:T.amber, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+                        📧 Rappel
                       </button>
                     )}
                     <button onClick={()=>handleDelete(p.id)}
@@ -2149,7 +2158,11 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
       status: "réservée",
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
-    if (data) setRentals([data, ...rentals]);
+    if (data) {
+      setRentals([data, ...rentals]);
+      const cl = clients.find(c=>c.id===form.clientId);
+      if (cl?.email) sendEmail("rental", cl.email, { clientName: cl.firstName+" "+cl.lastName, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
+    }
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   };
