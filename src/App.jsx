@@ -1567,8 +1567,8 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
         )}
       </div>
 
+      {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.vehicles} véhicules. Passez en Pro pour une flotte illimitée.`} onClose={()=>setUpgradeModal(false)}/>}
       {modal && (
-        {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.vehicles} véhicules. Passez en Pro pour une flotte illimitée.`} onClose={()=>setUpgradeModal(false)}/>}
       <Modal title={t.addVehicle||"Ajouter un véhicule"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ gridColumn:"1/-1" }}><Input label="Nom du véhicule" value={form.name} onChange={v=>setForm({...form,name:v})} placeholder="Renault Clio"/></div>
@@ -2615,8 +2615,8 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       </div>
 
       {/* Modal nouvelle location */}
+      {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.rentals} locations/mois. Passez en Pro pour des locations illimitées.`} onClose={()=>setUpgradeModal(false)}/>}
       {modal && (
-        {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.rentals} locations/mois. Passez en Pro pour des locations illimitées.`} onClose={()=>setUpgradeModal(false)}/>}
         <Modal title={t.newRental||"Nouvelle location"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             
