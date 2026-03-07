@@ -130,6 +130,43 @@ const Ic = ({ paths, d, size=16, color="currentColor", sw=1.5 }) => (
   </svg>
 );
 
+// ─── PLAN LIMITS ──────────────────────────────────────────────────────────────
+const PLAN_LIMITS = {
+  starter:    { vehicles: 5,  rentals: 50,  emails: false, label: "Starter" },
+  pro:        { vehicles: Infinity, rentals: Infinity, emails: true, label: "Pro" },
+  enterprise: { vehicles: Infinity, rentals: Infinity, emails: true, label: "Enterprise" },
+};
+
+function PlanBadge({ plan }) {
+  const colors = { starter: T.blue, pro: T.gold, enterprise: T.amber };
+  const c = colors[plan] || T.blue;
+  return (
+    <span style={{ padding:"2px 10px", borderRadius:99, fontSize:10, fontWeight:700, background:c+"18", color:c, border:`1px solid ${c}30`, textTransform:"uppercase", letterSpacing:".06em" }}>
+      {plan||"starter"}
+    </span>
+  );
+}
+
+function UpgradeModal({ onClose, reason }) {
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#00000080", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={onClose}>
+      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:20, padding:"36px 32px", maxWidth:420, width:"90%", textAlign:"center" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ fontSize:36, marginBottom:12 }}>⭐</div>
+        <h2 style={{ fontSize:20, fontWeight:800, color:T.text, marginBottom:8 }}>Limite atteinte</h2>
+        <p style={{ fontSize:14, color:T.sub, lineHeight:1.6, marginBottom:24 }}>{reason}</p>
+        <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+          <button onClick={()=>window.open("https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03","_blank")} style={{ background:T.gold, color:"#0F0D0B", padding:"10px 24px", borderRadius:9, fontSize:14, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+            Passer en Pro →
+          </button>
+          <button onClick={onClose} style={{ background:"transparent", color:T.sub, padding:"10px 16px", borderRadius:9, fontSize:14, border:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit" }}>
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const Icons = {
   dash:     <Ic size={15} paths={["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z","M9 22V12h6v10"]}/>,
   car:      <Ic size={15} paths={["M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3","M18 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0","M7 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0"]}/>,
@@ -1381,13 +1418,14 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user }) {
+function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
   const t = TR.fr;
   const lang = "fr";
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [modal, setModal]   = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState(false);
   const [form, setForm]     = useState({name:"",plate:"",fuel:"Essence",trans:"Manuelle",km:"",price:"",year:"",cat:"Citadine",photo:""});
   const [uploading, setUploading] = useState(false);
 
@@ -1412,7 +1450,18 @@ function Vehicles({ vehicles, setVehicles, user }) {
 
   return (
     <Page title={t.vehicles||"Véhicules"} sub={`${vehicles.length} ${t.vehicles||"véhicules"}`}
-      actions={<Btn label={t.addVehicle||"Ajouter un véhicule"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
+      actions={
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <PlanBadge plan={userPlan}/>
+          {PLAN_LIMITS[userPlan]?.vehicles !== Infinity && (
+            <span style={{ fontSize:12, color:T.muted }}>{vehicles.length}/{PLAN_LIMITS[userPlan]?.vehicles} véhicules</span>
+          )}
+          <Btn label={t.addVehicle||"Ajouter un véhicule"} variant="primary" icon={Icons.plus} onClick={()=>{
+            if(vehicles.length >= (PLAN_LIMITS[userPlan]?.vehicles||5)) { setUpgradeModal(true); return; }
+            setModal(true);
+          }}/>
+        </div>
+      }>
 
       {/* Filters */}
       <div style={{ display:"flex", gap:8, marginBottom:22, alignItems:"center", flexWrap:"wrap" }}>
@@ -1519,7 +1568,8 @@ function Vehicles({ vehicles, setVehicles, user }) {
       </div>
 
       {modal && (
-        <Modal title={t.addVehicle||"Ajouter un véhicule"} onClose={()=>setModal(false)}>
+        {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.vehicles} véhicules. Passez en Pro pour une flotte illimitée.`} onClose={()=>setUpgradeModal(false)}/>}
+      <Modal title={t.addVehicle||"Ajouter un véhicule"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ gridColumn:"1/-1" }}><Input label="Nom du véhicule" value={form.name} onChange={v=>setForm({...form,name:v})} placeholder="Renault Clio"/></div>
             <div style={{ gridColumn:"1/-1" }}>
@@ -2419,10 +2469,11 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user }) {
+function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter" }) {
   const t = TR.fr;
   const lang = "fr";
   const [modal, setModal] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState(false);
   const [sel, setSel]     = useState(null);
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
@@ -2565,6 +2616,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
 
       {/* Modal nouvelle location */}
       {modal && (
+        {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.rentals} locations/mois. Passez en Pro pour des locations illimitées.`} onClose={()=>setUpgradeModal(false)}/>}
         <Modal title={t.newRental||"Nouvelle location"} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             
@@ -2632,6 +2684,7 @@ export default function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
+  const [userPlan,       setUserPlan]       = useState("starter");
   const unread = NOTIFS.filter(n=>!n.read).length;
 
   useEffect(() => {
@@ -2663,7 +2716,7 @@ export default function App() {
 
   const fetchProfile = async (uid) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €" });
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €" }); setUserPlan(data.plan||"starter"); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
@@ -2712,7 +2765,7 @@ export default function App() {
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
