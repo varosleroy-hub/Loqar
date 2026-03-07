@@ -874,6 +874,64 @@ function Page({ title, sub, actions, children }) {
   );
 }
 
+// ─── SUCCESS PAGE ─────────────────────────────────────────────────────────────
+function SuccessPage({ onContinue }) {
+  const [plan, setPlan] = useState("pro");
+  const params = new URLSearchParams(window.location.search);
+  
+  useEffect(() => {
+    // Clean URL after 3s
+    setTimeout(() => {
+      window.history.replaceState({}, "", "/");
+    }, 3000);
+  }, []);
+
+  const planInfo = {
+    starter:    { name:"Starter",    price:"29€/mois",  color:T.blue,  features:["5 véhicules","50 locations/mois","Documents PDF"] },
+    pro:        { name:"Pro",        price:"79€/mois",  color:T.gold,  features:["Véhicules illimités","Locations illimitées","Emails automatiques"] },
+    enterprise: { name:"Enterprise", price:"199€/mois", color:T.amber, features:["Multi-agences","API accès","Onboarding dédié"] },
+  };
+  const p = planInfo[plan] || planInfo.pro;
+
+  return (
+    <div style={{ background:T.bg, minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Plus Jakarta Sans',sans-serif", padding:24 }}>
+      <div style={{ maxWidth:480, width:"100%", textAlign:"center" }}>
+        {/* Animated checkmark */}
+        <div style={{ width:80, height:80, borderRadius:"50%", background:T.success+"18", border:`2px solid ${T.success}`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px", animation:"pulse 2s infinite" }}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+        </div>
+        <style>{`@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 ${T.success}30} 50%{box-shadow:0 0 0 12px transparent} }`}</style>
+
+        <div style={{ fontSize:11, fontWeight:700, color:T.success, letterSpacing:".1em", textTransform:"uppercase", marginBottom:10 }}>Paiement confirmé</div>
+        <h1 style={{ fontSize:32, fontWeight:800, letterSpacing:"-0.03em", color:T.text, marginBottom:8 }}>
+          Bienvenue sur Loqar <span style={{ color:p.color }}>{p.name}</span> !
+        </h1>
+        <p style={{ fontSize:15, color:T.sub, lineHeight:1.7, marginBottom:32 }}>
+          Votre abonnement {p.name} à {p.price} est maintenant actif. Vous avez accès à toutes les fonctionnalités.
+        </p>
+
+        {/* Plan features */}
+        <div style={{ background:T.card, border:`1px solid ${p.color}40`, borderRadius:16, padding:"20px 24px", marginBottom:28, textAlign:"left" }}>
+          <div style={{ fontSize:13, fontWeight:700, color:p.color, marginBottom:12 }}>✨ Votre plan {p.name} inclut :</div>
+          {p.features.map((f,i) => (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, fontSize:13, color:T.sub }}>
+              <div style={{ width:18, height:18, borderRadius:"50%", background:p.color+"18", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:p.color, flexShrink:0 }}>✓</div>
+              {f}
+            </div>
+          ))}
+        </div>
+
+        <button onClick={onContinue} style={{ background:T.gold, color:"#0F0D0B", padding:"13px 36px", borderRadius:10, fontSize:15, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit", width:"100%" }}>
+          Accéder à mon espace →
+        </button>
+        <p style={{ fontSize:12, color:T.muted, marginTop:14 }}>Un email de confirmation vous a été envoyé</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({ onGetStarted }) {
   const [scrolled, setScrolled] = useState(false);
@@ -2682,6 +2740,7 @@ export default function App() {
   const [payments,       setPayments]       = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(() => new URLSearchParams(window.location.search).get("success") === "true");
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
   const [userPlan,       setUserPlan]       = useState("starter");
@@ -2761,6 +2820,7 @@ export default function App() {
     </div>
   );
 
+  if (showSuccess) return <SuccessPage onContinue={()=>setShowSuccess(false)}/>;
   if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
 
   const screens = {
