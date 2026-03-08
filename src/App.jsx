@@ -992,6 +992,7 @@ function SuccessPage({ onContinue }) {
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({ onGetStarted }) {
+  const lang = useLang();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -2397,6 +2398,7 @@ const getFAQS = (lang="fr") => [
 ];
 
 function PlanCard({ plan, annual }) {
+  const lang = useLang();
   const [hov, setHov] = useState(false);
   const price = annual ? plan.annualPrice : plan.monthlyPrice;
   const savings = plan.monthlyPrice - plan.annualPrice;
