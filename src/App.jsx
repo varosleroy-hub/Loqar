@@ -637,7 +637,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
 }
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
-function SignaturePage() {
+function SignaturePage({ lang = "fr" }) {
   const t = TR[lang]||TR.fr;
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
@@ -2461,7 +2461,7 @@ function FaqItem({ q, a }) {
   );
 }
 
-function Pricing() {
+function Pricing({ lang = "fr" }) {
   const t = TR[lang]||TR.fr;
   const [annual, setAnnual] = useState(false);
   return (
@@ -2877,8 +2877,8 @@ export default function App() {
     clients:   <Clients   clients={clients}   setClients={setClients} user={user} lang={lang}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} lang={lang}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} lang={lang}/>,
-    signature: <SignaturePage/>,
-    pricing:   <Pricing/>,
+    signature: <SignaturePage lang={lang}/>,
+    pricing:   <Pricing lang={lang}/>,
     settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} lang={lang}/>,
   };
 
