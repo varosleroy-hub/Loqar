@@ -727,7 +727,7 @@ function SignaturePage({ lang = "fr" }) {
       <Card style={{ padding:0, overflow:"hidden" }}>
         <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Contrats en attente de signature</div>
-          <Btn label=lang==="en"?"New contract":"Nouveau contrat" variant="outline" size="sm" icon={Icons.plus}/>
+          <Btn label={lang==="en"?"New contract":"Nouveau contrat"} variant="outline" size="sm" icon={Icons.plus}/>
         </div>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
@@ -759,8 +759,8 @@ function SignaturePage({ lang = "fr" }) {
                   <td style={{ padding:"13px 18px", borderBottom:`1px solid ${T.border}` }}>
                     {!isSigned
                       ? <div style={{ display:"flex", gap:8 }}>
-                          <Btn label=lang==="en"?"Send link":"Envoyer le lien" variant="outline" size="sm" icon={Icons.mail} onClick={()=>{ setSelected(c); setSigStep("send"); setTimeout(()=>setSigStep("signing"),800); }}/>
-                          <Btn label=lang==="en"?"Sign here":"Signer ici" variant="secondary" size="sm" icon={Icons.pen} onClick={()=>{ setSelected(c); setSigStep("signing"); setHasDrawn(false); }}/>
+                          <Btn label={lang==="en"?"Send link":"Envoyer le lien"} variant="outline" size="sm" icon={Icons.mail} onClick={()=>{ setSelected(c); setSigStep("send"); setTimeout(()=>setSigStep("signing"),800); }}/>
+                          <Btn label={lang==="en"?"Sign here":"Signer ici"} variant="secondary" size="sm" icon={Icons.pen} onClick={()=>{ setSelected(c); setSigStep("signing"); setHasDrawn(false); }}/>
                         </div>
                       : <span style={{ fontSize:12, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Signé</span>
                     }
@@ -1825,7 +1825,7 @@ function Clients({ clients, setClients, user, lang = "fr" }) {
             <Input label="Prénom" value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
             <Input label="Nom" value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
             <div style={{ gridColumn:"1/-1" }}><Input label="Email" type="email" value={form.email} onChange={v=>setForm({...form,email:v})} placeholder="marie@email.fr"/></div>
-            <Input label=lang==="en"?"Phone":"Téléphone" value={form.phone} onChange={v=>setForm({...form,phone:v})} placeholder="+33 6 …"/>
+            <Input label={lang==="en"?"Phone":"Téléphone"} value={form.phone} onChange={v=>setForm({...form,phone:v})} placeholder="+33 6 …"/>
             <Input label="Expiration du permis" type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
@@ -2495,7 +2495,7 @@ function Pricing({ lang = "fr" }) {
           <div>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
               <span style={{ fontSize:15, fontWeight:700, color:T.text }}>Espace locataire — 100% gratuit</span>
-              <Badge label=lang==="en"?"FREE":"GRATUIT" color={T.success}/>
+              <Badge label={lang==="en"?"FREE":"GRATUIT"} color={T.success}/>
             </div>
             <p style={{ fontSize:12, color:T.sub, lineHeight:1.6, maxWidth:500 }}>Vos clients consultent leurs contrats, signent électroniquement et accèdent à leur historique. Inclus dans tous les plans.</p>
           </div>
@@ -2562,8 +2562,8 @@ function Pricing({ lang = "fr" }) {
         <div style={{ fontSize:24, fontWeight:700, letterSpacing:"-.03em", color:T.text, marginBottom:10 }}>Prêt à piloter votre flotte ?</div>
         <p style={{ fontSize:13, color:T.sub, marginBottom:24, lineHeight:1.7 }}>14 jours gratuits, aucune carte bancaire requise.</p>
         <div style={{ display:"flex", gap:12, justifyContent:"center" }}>
-          <Btn label=lang==="en"?"Start free":"Démarrer gratuitement" variant="primary" size="lg"/>
-          <Btn label=lang==="en"?"See a demo":"Voir une démo" variant="secondary" size="lg"/>
+          <Btn label={lang==="en"?"Start free":"Démarrer gratuitement"} variant="primary" size="lg"/>
+          <Btn label={lang==="en"?"See a demo":"Voir une démo"} variant="secondary" size="lg"/>
         </div>
         <div style={{ marginTop:14, fontSize:11, color:T.muted }}>✓ 14 jours gratuits · ✓ Aucune CB · ✓ Résiliation en 1 clic</div>
       </div>
