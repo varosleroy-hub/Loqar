@@ -7,18 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Map Stripe Payment Link → plan
 const LINK_TO_PLAN = {
-  "https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05": "starter",
-  "https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03": "pro",
-  "https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04": "enterprise",
-};
-
-// Map price IDs → plan (fallback)
-const PRICE_TO_PLAN = {
-  starter: "starter",
-  pro: "pro",
-  enterprise: "enterprise",
+  "https://buy.stripe.com/28E8wPalNdhB9iw2z97kc06": "starter",
+  "https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07": "pro",
+  "https://buy.stripe.com/5kQ9AT79Bcdx1Q4ehR7kc08": "enterprise",
 };
 
 export default async function handler(req, res) {
@@ -45,24 +37,19 @@ export default async function handler(req, res) {
 
     if (!email) return res.json({ received: true });
 
-    // Determine plan from payment link or metadata
     let plan = "starter";
     if (paymentLink) {
-      // Fetch payment link details to get URL
       try {
         const pl = await stripe.paymentLinks.retrieve(paymentLink);
         plan = LINK_TO_PLAN[pl.url] || "starter";
       } catch (e) {
-        // fallback: check metadata
         plan = session.metadata?.plan || "starter";
       }
     }
 
-    // Calculate expiry (1 month from now)
     const expires = new Date();
     expires.setMonth(expires.getMonth() + 1);
 
-    // Update user profile in Supabase
     const { error } = await supabase
       .from("profiles")
       .update({ plan, plan_expires_at: expires.toISOString() })
@@ -79,8 +66,6 @@ export default async function handler(req, res) {
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     const customerId = subscription.customer;
-
-    // Get customer email
     const customer = await stripe.customers.retrieve(customerId);
     const email = customer.email;
 
@@ -89,7 +74,6 @@ export default async function handler(req, res) {
         .from("profiles")
         .update({ plan: "starter", plan_expires_at: null })
         .eq("email", email);
-
       console.log(`⬇️ Plan downgraded: ${email} → starter`);
     }
   }
