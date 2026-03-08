@@ -11,7 +11,7 @@ fr: {
   newPayment:"Nouveau paiement", save:"Enregistrer", cancel:"Annuler",
   delete:"Supprimer", edit:"Modifier", add:"Ajouter",
   search:"Rechercher…", available:"Disponible", rented:"En location",
-  maintenance:"Entretien", inProgress:lang==="en"?"In progress":lang==="en"?"In progress":"En cours", reserved:"Réservée",
+  maintenance:"Entretien", inProgress:"En cours", reserved:"Réservée",
   completed:"Terminée", cancelled:"Annulée", collected:"Encaissé",
   pending:"En attente", late:"En retard", client:"Client", vehicle:"Véhicule",
   start:"Début", end:"Fin", price:"Prix/jour (€)", deposit:"Caution (€)",
