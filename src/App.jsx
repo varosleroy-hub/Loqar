@@ -10,8 +10,8 @@ fr: {
   addVehicle:"Ajouter un véhicule", newClient:"Nouveau client",
   newPayment:"Nouveau paiement", save:"Enregistrer", cancel:"Annuler",
   delete:"Supprimer", edit:"Modifier", add:"Ajouter",
-  search:"Rechercher…", available:lang==="en"?"Available":"Disponible", rented:lang==="en"?"Rented":"En location",
-  maintenance:lang==="en"?"Maintenance":"Entretien", inProgress:lang==="en"?"In progress":lang==="en"?"In progress":"En cours", reserved:"Réservée",
+  search:"Rechercher…", available:"Disponible", rented:"En location",
+  maintenance:"Entretien", inProgress:lang==="en"?"In progress":lang==="en"?"In progress":"En cours", reserved:"Réservée",
   completed:"Terminée", cancelled:"Annulée", collected:"Encaissé",
   pending:"En attente", late:"En retard", client:"Client", vehicle:"Véhicule",
   start:"Début", end:"Fin", price:"Prix/jour (€)", deposit:"Caution (€)",
@@ -20,11 +20,11 @@ fr: {
   revenue:"Revenus encaissés", activeRentals:"Locations actives",
   availableVehicles:"Véhicules disponibles", downloadPDF:"Télécharger PDF",
   contract:"Contrat", invoice:"Facture", inspection:"État des lieux", quote:"Devis",
-  firstName:"Prénom", lastName:"Nom", email:"Email", phone:lang==="en"?"Phone":"Téléphone",
+  firstName:"Prénom", lastName:"Nom", email:"Email", phone:"Téléphone",
   licenseExpiry:"Expiration du permis", type:"Type", individual:"Particulier",
   company:"Entreprise", collect:"Encaisser", livePreview:"Aperçu en direct",
   agencyName:"Nom de l'agence", address:"Adresse", siret:"SIRET",
-  saveProfile:"Sauvegarder le profil", profile:lang==="en"?"Agency profile":"Profil agence",
+  saveProfile:"Sauvegarder le profil", profile:"Profil agence",
   logout:"Déconnexion", planPro:"Plan Pro", fleetStatus:"Flotte",
   totalVehicles:"Total véhicules", noRentals:"Aucune location active",
 },
@@ -2335,7 +2335,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
 }
 
 // ─── PRICING ─────────────────────────────────────────────────────────────────
-const PLANS = [
+const getPlans = (lang="fr") => [
   {
     id:"starter", name:"Starter", tagline:lang==="en"?"Start solo":"Pour démarrer seul",
     monthlyPrice:49, annualPrice:39, annualTotal:468, color:T.blue, colorDim:T.blueDim,
@@ -2374,12 +2374,12 @@ const PLANS = [
   },
 ];
 
-const FAQS_P = [
-  {q:lang==="en"?"Can I change my plan at any time?":"Puis-je changer de plan à tout moment ?", a:"Oui, sans engagement. Passage au plan supérieur immédiat, retour au plan inférieur à la fin de la période en cours."},
-  {q:lang==="en"?"What's included in the 14-day trial?":"Qu'inclut l'essai de 14 jours ?", a:"Accès complet à toutes les fonctionnalités du plan choisi. Aucune carte bancaire requise pour démarrer."},
-  {q:lang==="en"?"Is the tenant plan really free?":"Le plan locataire est-il vraiment gratuit ?", a:"Oui. Vos clients accèdent gratuitement à leur espace : contrats, signature électronique, historique de locations."},
-  {q:lang==="en"?"Are there fees on payments?":"Y a-t-il des frais sur les paiements ?", a:"Une commission de 0,8% s'applique uniquement si vous utilisez l'encaissement intégré via Stripe."},
-  {q:lang==="en"?"Is my data secure?":"Mes données sont-elles sécurisées ?", a:"Hébergement France, chiffrement AES-256, conformité RGPD complète."},
+const getFAQS = (lang="fr") => [
+  {q:lang==="en"?"Can I change my plan at any time?":"Puis-je changer de plan à tout moment ?", a:lang==="en"?"Yes, no commitment. Upgrade immediately, downgrade at end of current period.":"Oui, sans engagement. Passage au plan supérieur immédiat, retour au plan inférieur à la fin de la période en cours."},
+  {q:lang==="en"?"What's included in the 14-day trial?":"Qu'inclut l'essai de 14 jours ?", a:lang==="en"?"Full access to all features of chosen plan. No credit card required.":"Accès complet à toutes les fonctionnalités du plan choisi. Aucune carte bancaire requise pour démarrer."},
+  {q:lang==="en"?"Is the tenant plan really free?":"Le plan locataire est-il vraiment gratuit ?", a:lang==="en"?"Yes. Your clients access their space for free: contracts, e-signature, rental history.":"Oui. Vos clients accèdent gratuitement à leur espace : contrats, signature électronique, historique de locations."},
+  {q:lang==="en"?"Are there fees on payments?":"Y a-t-il des frais sur les paiements ?", a:lang==="en"?"A 0.8% fee applies only if you use integrated Stripe payments.":"Une commission de 0,8% s'applique uniquement si vous utilisez l'encaissement intégré via Stripe."},
+  {q:lang==="en"?"Is my data secure?":"Mes données sont-elles sécurisées ?", a:lang==="en"?"France hosting, AES-256 encryption, full GDPR compliance.":"Hébergement France, chiffrement AES-256, conformité RGPD complète."},
 ];
 
 function PlanCard({ plan, annual }) {
@@ -2510,7 +2510,7 @@ function Pricing({ lang = "fr" }) {
             <thead>
               <tr style={{ background:T.surface }}>
                 <th style={{ padding:"12px 18px", textAlign:"left", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}`, width:"38%" }}>Fonctionnalité</th>
-                {PLANS.map(p=>(
+                {getPlans(lang).map(p=>(
                   <th key={p.id} style={{ padding:"12px 18px", textAlign:"center", fontSize:13, fontWeight:700, color:p.color, borderBottom:`1px solid ${T.border}` }}>{p.name}</th>
                 ))}
               </tr>
@@ -2553,7 +2553,7 @@ function Pricing({ lang = "fr" }) {
       <div style={{ maxWidth:680, marginBottom:48 }}>
         <h2 style={{ fontSize:18, fontWeight:700, letterSpacing:"-.02em", color:T.text, marginBottom:18 }}>Questions fréquentes</h2>
         <Card style={{ padding:"4px 22px" }}>
-          {FAQS_P.map((f,i)=><FaqItem key={i} q={f.q} a={f.a}/>)}
+          {getFAQS(lang).map((f,i)=><FaqItem key={i} q={f.q} a={f.a}/>)}
         </Card>
       </div>
 
