@@ -155,7 +155,7 @@ function UpgradeModal({ onClose, reason }) {
         <h2 style={{ fontSize:20, fontWeight:800, color:T.text, marginBottom:8 }}>Limite atteinte</h2>
         <p style={{ fontSize:14, color:T.sub, lineHeight:1.6, marginBottom:24 }}>{reason}</p>
         <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
-          <button onClick={()=>window.open("https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03","_blank")} style={{ background:T.gold, color:"#0F0D0B", padding:"10px 24px", borderRadius:9, fontSize:14, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+          <button onClick={()=>window.open("https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07","_blank")} style={{ background:T.gold, color:"#0F0D0B", padding:"10px 24px", borderRadius:9, fontSize:14, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit" }}>
             Passer en Pro →
           </button>
           <button onClick={onClose} style={{ background:"transparent", color:T.sub, padding:"10px 16px", borderRadius:9, fontSize:14, border:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit" }}>
@@ -838,7 +838,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
           <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Passer au Pro</span>
         </div>
         <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>Véhicules illimités, emails automatiques.</p>
-        <Btn label="Passer au Pro" variant="primary" size="sm" full onClick={()=>window.open("https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03","_blank")}/>
+        <Btn label="Passer au Pro" variant="primary" size="sm" full onClick={()=>window.open("https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07","_blank")}/>
       </div>
       )}
 
@@ -953,11 +953,11 @@ function LandingPage({ onGetStarted }) {
   ];
 
   const plans = [
-    { name:"Starter", desc:"Pour débuter", price:49, color:T.blue, link:"https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05",
+    { name:"Starter", desc:"Pour débuter", price:49, color:T.blue, link:"https://buy.stripe.com/28E8wPalNdhB9iw2z97kc06",
       features:["5 véhicules","50 locations/mois","Documents PDF","Support email"] },
-    { name:"Pro", desc:"Pour les agences", price:129, color:T.gold, featured:true, link:"https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03",
+    { name:"Pro", desc:"Pour les agences", price:129, color:T.gold, featured:true, link:"https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07",
       features:["Véhicules illimités","Locations illimitées","Emails automatiques","Support prioritaire"] },
-    { name:"Enterprise", desc:"Pour les grandes agences", price:249, color:T.amber, link:"https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04",
+    { name:"Enterprise", desc:"Pour les grandes agences", price:249, color:T.amber, link:"https://buy.stripe.com/5kQ9AT79Bcdx1Q4ehR7kc08",
       features:["Multi-agences","API accès","Marque blanche","Onboarding dédié"] },
   ];
 
@@ -2383,9 +2383,9 @@ function PlanCard({ plan, annual }) {
       <button
         onClick={()=>{
           const links = {
-            starter:    "https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05",
-            pro:        "https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03",
-            enterprise: "https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04",
+            starter:    "https://buy.stripe.com/28E8wPalNdhB9iw2z97kc06",
+            pro:        "https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07",
+            enterprise: "https://buy.stripe.com/5kQ9AT79Bcdx1Q4ehR7kc08",
           };
           window.location.href = links[plan.id] || "mailto:contact@loqar.fr";
         }}
