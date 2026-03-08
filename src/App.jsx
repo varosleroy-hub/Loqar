@@ -1976,7 +1976,7 @@ function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{"— Sélectionner —"}</option>
+                <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
               </select>
             </div>
@@ -2086,37 +2086,37 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
                 <select value={p.clientId} onChange={e=>up("clientId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                  <option value="">{"— Sélectionner —"}</option>
+                  <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                   {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                 </select>
               </div>
 
               {/* Vehicle selector */}
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
+                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lang==="en"?"Vehicle":"Véhicule"}</label>
                 <select value={p.vehicleId} onChange={e=>up("vehicleId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                  <option value="">{"— Sélectionner —"}</option>
+                  <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                   {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
                 </select>
               </div>
 
               <Input label={t.price||"Prix/jour (€)"} value={p.price} onChange={v=>up("price",v)} type="number"/>
               <Input label={t.deposit||"Caution (€)"} value={p.deposit} onChange={v=>up("deposit",v)} type="number"/>
-              <Input label={"Km départ"} value={p.km} onChange={v=>up("km",v)} type="number"/>
-              {(docType==="etat"||docType==="contrat") && <Input label={"Km retour"} value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
+              <Input label={lang==="en"?"Start mileage":"Km départ"} value={p.km} onChange={v=>up("km",v)} type="number"/>
+              {(docType==="etat"||docType==="contrat") && <Input label={lang==="en"?"End mileage":"Km retour"} value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
               <Input label={t.start||"Début"} type="date" value={p.startDate} onChange={v=>up("startDate",v)}/>
               <Input label={t.end||"Fin"} type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
 
               {/* Fuel level */}
               {(docType==="etat"||docType==="contrat") && (
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-                  {[["fuelLevel","Carburant départ"],["fuelReturn","Carburant retour"]].map(([key,lbl])=>(
+                  {[["fuelLevel",lang==="en"?"Fuel out":"Carburant départ"],["fuelReturn",lang==="en"?"Fuel in":"Carburant retour"]].map(([key,lbl])=>(
                     <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                       <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                       <select value={p[key]} onChange={e=>up(key,e.target.value)}
                         style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"8px 10px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none" }}>
-                        {["Plein","3/4","1/2","1/4","Vide"].map(o=><option key={o} value={o}>{o}</option>)}
+                        {(lang==="en"?["Full","3/4","1/2","1/4","Empty"]:["Plein","3/4","1/2","1/4","Vide"]).map(o=><option key={o} value={o}>{o}</option>)}
                       </select>
                     </div>
                   ))}
@@ -2124,7 +2124,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
               )}
 
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Notes / Observations</label>
+                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lang==="en"?"Notes / Comments":"Notes / Observations"}</label>
                 <textarea value={p.notes} onChange={e=>up("notes",e.target.value)} rows={3}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", resize:"vertical", lineHeight:1.6 }}/>
               </div>
@@ -2160,7 +2160,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
-                  {{contrat:"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
+                  {lang==="en"?{contrat:"Rental Contract",facture:"Invoice",etat:"Inspection Report",devis:"Quote"}[docType]:{contrat:"Contrat de Location",facture:"Facture",etat:"État des Lieux",devis:"Devis"}[docType]}
                 </div>
                 <div style={{ fontSize:10, color:"#888", marginTop:3 }}>N° {docNum}</div>
                 <div style={{ fontSize:10, color:"#888" }}>Date : {new Date().toLocaleDateString("fr-FR")}</div>
@@ -2170,40 +2170,40 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
             {/* Parties */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
               <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>Loueur</div>
+                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Lessor":"Loueur"}</div>
                 <div style={{ fontWeight:700, fontSize:13 }}>{agencyName}</div>
                 <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{agencyAddress}</div>
                 <div style={{ fontSize:11, color:"#555" }}>{agencySiret}</div>
               </div>
               <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>Locataire</div>
+                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Tenant":"Locataire"}</div>
                 {selectedClient ? <>
                   <div style={{ fontWeight:700, fontSize:13 }}>{selectedClient.firstName} {selectedClient.lastName}</div>
                   <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{selectedClient.email}</div>
                   <div style={{ fontSize:11, color:"#555" }}>{selectedClient.phone}</div>
                   <div style={{ fontSize:11, color:"#555" }}>Permis : {fmtDate(selectedClient.licenseExpiry)}</div>
-                </> : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>Sélectionnez un client</div>}
+                </> : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>{lang==="en"?"Select a client":"Sélectionnez un client"}</div>}
               </div>
             </div>
 
             {/* Vehicle info */}
             <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8, marginBottom:20 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>Véhicule</div>
+              <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Vehicle":"Véhicule"}</div>
               {selectedVehicle ? (
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
-                  {[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans]].map(([k,v])=>(
+                  {lang==="en"?[["Model",selectedVehicle.name],["Plate",selectedVehicle.plate],["Fuel",selectedVehicle.fuel],["Gearbox",selectedVehicle.trans]]:[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans]].map(([k,v])=>(
                     <div key={k}>
                       <div style={{ fontSize:9, color:"#888" }}>{k}</div>
                       <div style={{ fontWeight:700, fontSize:11 }}>{v||"—"}</div>
                     </div>
                   ))}
                 </div>
-              ) : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>Sélectionnez un véhicule</div>}
+              ) : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>{lang==="en"?"Select a vehicle":"Sélectionnez un véhicule"}</div>}
             </div>
 
             {/* Location details */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
-              {[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} {"jour(s)"}`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
+              {lang==="en"?[["Start",fmtDate(p.startDate)||"—"],["End",fmtDate(p.endDate)||"—"],["Duration",days>0?`${days} day(s)`:"—"],["Start km",p.km?fmt(parseInt(p.km))+" km":"—"]]:[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                   <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
                   <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
@@ -2214,7 +2214,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
             {/* Carburant */}
             {(docType==="etat"||docType==="contrat") && (
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:20 }}>
-                {[["Niveau carburant départ",p.fuelLevel],["Niveau carburant retour",p.fuelReturn]].map(([k,v])=>(
+                {lang==="en"?[["Fuel level out",p.fuelLevel],["Fuel level in",p.fuelReturn]]:[["Niveau carburant départ",p.fuelLevel],["Niveau carburant retour",p.fuelReturn]].map(([k,v])=>(
                   <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                     <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
                     <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
@@ -2226,7 +2226,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
             {/* Checklist état des lieux */}
             {docType==="etat" && (
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"#1A1510", marginBottom:10, textTransform:"uppercase", letterSpacing:".08em" }}>Contrôle de l'état du véhicule</div>
+                <div style={{ fontSize:11, fontWeight:700, color:"#1A1510", marginBottom:10, textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"Vehicle Condition Check":"Contrôle de l'état du véhicule"}</div>
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
                   <thead>
                     <tr style={{ background:"#1A1510" }}>
@@ -2268,21 +2268,21 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
                 </thead>
                 <tbody>
                   <tr style={{ background:"#fff" }}>
-                    <td style={{ padding:"8px 12px", fontSize:12 }}>Location {selectedVehicle?.name||"véhicule"}</td>
+                    <td style={{ padding:"8px 12px", fontSize:12 }}>{lang==="en"?"Rental":"Location"} {selectedVehicle?.name||""}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{days>0?days+"j":"—"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price?Math.round(parseInt(p.price)/1.2)+" €":"—"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price?Math.round(parseInt(p.price)*days*0.2/days)+" €":"—"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, textAlign:"right" }}>{total>0?total+" €":"—"}</td>
                   </tr>
                   <tr style={{ background:"#FAF7F0" }}>
-                    <td style={{ padding:"8px 12px", fontSize:12 }}>Caution (remboursable)</td>
+                    <td style={{ padding:"8px 12px", fontSize:12 }}>{lang==="en"?"Deposit (refundable)":"Caution (remboursable)"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>1</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right", color:"#888" }}>—</td>
-                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right", color:"#888" }}>exonérée</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right", color:"#888" }}>{lang==="en"?"exempt":"exonérée"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, textAlign:"right" }}>{p.deposit?p.deposit+" €":"—"}</td>
                   </tr>
                   <tr style={{ background:"#1A1510" }}>
-                    <td colSpan={4} style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", color:"#EDE5D4", textTransform:"uppercase", letterSpacing:".04em" }}>Total TTC</td>
+                    <td colSpan={4} style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", color:"#EDE5D4", textTransform:"uppercase", letterSpacing:".04em" }}>{lang==="en"?"Total":"Total TTC"}</td>
                     <td style={{ padding:"10px 12px", fontWeight:700, textAlign:"right", fontSize:15, color:"#C9A55A" }}>{total>0?total+" €":"—"}</td>
                   </tr>
                 </tbody>
@@ -2291,7 +2291,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
 
             {p.notes && (
               <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, borderLeft:"3px solid #C9A55A", marginBottom:20 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:4 }}>Notes / Observations</div>
+                <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:4 }}>{lang==="en"?"Notes":"Notes / Observations"}</div>
                 <div style={{ fontSize:12, color:"#444" }}>{p.notes}</div>
               </div>
             )}
@@ -2299,7 +2299,7 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
             {/* Clauses légales contrat */}
             {docType==="contrat" && (
               <div style={{ marginBottom:20, padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
-                <div style={{ fontSize:10, fontWeight:700, color:"#1A1510", marginBottom:8, textTransform:"uppercase", letterSpacing:".08em" }}>Conditions générales de location</div>
+                <div style={{ fontSize:10, fontWeight:700, color:"#1A1510", marginBottom:8, textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"General Rental Terms":"Conditions générales de location"}</div>
                 <div style={{ fontSize:9, color:"#555", lineHeight:1.6 }}>
                   <p style={{ margin:"0 0 6px" }}>1. <strong>Responsabilité</strong> — Le locataire est responsable de tous les dommages causés au véhicule pendant la durée de la location, y compris en cas de vol.</p>
                   <p style={{ margin:"0 0 6px" }}>2. <strong>Carburant</strong> — Le véhicule doit être restitué avec le même niveau de carburant qu'au départ. Tout déficit sera facturé.</p>
@@ -2313,10 +2313,10 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
 
             {/* Signatures */}
             <div style={{ marginTop:30, display:"grid", gridTemplateColumns:"1fr 1fr", gap:40, paddingTop:20, borderTop:"1px solid #DDD5C8" }}>
-              {["Signature du loueur","Signature du locataire"].map(l=>(
+              {(lang==="en"?["Lessor's signature","Tenant's signature"]:["Signature du loueur","Signature du locataire"]).map(l=>(
                 <div key={l}>
                   <div style={{ fontSize:10, color:"#888", marginBottom:4 }}>{l} :</div>
-                  <div style={{ fontSize:9, color:"#AAA", marginBottom:20, fontStyle:"italic" }}>Lu et approuvé</div>
+                  <div style={{ fontSize:9, color:"#AAA", marginBottom:20, fontStyle:"italic" }}>{lang==="en"?"Read and approved":"Lu et approuvé"}</div>
                   <div style={{ height:50, borderBottom:"1px solid #C8B89A" }}/>
                   <div style={{ fontSize:9, color:"#AAA", marginTop:4 }}>Date : _______________</div>
                 </div>
@@ -2727,7 +2727,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{"— Sélectionner —"}</option>
+                <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
               </select>
             </div>
@@ -2736,7 +2736,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
               <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>x.id===e.target.value); if(v) up("pricePerDay",v.price||""); }}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{"— Sélectionner —"}</option>
+                <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
               </select>
             </div>
