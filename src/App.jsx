@@ -643,7 +643,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
 }
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
-function SignaturePage({ lang = "fr" }) {
+function SignaturePage() {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [selected, setSelected] = useState(null);
@@ -2475,7 +2475,7 @@ function FaqItem({ q, a }) {
   );
 }
 
-function Pricing({ lang = "fr" }) {
+function Pricing() {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [annual, setAnnual] = useState(false);
