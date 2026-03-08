@@ -750,7 +750,7 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter" }) {
   const t = TR.fr;
   const lang = "fr";
   const lateP = PAYMENTS.filter(p=>p.status==="en retard").length;
@@ -830,15 +830,17 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
 
       <div style={{ flex:1 }}/>
 
-      {/* Upgrade */}
+      {/* Upgrade - only for starter */}
+      {userPlan === "starter" && (
       <div style={{ background:`linear-gradient(135deg,${T.gold}18,${T.gold}08)`, border:`1px solid ${T.gold}30`, borderRadius:12, padding:14, marginBottom:12 }}>
         <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
           <span style={{ color:T.gold }}>{Icons.zap}</span>
-          <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Plan Pro</span>
+          <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Passer au Pro</span>
         </div>
-        <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>API, rapports avancés et marque blanche.</p>
-        <Btn label={t.lang==="en"?"Upgrade to Pro":"Passer au Pro"} variant="primary" size="sm" full/>
+        <p style={{ fontSize:11, color:T.sub, lineHeight:1.5, marginBottom:10 }}>Véhicules illimités, emails automatiques.</p>
+        <Btn label="Passer au Pro" variant="primary" size="sm" full onClick={()=>window.open("https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03","_blank")}/>
       </div>
+      )}
 
       {/* User */}
       <div style={{ borderTop:`1px solid ${T.border}`, paddingTop:14, display:"flex", alignItems:"center", gap:10 }}>
@@ -1876,7 +1878,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
           </thead>
           <tbody>
             {filtered.length===0 && (
-              <tr><td colSpan={7} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucun paiement — cliquez sur t.newPayment||"Nouveau paiement" pour commencer</td></tr>
+              <tr><td colSpan={7} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucun paiement — cliquez sur "Nouveau paiement" pour commencer</td></tr>
             )}
             {filtered.map(p=>(
               <tr key={p.id} style={{ transition:"background .1s" }}
@@ -2614,7 +2616,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
             </thead>
             <tbody>
               {rentals.length===0 && (
-                <tr><td colSpan={6} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucune location — cliquez sur t.newRental||"Nouvelle location" pour commencer</td></tr>
+                <tr><td colSpan={6} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucune location — cliquez sur "Nouvelle location" pour commencer</td></tr>
               )}
               {rentals.map(r=>(
                 <tr key={r.id} onClick={()=>setSel(sel?.id===r.id?null:r)}
@@ -2840,7 +2842,7 @@ export default function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
