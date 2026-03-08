@@ -734,13 +734,13 @@ function SignaturePage() {
       {/* Contracts list */}
       <Card style={{ padding:0, overflow:"hidden" }}>
         <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Contrats en attente de signature</div>
+          <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Contracts pending signature":"Contrats en attente de signature"}</div>
           <Btn label={lang==="en"?"New contract":"Nouveau contrat"} variant="outline" size="sm" icon={Icons.plus}/>
         </div>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
             <tr style={{ background:T.surface }}>
-              {["Client","Véhicule",t.date||"Date",t.amount||"Montant",t.status||"Statut",t.actions||"Actions"].map(h=>(
+              {[t.client||"Client",lang==="en"?"Vehicle":"Véhicule",t.date||"Date",t.amount||"Montant",t.status||"Statut",t.actions||"Actions"].map(h=>(
                 <th key={h} style={{ padding:"10px 18px", textAlign:"left", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{h}</th>
               ))}
             </tr>
@@ -1905,8 +1905,8 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
   };
 
   return (
-    <Page title={t.payments||"Paiements"} sub="Encaissements, transactions et cautions"
-      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouveau paiement</button>}>
+    <Page title={t.payments||"Paiements"} sub={lang==="en"?"Collections, transactions and deposits":"Encaissements, transactions et cautions"}
+      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>}>
       
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
         {stats.map(s=>{ const c=useCounter(s.value,900); return (
@@ -1932,13 +1932,13 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
-            <tr>{["Client",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
+            <tr>{[t.client||"Client",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
               <th key={l} style={{ textAlign:"left", padding:"10px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
             ))}</tr>
           </thead>
           <tbody>
             {filtered.length===0 && (
-              <tr><td colSpan={7} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucun paiement — cliquez sur "Nouveau paiement" pour commencer</td></tr>
+              <tr><td colSpan={7} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>{lang==="en"?'No payments — click "New payment" to start':'Aucun paiement — cliquez sur "Nouveau paiement" pour commencer'}</td></tr>
             )}
             {filtered.map(p=>(
               <tr key={p.id} style={{ transition:"background .1s" }}
@@ -2649,7 +2649,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
   };
 
   return (
-    <Page title={t.rentals||"Locations"} sub={`${rentals.length} location(s) enregistrée(s)`}
+    <Page title={t.rentals||"Locations"} sub={lang==="en"?`${rentals.length} rental(s) registered`:`${rentals.length} location(s) enregistrée(s)`}
       actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
       
       {/* Stats */}
@@ -2672,13 +2672,13 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
-              <tr>{["Client","Véhicule","Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
+              <tr>{[t.client||"Client",lang==="en"?"Vehicle":"Véhicule",lang==="en"?"Period":"Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
                 <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
               ))}</tr>
             </thead>
             <tbody>
               {rentals.length===0 && (
-                <tr><td colSpan={6} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>Aucune location — cliquez sur "Nouvelle location" pour commencer</td></tr>
+                <tr><td colSpan={6} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>{lang==="en"?'No rentals — click "New rental" to start':'Aucune location — cliquez sur "Nouvelle location" pour commencer'}</td></tr>
               )}
               {rentals.map(r=>(
                 <tr key={r.id} onClick={()=>setSel(sel?.id===r.id?null:r)}
@@ -2719,7 +2719,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
                 <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Détail location</div>
                 <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
               </div>
-              {[["Client",sel.client_name],["Véhicule",sel.vehicle_name],["Début",fmtDate(sel.start_date)],["Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
+              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                   <span style={{ fontSize:12, color:T.muted }}>{k}</span>
                   <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
