@@ -523,7 +523,6 @@ function OnboardingScreen({ onDone, onNav }) {
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
@@ -640,7 +639,6 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
 function SignaturePage() {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
   const [signed, setSigned] = useState([]);
@@ -794,7 +792,6 @@ const NAV = NAV_KEYS; // backward compat
 
 function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], lang = "fr", onLangChange }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const lateP = payments.filter(p=>p.status==="en retard").length;
   return (
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
@@ -1531,7 +1528,6 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
 function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", lang = "fr" }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -1725,7 +1721,6 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", lang = "f
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
 function Clients({ clients, setClients, user, lang = "fr" }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
   const [modal, setModal]  = useState(false);
@@ -1851,7 +1846,6 @@ function Clients({ clients, setClients, user, lang = "fr" }) {
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [filter, setFilter] = useState("all");
   const [modal, setModal]   = useState(false);
   const [form, setForm]     = useState({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
@@ -2025,7 +2019,6 @@ function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
 function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
@@ -2470,7 +2463,6 @@ function FaqItem({ q, a }) {
 
 function Pricing() {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [annual, setAnnual] = useState(false);
   return (
     <Page title="Abonnements" sub="Choisissez le plan adapté à votre activité">
@@ -2583,7 +2575,6 @@ function Pricing() {
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
 function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", lang = "fr" }) {
   const t = TR[lang]||TR.fr;
-  const lang = "fr";
   const [modal, setModal] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [sel, setSel]     = useState(null);
