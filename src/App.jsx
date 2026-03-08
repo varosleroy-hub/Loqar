@@ -132,8 +132,8 @@ const Ic = ({ paths, d, size=16, color="currentColor", sw=1.5 }) => (
 
 // ─── PLAN LIMITS ──────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
-  starter:    { vehicles: 5,  rentals: 50,  emails: false, label: "Starter" },
-  pro:        { vehicles: Infinity, rentals: Infinity, emails: true, label: "Pro" },
+  starter:    { vehicles: 3,  rentals: 50,  emails: false, label: "Starter" },
+  pro:        { vehicles: 15, rentals: Infinity, emails: true, label: "Pro" },
   enterprise: { vehicles: Infinity, rentals: Infinity, emails: true, label: "Enterprise" },
 };
 
@@ -953,11 +953,11 @@ function LandingPage({ onGetStarted }) {
   ];
 
   const plans = [
-    { name:"Starter", desc:"Pour débuter", price:29, color:T.blue, link:"https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05",
+    { name:"Starter", desc:"Pour débuter", price:49, color:T.blue, link:"https://buy.stripe.com/bJe7sL9hJ5P9eCQflV7kc05",
       features:["5 véhicules","50 locations/mois","Documents PDF","Support email"] },
-    { name:"Pro", desc:"Pour les agences", price:79, color:T.gold, featured:true, link:"https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03",
+    { name:"Pro", desc:"Pour les agences", price:129, color:T.gold, featured:true, link:"https://buy.stripe.com/14A14n2Tlcdx8esehR7kc03",
       features:["Véhicules illimités","Locations illimitées","Emails automatiques","Support prioritaire"] },
-    { name:"Enterprise", desc:"Pour les grandes agences", price:199, color:T.amber, link:"https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04",
+    { name:"Enterprise", desc:"Pour les grandes agences", price:249, color:T.amber, link:"https://buy.stripe.com/8x2cN579B7XhcuI8Xx7kc04",
       features:["Multi-agences","API accès","Marque blanche","Onboarding dédié"] },
   ];
 
@@ -2294,7 +2294,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
 const PLANS = [
   {
     id:"starter", name:"Starter", tagline:"Pour démarrer seul",
-    monthlyPrice:29, annualPrice:23, color:T.blue, colorDim:T.blueDim,
+    monthlyPrice:49, annualPrice:39, annualTotal:468, color:T.blue, colorDim:T.blueDim,
     highlight:false, cta:"Commencer l'essai", note:"14 jours · Aucune CB requise",
     features:[
       {t:"Jusqu'à 3 véhicules",ok:true},{t:"Clients illimités",ok:true},
@@ -2306,7 +2306,7 @@ const PLANS = [
   },
   {
     id:"pro", name:"Pro", tagline:"Pour l'agence qui grandit", badge:"Le plus populaire",
-    monthlyPrice:79, annualPrice:63, color:T.gold, colorDim:T.goldDim,
+    monthlyPrice:129, annualPrice:99, annualTotal:1188, color:T.gold, colorDim:T.goldDim,
     highlight:true, cta:"Essayer le Pro", note:"14 jours · Aucune CB requise",
     features:[
       {t:"Jusqu'à 15 véhicules",ok:true},{t:"Clients illimités",ok:true},
@@ -2318,7 +2318,7 @@ const PLANS = [
   },
   {
     id:"enterprise", name:"Enterprise", tagline:"Pour les structures multi-sites",
-    monthlyPrice:199, annualPrice:159, color:T.amber, colorDim:T.amberDim,
+    monthlyPrice:249, annualPrice:199, annualTotal:2388, color:T.amber, colorDim:T.amberDim,
     highlight:false, cta:"Nous contacter", note:"Onboarding personnalisé inclus",
     features:[
       {t:"Véhicules illimités",ok:true},{t:"Clients illimités",ok:true},
@@ -2342,6 +2342,7 @@ function PlanCard({ plan, annual }) {
   const [hov, setHov] = useState(false);
   const price = annual ? plan.annualPrice : plan.monthlyPrice;
   const savings = plan.monthlyPrice - plan.annualPrice;
+  const annualTotal = plan.annualTotal || plan.annualPrice * 12;
   return (
     <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       style={{ position:"relative", background:plan.highlight?T.card2:T.card, border:`1.5px solid ${plan.highlight?plan.color:hov?T.border2:T.border}`, borderRadius:16, padding:"26px 22px", display:"flex", flexDirection:"column", transform:plan.highlight?"scale(1.03)":hov?"translateY(-3px)":"none", boxShadow:plan.highlight?`0 20px 60px ${plan.color}15`:hov?"0 8px 32px #00000040":"none", transition:"all .2s", zIndex:plan.highlight?2:1 }}>
@@ -2362,7 +2363,7 @@ function PlanCard({ plan, annual }) {
         </div>
         {annual
           ? <div style={{ fontSize:11, color:T.success, marginTop:4, fontWeight:600 }}>Économisez {savings}€/mois · {price*12}€/an</div>
-          : <div style={{ fontSize:11, color:T.muted, marginTop:4 }}>ou {plan.annualPrice}€/mois en annuel</div>
+          : <div style={{ fontSize:11, color:T.muted, marginTop:4 }}>ou {plan.annualPrice}€/mois · {plan.annualTotal||plan.annualPrice*12}€/an</div>
         }
       </div>
       <div style={{ height:1, background:T.border, margin:"16px 0" }}/>
@@ -2486,7 +2487,7 @@ function Pricing() {
                 ["Marque blanche","—","—","✓"],
                 ["Support","Email","Email prioritaire","Téléphone dédié"],
                 ["Prix mensuel","49 €","129 €","249 €"],
-                ["Prix annuel","39 €/mois","99 €/mois","199 €/mois"],
+                ["Prix annuel","468 €/an","1 188 €/an","2 388 €/an"],
               ].map(([feat,...vals],ri)=>(
                 <tr key={ri} style={{ background:ri%2===0?"transparent":T.surface }}>
                   <td style={{ padding:"10px 18px", fontSize:12, color:T.sub, borderBottom:`1px solid ${T.border}`, fontWeight:500 }}>{feat}</td>
