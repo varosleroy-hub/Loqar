@@ -529,7 +529,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
   const save = () => { setAgencyProfile(form); setSaved(true); setTimeout(()=>setSaved(false),2500); };
 
   return (
-    <Page title={t.settings||"Paramètres"} sub=lang==="en"?"Your agency info · shown on PDF contracts":"Informations de votre agence · apparaissent sur vos contrats PDF">
+    <Page title={t.settings||"Paramètres"} sub={lang==="en"?"Your agency info · shown on PDF contracts":"Informations de votre agence · apparaissent sur vos contrats PDF"}>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
 
         {/* Infos agence */}
