@@ -10,8 +10,8 @@ fr: {
   addVehicle:"Ajouter un véhicule", newClient:"Nouveau client",
   newPayment:"Nouveau paiement", save:"Enregistrer", cancel:"Annuler",
   delete:"Supprimer", edit:"Modifier", add:"Ajouter",
-  search:"Rechercher…", available:"Disponible", rented:"En location",
-  maintenance:"Entretien", inProgress:"En cours", reserved:"Réservée",
+  search:"Rechercher…", available:lang==="en"?"Available":"Disponible", rented:lang==="en"?"Rented":"En location",
+  maintenance:lang==="en"?"Maintenance":"Entretien", inProgress:lang==="en"?"In progress":lang==="en"?"In progress":"En cours", reserved:"Réservée",
   completed:"Terminée", cancelled:"Annulée", collected:"Encaissé",
   pending:"En attente", late:"En retard", client:"Client", vehicle:"Véhicule",
   start:"Début", end:"Fin", price:"Prix/jour (€)", deposit:"Caution (€)",
@@ -20,11 +20,11 @@ fr: {
   revenue:"Revenus encaissés", activeRentals:"Locations actives",
   availableVehicles:"Véhicules disponibles", downloadPDF:"Télécharger PDF",
   contract:"Contrat", invoice:"Facture", inspection:"État des lieux", quote:"Devis",
-  firstName:"Prénom", lastName:"Nom", email:"Email", phone:"Téléphone",
+  firstName:"Prénom", lastName:"Nom", email:"Email", phone:lang==="en"?"Phone":"Téléphone",
   licenseExpiry:"Expiration du permis", type:"Type", individual:"Particulier",
   company:"Entreprise", collect:"Encaisser", livePreview:"Aperçu en direct",
   agencyName:"Nom de l'agence", address:"Adresse", siret:"SIRET",
-  saveProfile:"Sauvegarder le profil", profile:"Profil agence",
+  saveProfile:"Sauvegarder le profil", profile:lang==="en"?"Agency profile":"Profil agence",
   logout:"Déconnexion", planPro:"Plan Pro", fleetStatus:"Flotte",
   totalVehicles:"Total véhicules", noRentals:"Aucune location active",
 },
@@ -265,10 +265,10 @@ function Badge({ label, color=T.gold, bg, dot=false }) {
 
 function StatusBadge({ status }) {
   const m = {
-    "disponible":  { c:T.success, l:"Disponible" },
-    "en location": { c:T.gold,    l:"En location" },
-    "entretien":   { c:T.red,     l:"Entretien" },
-    "en cours":    { c:T.gold,    l:"En cours" },
+    "disponible":  { c:T.success, l:lang==="en"?"Available":"Disponible" },
+    "en location": { c:T.gold,    l:lang==="en"?"Rented":"En location" },
+    "entretien":   { c:T.red,     l:lang==="en"?"Maintenance":"Entretien" },
+    "en cours":    { c:T.gold,    l:lang==="en"?"In progress":lang==="en"?"In progress":"En cours" },
     "terminée":    { c:T.muted,   l:"Terminée" },
     "réservée":    { c:T.blue,    l:"Réservée" },
     "encaissé":    { c:T.success, l:"Encaissé" },
@@ -529,7 +529,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
   const save = () => { setAgencyProfile(form); setSaved(true); setTimeout(()=>setSaved(false),2500); };
 
   return (
-    <Page title={t.settings||"Paramètres"} sub="Informations de votre agence · apparaissent sur vos contrats PDF">
+    <Page title={t.settings||"Paramètres"} sub=lang==="en"?"Your agency info · shown on PDF contracts":"Informations de votre agence · apparaissent sur vos contrats PDF">
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
 
         {/* Infos agence */}
@@ -557,7 +557,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
+            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],[lang==="en"?"Phone":"Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],[lang==="en"?"Website":"Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                 <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -572,10 +572,10 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
           {/* Coordonnées bancaires */}
           <Card>
             <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:T.gold }}>{Icons.dollar}</span> {"Coordonnées bancaires"}
+              <span style={{ color:T.gold }}>{Icons.dollar}</span> {lang==="en"?"Banking details":"Coordonnées bancaires"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-              {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],["Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
+              {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],[lang==="en"?"Account holder":"Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
                 <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                   <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                   <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -589,7 +589,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
           {/* Mentions légales contrat */}
           <Card>
             <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:T.gold }}>{Icons.doc}</span> {"Mentions contrat"}
+              <span style={{ color:T.gold }}>{Icons.doc}</span> {lang==="en"?"Contract terms":"Mentions contrat"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -618,7 +618,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
                   <div style={{ fontSize:10, color:"#888" }}>{form.address||t.address||"Adresse"}</div>
                 </div>
                 <div style={{ marginLeft:"auto", textAlign:"right" }}>
-                  <div style={{ fontSize:10, color:"#888" }}>{form.phone||"Téléphone"}</div>
+                  <div style={{ fontSize:10, color:"#888" }}>{form.phone||lang==="en"?"Phone":"Téléphone"}</div>
                   <div style={{ fontSize:10, color:"#888" }}>{form.email||"Email"}</div>
                 </div>
               </div>
@@ -656,7 +656,7 @@ function SignaturePage({ lang = "fr" }) {
   const confirmSign = () => { setSigned(s=>[...s,selected?.id]); setSigStep("done"); };
 
   return (
-    <Page title="Signature électronique" sub="Envoyez vos contrats à signer en un clic">
+    <Page title={lang==="en"?"Electronic signature":"Signature électronique"} sub={lang==="en"?"Send contracts for signing in one click":"Envoyez vos contrats à signer en un clic"}>
 
       {sigStep==="signing" && selected && (
         <div style={{ position:"fixed", inset:0, zIndex:500, background:"#00000090", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(6px)" }}>
@@ -708,8 +708,8 @@ function SignaturePage({ lang = "fr" }) {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:24 }}>
         {[
           {l:t.pending||"En attente",v:contracts.filter(c=>c.status==="en attente signature"&&!signed.includes(c.id)).length,c:T.amber,icon:Icons.clock},
-          {l:"Signés",v:contracts.filter(c=>c.status==="signé").length+signed.length,c:T.success,icon:Icons.check},
-          {l:"Total contrats",v:contracts.length,c:T.gold,icon:Icons.doc},
+          {l:lang==="en"?"Signed":"Signés",v:contracts.filter(c=>c.status==="signé").length+signed.length,c:T.success,icon:Icons.check},
+          {l:lang==="en"?"Total contracts":"Total contrats",v:contracts.length,c:T.gold,icon:Icons.doc},
         ].map(s=>(
           <Card key={s.l}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
@@ -727,7 +727,7 @@ function SignaturePage({ lang = "fr" }) {
       <Card style={{ padding:0, overflow:"hidden" }}>
         <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Contrats en attente de signature</div>
-          <Btn label="Nouveau contrat" variant="outline" size="sm" icon={Icons.plus}/>
+          <Btn label=lang==="en"?"New contract":"Nouveau contrat" variant="outline" size="sm" icon={Icons.plus}/>
         </div>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
@@ -759,8 +759,8 @@ function SignaturePage({ lang = "fr" }) {
                   <td style={{ padding:"13px 18px", borderBottom:`1px solid ${T.border}` }}>
                     {!isSigned
                       ? <div style={{ display:"flex", gap:8 }}>
-                          <Btn label="Envoyer le lien" variant="outline" size="sm" icon={Icons.mail} onClick={()=>{ setSelected(c); setSigStep("send"); setTimeout(()=>setSigStep("signing"),800); }}/>
-                          <Btn label="Signer ici" variant="secondary" size="sm" icon={Icons.pen} onClick={()=>{ setSelected(c); setSigStep("signing"); setHasDrawn(false); }}/>
+                          <Btn label=lang==="en"?"Send link":"Envoyer le lien" variant="outline" size="sm" icon={Icons.mail} onClick={()=>{ setSelected(c); setSigStep("send"); setTimeout(()=>setSigStep("signing"),800); }}/>
+                          <Btn label=lang==="en"?"Sign here":"Signer ici" variant="secondary" size="sm" icon={Icons.pen} onClick={()=>{ setSelected(c); setSigStep("signing"); setHasDrawn(false); }}/>
                         </div>
                       : <span style={{ fontSize:12, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Signé</span>
                     }
@@ -850,7 +850,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
       {/* Fleet health */}
       <div style={{ fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", padding:"12px 10px 8px" }}>Flotte</div>
       <div style={{ padding:"12px 14px", background:T.card, border:`1px solid ${T.border}`, borderRadius:12, margin:"0 0 4px" }}>
-        {[{l:t.available||"Disponible",s:"disponible",c:T.success},{l:t.rented||"En location",s:"en location",c:T.gold},{l:t.maintenance||"Entretien",s:"entretien",c:T.red}].map(g=>{
+        {[{l:t.available||lang==="en"?"Available":"Disponible",s:"disponible",c:T.success},{l:t.rented||lang==="en"?"Rented":"En location",s:"en location",c:T.gold},{l:t.maintenance||lang==="en"?"Maintenance":"Entretien",s:"entretien",c:T.red}].map(g=>{
           const count = vehicles.filter(v=>v.status===g.s).length;
           return (
             <div key={g.s} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
@@ -1129,7 +1129,7 @@ function LandingPage({ onGetStarted }) {
                   <div style={{ padding:"9px 14px", background:T.card2, display:"grid", gridTemplateColumns:"1fr 1fr 80px", fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", fontWeight:700 }}>
                     <span>Client</span><span>Véhicule</span><span>Statut</span>
                   </div>
-                  {[["Martin Dupont","Peugeot 308",T.gold,"En cours"],["Sarah Leroy","Renault Clio",T.blue,"Réservée"],["Pierre Martin","BMW 320i",T.success,"Terminée"]].map(([n,v,c,s])=>(
+                  {[["Martin Dupont","Peugeot 308",T.gold,lang==="en"?"In progress":lang==="en"?"In progress":"En cours"],["Sarah Leroy","Renault Clio",T.blue,"Réservée"],["Pierre Martin","BMW 320i",T.success,"Terminée"]].map(([n,v,c,s])=>(
                     <div key={n} style={{ padding:"10px 14px", borderTop:`1px solid ${T.border}`, display:"grid", gridTemplateColumns:"1fr 1fr 80px", alignItems:"center", fontSize:12 }}>
                       <span>{n}</span>
                       <span style={{ color:T.sub }}>{v}</span>
@@ -1336,8 +1336,8 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
   const revCount = useCounter(totalRevenue, 1300);
 
   return (
-    <Page title="Tableau de bord"
-      sub={`${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})} · Bienvenue sur Loqar`}
+    <Page title={lang==="en"?"Dashboard":"Tableau de bord"}
+      sub={`${new Date().toLocaleDateString(lang==="en"?"en-US":"fr-FR",{weekday:"long",day:"numeric",month:"long"})} · ${lang==="en"?"Welcome to Loqar":"Bienvenue sur Loqar"}`}
       actions={<button onClick={()=>onNav&&onNav("rentals")} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
 
       {/* ── Revenue banner ── */}
@@ -1378,9 +1378,9 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
       {/* ── Stats row ── */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:18 }}>
         {[
-          { label:"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:"En cours" },
+          { label:"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:lang==="en"?"In progress":lang==="en"?"In progress":"En cours" },
           { label:"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:`Sur ${(vehicles||[]).length} total` },
-          { label:"Clients",                value:(clients||[]).length,       color:T.blue,    icon:Icons.users,    sub:"Enregistrés" },
+          { label:"Clients",                value:(clients||[]).length,       color:T.blue,    icon:Icons.users,    sub:lang==="en"?"Registered":"Enregistrés" },
           { label:"Paiements en attente",   value:pendingPayments.length,    color:T.amber,   icon:Icons.dollar,   sub:`${pendingPayments.reduce((a,p)=>a+(p.amount||0),0)} €` },
         ].map(s=>{
           const c = useCounter(s.value, 900);
@@ -1412,7 +1412,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
               <button onClick={()=>onNav&&onNav("rentals")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir tout →</button>
             </div>
             {activeRentals.length === 0 ? (
-              <div style={{ textAlign:"center", padding:"32px 0", color:T.muted, fontSize:13 }}>Aucune location active pour le moment</div>
+              <div style={{ textAlign:"center", padding:"32px 0", color:T.muted, fontSize:13 }}>{lang==="en"?"No active rentals":lang==="en"?"No active rentals":"Aucune location active pour le moment"}</div>
             ) : (
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 {activeRentals.slice(0,5).map(r=>{
@@ -1445,9 +1445,9 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
             <h3 style={{ fontSize:15, fontWeight:700, color:T.text, marginBottom:16 }}>Répartition des locations</h3>
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {[
-                { label:"En cours",  value:statusCount["en cours"],  color:T.gold,    total:(rentals||[]).length },
-                { label:"Réservées", value:statusCount["réservée"],  color:T.blue,    total:(rentals||[]).length },
-                { label:"Terminées", value:statusCount["terminée"],  color:T.success, total:(rentals||[]).length },
+                { label:lang==="en"?"In progress":lang==="en"?"In progress":"En cours",  value:statusCount["en cours"],  color:T.gold,    total:(rentals||[]).length },
+                { label:lang==="en"?"Reserved":"Réservées", value:statusCount["réservée"],  color:T.blue,    total:(rentals||[]).length },
+                { label:lang==="en"?"Completed":"Terminées", value:statusCount["terminée"],  color:T.success, total:(rentals||[]).length },
               ].map(s=>(
                 <div key={s.label}>
                   <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:T.sub, marginBottom:5 }}>
@@ -1474,7 +1474,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
               <div key={v.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                 <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, background:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}/>
                 <div style={{ flex:1, fontSize:12, color:T.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v.name||v.make}</div>
-                <span style={{ fontSize:10, fontWeight:600, color:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}>{v.status==="disponible"?"Dispo":v.status==="en location"?"Loué":"Entretien"}</span>
+                <span style={{ fontSize:10, fontWeight:600, color:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}>{v.status==="disponible"?"Dispo":v.status==="en location"?"Loué":lang==="en"?"Maintenance":"Entretien"}</span>
               </div>
             ))}
             {(vehicles||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>Aucun véhicule</div>}
@@ -1498,7 +1498,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
                 </div>
               </div>
             ))}
-            {(payments||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>Aucun paiement</div>}
+            {(payments||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>{lang==="en"?"No payments":"Aucun paiement"}</div>}
           </Card>
 
           {/* Alertes */}
@@ -1577,7 +1577,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", lang = "f
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher un véhicule ou immatriculation…"
             style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
         </div>
-        {[["all","Tous"],["disponible",t.available||"Disponible"],["en location",t.rented||"En location"],["entretien",t.maintenance||"Entretien"]].map(([k,l])=>{
+        {[["all",lang==="en"?"All":"Tous"],["disponible",t.available||lang==="en"?"Available":"Disponible"],["en location",t.rented||lang==="en"?"Rented":"En location"],["entretien",t.maintenance||lang==="en"?"Maintenance":"Entretien"]].map(([k,l])=>{
           const cnt=k==="all"?vehicles.length:vehicles.filter(v=>v.status===k).length;
           const active=filter===k;
           return (
@@ -1825,7 +1825,7 @@ function Clients({ clients, setClients, user, lang = "fr" }) {
             <Input label="Prénom" value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
             <Input label="Nom" value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
             <div style={{ gridColumn:"1/-1" }}><Input label="Email" type="email" value={form.email} onChange={v=>setForm({...form,email:v})} placeholder="marie@email.fr"/></div>
-            <Input label="Téléphone" value={form.phone} onChange={v=>setForm({...form,phone:v})} placeholder="+33 6 …"/>
+            <Input label=lang==="en"?"Phone":"Téléphone" value={form.phone} onChange={v=>setForm({...form,phone:v})} placeholder="+33 6 …"/>
             <Input label="Expiration du permis" type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
@@ -1908,7 +1908,7 @@ function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-        {[["all","Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
+        {[["all",lang==="en"?"All":"Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
           <button key={k} onClick={()=>setFilter(k)}
             style={{ padding:"7px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:filter===k?T.goldDim:T.card, border:`1px solid ${filter===k?T.gold:T.border}`, color:filter===k?T.gold:T.sub, transition:"all .15s", fontFamily:"inherit" }}>{l}</button>
         ))}
@@ -2337,49 +2337,49 @@ function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
 // ─── PRICING ─────────────────────────────────────────────────────────────────
 const PLANS = [
   {
-    id:"starter", name:"Starter", tagline:"Pour démarrer seul",
+    id:"starter", name:"Starter", tagline:lang==="en"?"Start solo":"Pour démarrer seul",
     monthlyPrice:49, annualPrice:39, annualTotal:468, color:T.blue, colorDim:T.blueDim,
-    highlight:false, cta:"Commencer l'essai", note:"14 jours · Aucune CB requise",
+    highlight:false, cta:lang==="en"?"Start free trial":"Commencer l'essai", note:lang==="en"?"14 days · No card required":"14 jours · Aucune CB requise",
     features:[
-      {t:"Jusqu'à 3 véhicules",ok:true},{t:"Clients illimités",ok:true},
-      {t:"Contrats & état des lieux PDF",ok:true},{t:"Suivi des paiements",ok:true},
-      {t:"Vue Gantt du calendrier",ok:true},{t:"Alertes permis expirés",ok:true},
-      {t:"1 utilisateur",ok:true},{t:"Rapports avancés",ok:false},
-      {t:"Export comptable",ok:false},{t:"API & webhooks",ok:false},{t:"Marque blanche",ok:false},
+      {t:lang==="en"?"Up to 3 vehicles":"Jusqu'à 3 véhicules",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
+      {t:lang==="en"?"PDF contracts & inspections":"Contrats & état des lieux PDF",ok:true},{t:lang==="en"?"Payment tracking":"Suivi des paiements",ok:true},
+      {t:lang==="en"?"Gantt calendar view":"Vue Gantt du calendrier",ok:true},{t:lang==="en"?"License expiry alerts":"Alertes permis expirés",ok:true},
+      {t:lang==="en"?"1 user":"1 utilisateur",ok:true},{t:lang==="en"?"Advanced reports":"Rapports avancés",ok:false},
+      {t:lang==="en"?"Accounting export":"Export comptable",ok:false},{t:lang==="en"?"API & webhooks":"API & webhooks",ok:false},{t:lang==="en"?"White label":"Marque blanche",ok:false},
     ],
   },
   {
-    id:"pro", name:"Pro", tagline:"Pour l'agence qui grandit", badge:"Le plus populaire",
+    id:"pro", name:"Pro", tagline:lang==="en"?"For growing agencies":"Pour l'agence qui grandit", badge:lang==="en"?"Most popular":"Le plus populaire",
     monthlyPrice:129, annualPrice:99, annualTotal:1188, color:T.gold, colorDim:T.goldDim,
-    highlight:true, cta:"Essayer le Pro", note:"14 jours · Aucune CB requise",
+    highlight:true, cta:lang==="en"?"Try Pro":"Essayer le Pro", note:lang==="en"?"14 days · No card required":"14 jours · Aucune CB requise",
     features:[
-      {t:"Jusqu'à 15 véhicules",ok:true},{t:"Clients illimités",ok:true},
-      {t:"Contrats & état des lieux PDF",ok:true},{t:"Suivi des paiements",ok:true},
-      {t:"Vue Gantt du calendrier",ok:true},{t:"Alertes permis expirés",ok:true},
-      {t:"Jusqu'à 3 utilisateurs",ok:true},{t:"Rapports avancés",ok:true},
-      {t:"Export comptable CSV",ok:true},{t:"API & webhooks",ok:false},{t:"Marque blanche",ok:false},
+      {t:lang==="en"?"Up to 15 vehicles":"Jusqu'à 15 véhicules",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
+      {t:lang==="en"?"PDF contracts & inspections":"Contrats & état des lieux PDF",ok:true},{t:lang==="en"?"Payment tracking":"Suivi des paiements",ok:true},
+      {t:lang==="en"?"Gantt calendar view":"Vue Gantt du calendrier",ok:true},{t:lang==="en"?"License expiry alerts":"Alertes permis expirés",ok:true},
+      {t:lang==="en"?"Up to 3 users":"Jusqu'à 3 utilisateurs",ok:true},{t:lang==="en"?"Advanced reports":"Rapports avancés",ok:true},
+      {t:lang==="en"?"CSV accounting export":"Export comptable CSV",ok:true},{t:lang==="en"?"API & webhooks":"API & webhooks",ok:false},{t:lang==="en"?"White label":"Marque blanche",ok:false},
     ],
   },
   {
-    id:"enterprise", name:"Enterprise", tagline:"Pour les structures multi-sites",
+    id:"enterprise", name:"Enterprise", tagline:lang==="en"?"For multi-site operations":"Pour les structures multi-sites",
     monthlyPrice:249, annualPrice:199, annualTotal:2388, color:T.amber, colorDim:T.amberDim,
-    highlight:false, cta:"Nous contacter", note:"Onboarding personnalisé inclus",
+    highlight:false, cta:lang==="en"?"Contact us":"Nous contacter", note:lang==="en"?"Personalized onboarding included":"Onboarding personnalisé inclus",
     features:[
-      {t:"Véhicules illimités",ok:true},{t:"Clients illimités",ok:true},
-      {t:"Contrats & état des lieux PDF",ok:true},{t:"Suivi des paiements",ok:true},
-      {t:"Vue Gantt du calendrier",ok:true},{t:"Alertes permis expirés",ok:true},
-      {t:"Utilisateurs illimités",ok:true},{t:"Rapports avancés",ok:true},
-      {t:"Export comptable CSV + ERP",ok:true},{t:"API & webhooks",ok:true},{t:"Marque blanche",ok:true},
+      {t:lang==="en"?"Unlimited vehicles":"Véhicules illimités",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
+      {t:lang==="en"?"PDF contracts & inspections":"Contrats & état des lieux PDF",ok:true},{t:lang==="en"?"Payment tracking":"Suivi des paiements",ok:true},
+      {t:lang==="en"?"Gantt calendar view":"Vue Gantt du calendrier",ok:true},{t:lang==="en"?"License expiry alerts":"Alertes permis expirés",ok:true},
+      {t:lang==="en"?"Unlimited users":"Utilisateurs illimités",ok:true},{t:lang==="en"?"Advanced reports":"Rapports avancés",ok:true},
+      {t:lang==="en"?"CSV + ERP export":"Export comptable CSV + ERP",ok:true},{t:lang==="en"?"API & webhooks":"API & webhooks",ok:true},{t:lang==="en"?"White label":"Marque blanche",ok:true},
     ],
   },
 ];
 
 const FAQS_P = [
-  {q:"Puis-je changer de plan à tout moment ?", a:"Oui, sans engagement. Passage au plan supérieur immédiat, retour au plan inférieur à la fin de la période en cours."},
-  {q:"Qu'inclut l'essai de 14 jours ?", a:"Accès complet à toutes les fonctionnalités du plan choisi. Aucune carte bancaire requise pour démarrer."},
-  {q:"Le plan locataire est-il vraiment gratuit ?", a:"Oui. Vos clients accèdent gratuitement à leur espace : contrats, signature électronique, historique de locations."},
-  {q:"Y a-t-il des frais sur les paiements ?", a:"Une commission de 0,8% s'applique uniquement si vous utilisez l'encaissement intégré via Stripe."},
-  {q:"Mes données sont-elles sécurisées ?", a:"Hébergement France, chiffrement AES-256, conformité RGPD complète."},
+  {q:lang==="en"?"Can I change my plan at any time?":"Puis-je changer de plan à tout moment ?", a:"Oui, sans engagement. Passage au plan supérieur immédiat, retour au plan inférieur à la fin de la période en cours."},
+  {q:lang==="en"?"What's included in the 14-day trial?":"Qu'inclut l'essai de 14 jours ?", a:"Accès complet à toutes les fonctionnalités du plan choisi. Aucune carte bancaire requise pour démarrer."},
+  {q:lang==="en"?"Is the tenant plan really free?":"Le plan locataire est-il vraiment gratuit ?", a:"Oui. Vos clients accèdent gratuitement à leur espace : contrats, signature électronique, historique de locations."},
+  {q:lang==="en"?"Are there fees on payments?":"Y a-t-il des frais sur les paiements ?", a:"Une commission de 0,8% s'applique uniquement si vous utilisez l'encaissement intégré via Stripe."},
+  {q:lang==="en"?"Is my data secure?":"Mes données sont-elles sécurisées ?", a:"Hébergement France, chiffrement AES-256, conformité RGPD complète."},
 ];
 
 function PlanCard({ plan, annual }) {
@@ -2407,7 +2407,7 @@ function PlanCard({ plan, annual }) {
         </div>
         {annual
           ? <div style={{ fontSize:11, color:T.success, marginTop:4, fontWeight:600 }}>Économisez {savings}€/mois · {price*12}€/an</div>
-          : <div style={{ fontSize:11, color:T.muted, marginTop:4 }}>ou {plan.annualPrice}€/mois · {plan.annualTotal||plan.annualPrice*12}€/an</div>
+          : <div style={{ fontSize:11, color:T.muted, marginTop:4 }}>{lang==="en"?"or":"ou"} {plan.annualPrice}€/{lang==="en"?"mo":"mois"} · {plan.annualTotal||plan.annualPrice*12}€/{lang==="en"?"yr":"an"}</div>
         }
       </div>
       <div style={{ height:1, background:T.border, margin:"16px 0" }}/>
@@ -2465,17 +2465,17 @@ function Pricing({ lang = "fr" }) {
   const t = TR[lang]||TR.fr;
   const [annual, setAnnual] = useState(false);
   return (
-    <Page title="Abonnements" sub="Choisissez le plan adapté à votre activité">
+    <Page title={lang==="en"?"Pricing":"Abonnements"} sub={lang==="en"?"Choose the plan that fits your business":"Choisissez le plan adapté à votre activité"}>
       {/* Toggle mensuel / annuel */}
       <div style={{ display:"flex", justifyContent:"center", marginBottom:40 }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, background:T.card, border:`1px solid ${T.border}`, borderRadius:99, padding:"8px 20px" }}>
-          <span style={{ fontSize:13, fontWeight:annual?400:600, color:annual?T.muted:T.text, transition:"all .2s" }}>Mensuel</span>
+          <span style={{ fontSize:13, fontWeight:annual?400:600, color:annual?T.muted:T.text, transition:"all .2s" }}>{ lang==="en"?"Monthly":"Mensuel" }</span>
           <button onClick={()=>setAnnual(!annual)}
             style={{ width:44, height:24, borderRadius:99, background:annual?T.gold:T.border2, border:"none", cursor:"pointer", position:"relative", transition:"background .2s", flexShrink:0 }}>
             <div style={{ width:18, height:18, borderRadius:"50%", background:annual?"#0F0D0B":"#fff", position:"absolute", top:3, left:annual?23:3, transition:"left .2s", boxShadow:"0 1px 4px #00000040" }}/>
           </button>
           <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-            <span style={{ fontSize:13, fontWeight:annual?600:400, color:annual?T.text:T.muted, transition:"all .2s" }}>Annuel</span>
+            <span style={{ fontSize:13, fontWeight:annual?600:400, color:annual?T.text:T.muted, transition:"all .2s" }}>{ lang==="en"?"Annual":"Annuel" }</span>
             <span style={{ background:T.successDim, border:`1px solid ${T.success}25`, color:T.success, fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:99 }}>−24%</span>
           </div>
         </div>
@@ -2495,7 +2495,7 @@ function Pricing({ lang = "fr" }) {
           <div>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
               <span style={{ fontSize:15, fontWeight:700, color:T.text }}>Espace locataire — 100% gratuit</span>
-              <Badge label="GRATUIT" color={T.success}/>
+              <Badge label=lang==="en"?"FREE":"GRATUIT" color={T.success}/>
             </div>
             <p style={{ fontSize:12, color:T.sub, lineHeight:1.6, maxWidth:500 }}>Vos clients consultent leurs contrats, signent électroniquement et accèdent à leur historique. Inclus dans tous les plans.</p>
           </div>
@@ -2519,18 +2519,18 @@ function Pricing({ lang = "fr" }) {
               {[
                 [t.vehicles||"Véhicules","3","15","Illimité"],
                 [t.clients||"Clients","Illimité","Illimité","Illimité"],
-                ["Contrats PDF","✓","✓","✓"],
+                [lang==="en"?"PDF Contracts":"Contrats PDF","✓","✓","✓"],
                 [t.payments||"Paiements","✓","✓","✓"],
-                ["Vue Gantt","✓","✓","✓"],
-                ["Alertes permis","✓","✓","✓"],
-                ["Utilisateurs","1","3","Illimité"],
-                ["Rapports avancés","—","✓","✓"],
-                ["Export comptable","—","CSV","CSV + ERP"],
+                [lang==="en"?"Gantt view":"Vue Gantt","✓","✓","✓"],
+                [lang==="en"?"License alerts":"Alertes permis","✓","✓","✓"],
+                [lang==="en"?"Users":"Utilisateurs","1","3","Illimité"],
+                [lang==="en"?"Advanced reports":"Rapports avancés","—","✓","✓"],
+                [lang==="en"?"Accounting export":"Export comptable","—","CSV","CSV + ERP"],
                 ["API & webhooks","—","—","✓"],
-                ["Marque blanche","—","—","✓"],
-                ["Support","Email","Email prioritaire","Téléphone dédié"],
-                ["Prix mensuel","49 €","129 €","249 €"],
-                ["Prix annuel","468 €/an","1 188 €/an","2 388 €/an"],
+                [lang==="en"?"White label":"Marque blanche","—","—","✓"],
+                [lang==="en"?"Support":"Support","Email","Email prioritaire","Téléphone dédié"],
+                [lang==="en"?"Monthly price":"Prix mensuel","49 €","129 €","249 €"],
+                [lang==="en"?"Annual price":"Prix annuel","468 €/an","1 188 €/an","2 388 €/an"],
               ].map(([feat,...vals],ri)=>(
                 <tr key={ri} style={{ background:ri%2===0?"transparent":T.surface }}>
                   <td style={{ padding:"10px 18px", fontSize:12, color:T.sub, borderBottom:`1px solid ${T.border}`, fontWeight:500 }}>{feat}</td>
@@ -2562,8 +2562,8 @@ function Pricing({ lang = "fr" }) {
         <div style={{ fontSize:24, fontWeight:700, letterSpacing:"-.03em", color:T.text, marginBottom:10 }}>Prêt à piloter votre flotte ?</div>
         <p style={{ fontSize:13, color:T.sub, marginBottom:24, lineHeight:1.7 }}>14 jours gratuits, aucune carte bancaire requise.</p>
         <div style={{ display:"flex", gap:12, justifyContent:"center" }}>
-          <Btn label="Démarrer gratuitement" variant="primary" size="lg"/>
-          <Btn label="Voir une démo" variant="secondary" size="lg"/>
+          <Btn label=lang==="en"?"Start free":"Démarrer gratuitement" variant="primary" size="lg"/>
+          <Btn label=lang==="en"?"See a demo":"Voir une démo" variant="secondary" size="lg"/>
         </div>
         <div style={{ marginTop:14, fontSize:11, color:T.muted }}>✓ 14 jours gratuits · ✓ Aucune CB · ✓ Résiliation en 1 clic</div>
       </div>
@@ -2636,10 +2636,10 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
         {[
-          [t.inProgress||"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
-          [t.reserved||"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
-          [t.completed||"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
-          ["Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
+          [t.inProgress||lang==="en"?"In progress":lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
+          [t.reserved||lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
+          [t.completed||lang==="en"?"Completed":"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
+          [lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
         ].map(([label,value,color])=>(
           <Card key={label}>
             <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{label}</div>
