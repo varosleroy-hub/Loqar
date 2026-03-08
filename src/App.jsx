@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { supabase } from "./supabase.js";
 
 const TR = {
@@ -57,6 +57,11 @@ en: {
 };
 
 
+
+
+// ─── LANG CONTEXT ─────────────────────────────────────────────────────────────
+const LangContext = createContext("fr");
+const useLang = () => useContext(LangContext);
 
 
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
@@ -521,7 +526,8 @@ function OnboardingScreen({ onDone, onNav }) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
-function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
+function Settings({ agencyProfile, setAgencyProfile }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
@@ -638,6 +644,7 @@ function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
 function SignaturePage({ lang = "fr" }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
@@ -790,7 +797,8 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], lang = "fr", onLangChange }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const lateP = payments.filter(p=>p.status==="en retard").length;
   return (
@@ -1233,6 +1241,7 @@ function AuthScreen() {
   };
 
   return (
+    <LangContext.Provider value={lang}>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg }}>
       <div style={{ flex:1, background:T.surface, display:"flex", flexDirection:"column", justifyContent:"space-between", padding:52, position:"relative", overflow:"hidden", borderRight:`1px solid ${T.border}` }}>
         <div style={{ position:"absolute", inset:0, background:`linear-gradient(160deg, ${T.gold}08 0%, transparent 50%)`, pointerEvents:"none" }}/>
@@ -1298,7 +1307,8 @@ function AuthScreen() {
   );
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" }) {
+function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
 
   // Real data calculations
@@ -1526,7 +1536,8 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" })
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", lang = "fr" }) {
+function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
@@ -1719,7 +1730,8 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", lang = "f
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
-function Clients({ clients, setClients, user, lang = "fr" }) {
+function Clients({ clients, setClients, user }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
@@ -1844,7 +1856,8 @@ function Clients({ clients, setClients, user, lang = "fr" }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }) {
+function Payments({ payments, setPayments, clients, rentals, user }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [filter, setFilter] = useState("all");
   const [modal, setModal]   = useState(false);
@@ -2017,7 +2030,8 @@ function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }
 }
 
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
-function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
+function Documents({ agencyProfile, vehicles, clients }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
@@ -2462,6 +2476,7 @@ function FaqItem({ q, a }) {
 }
 
 function Pricing({ lang = "fr" }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [annual, setAnnual] = useState(false);
   return (
@@ -2573,7 +2588,8 @@ function Pricing({ lang = "fr" }) {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", lang = "fr" }) {
+function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter" }) {
+  const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [modal, setModal] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
@@ -2871,23 +2887,24 @@ export default function App() {
   if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
 
   const screens = {
-    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)} lang={lang}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} lang={lang}/>,
-    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} lang={lang}/>,
-    clients:   <Clients   clients={clients}   setClients={setClients} user={user} lang={lang}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} lang={lang}/>,
-    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} lang={lang}/>,
-    signature: <SignaturePage lang={lang}/>,
-    pricing:   <Pricing lang={lang}/>,
-    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} lang={lang}/>,
+    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan}/>,
+    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan}/>,
+    clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
+    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
+    signature: <SignaturePage/>,
+    pricing:   <Pricing/>,
+    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
   };
 
   return (
+    <LangContext.Provider value={lang}>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} lang={lang} onLangChange={handleLang}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
