@@ -2075,7 +2075,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
 
   return (
-    <Page title={t.documents||"Documents"} sub={"Générez contrats, devis et factures légalement conformes"}>
+    <Page title={t.documents||"Documents"} sub={lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
         {docTypes.map(dt=>{
           const active=docType===dt.id;
