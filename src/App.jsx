@@ -130,6 +130,20 @@ const Ic = ({ paths, d, size=16, color="currentColor", sw=1.5 }) => (
   </svg>
 );
 
+
+// ─── SEND EMAIL ───────────────────────────────────────────────────────────────
+const sendEmail = async (type, to, data) => {
+  try {
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, to, data }),
+    });
+  } catch (e) {
+    console.error("Email error:", e);
+  }
+};
+
 // ─── PLAN LIMITS ──────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
   starter:    { vehicles: 3,  rentals: 50,  emails: false, label: "Starter" },
@@ -516,7 +530,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-            {[[t.agencyName||t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
+            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],["Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],["Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                 <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -531,7 +545,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
           {/* Coordonnées bancaires */}
           <Card>
             <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:T.gold }}>{Icons.dollar}</span> {t.lang==="en"?"Banking details":"Coordonnées bancaires"}
+              <span style={{ color:T.gold }}>{Icons.dollar}</span> {"Coordonnées bancaires"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
               {[["IBAN","iban","FR76 3000 6000 0112 3456 7890 189"],["BIC / SWIFT","bic","BNPAFRPP"],["Titulaire","bankHolder","Alexandre Dubois"]].map(([lbl,key,ph])=>(
@@ -548,7 +562,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
           {/* Mentions légales contrat */}
           <Card>
             <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:T.gold }}>{Icons.doc}</span> {t.lang==="en"?"Contract terms":"Mentions contrat"}
+              <span style={{ color:T.gold }}>{Icons.doc}</span> {"Mentions contrat"}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -750,10 +764,10 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter" }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [] }) {
   const t = TR.fr;
   const lang = "fr";
-  const lateP = PAYMENTS.filter(p=>p.status==="en retard").length;
+  const lateP = payments.filter(p=>p.status==="en retard").length;
   return (
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
 
@@ -1530,7 +1544,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher un véhicule ou immatriculation…"
             style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
         </div>
-        {[["all",t.lang==="en"?"All":"Tous"],["disponible",t.available||"Disponible"],["en location",t.rented||"En location"],["entretien",t.maintenance||"Entretien"]].map(([k,l])=>{
+        {[["all","Tous"],["disponible",t.available||"Disponible"],["en location",t.rented||"En location"],["entretien",t.maintenance||"Entretien"]].map(([k,l])=>{
           const cnt=k==="all"?vehicles.length:vehicles.filter(v=>v.status===k).length;
           const active=filter===k;
           return (
@@ -1686,7 +1700,7 @@ function Clients({ clients, setClients, user }) {
       actions={<Btn label={t.newClient||"Nouveau client"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
       <div style={{ position:"relative", marginBottom:16 }}>
         <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t.lang==="en"?"Search client…":"Rechercher un client…"}
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={"Rechercher un client…"}
           style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px 10px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
       </div>
 
@@ -1695,7 +1709,7 @@ function Clients({ clients, setClients, user }) {
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr>
-                {["Client","Contact",t.lang==="en"?"License":t.lang==="en"?"License":"Permis",t.rentals||t.rentals||"Locations",t.lang==="en"?"Total spent":t.lang==="en"?"Total spent":"Total dépensé",t.type||"Type"].map(l=>(
+                {["Client","Contact","Permis",t.rentals||"Locations","Total dépensé",t.type||"Type"].map(l=>(
                   <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
                 ))}
               </tr>
@@ -1863,7 +1877,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-        {[["all",t.lang==="en"?"All":"Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
+        {[["all","Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
           <button key={k} onClick={()=>setFilter(k)}
             style={{ padding:"7px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:filter===k?T.goldDim:T.card, border:`1px solid ${filter===k?T.gold:T.border}`, color:filter===k?T.gold:T.sub, transition:"all .15s", fontFamily:"inherit" }}>{l}</button>
         ))}
@@ -1931,7 +1945,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
+                <option value="">{"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
               </select>
             </div>
@@ -1939,7 +1953,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Location associée</label>
               <select value={form.rentalId} onChange={e=>up("rentalId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{t.lang==="en"?"— Optional —":"— Optionnel —"}</option>
+                <option value="">{"— Optionnel —"}</option>
                 {rentals.map(r=><option key={r.id} value={r.id}>{r.client_name} — {r.vehicle_name}</option>)}
               </select>
             </div>
@@ -2000,10 +2014,10 @@ function Documents({ agencyProfile, vehicles, clients }) {
   };
 
   const docTypes = [
-    {id:"contrat", l:t.contract||"Contrat", d:t.lang==="en"?"Car rental":"Location auto"},
-    {id:"facture", l:t.invoice||t.invoice||"Facture", d:t.lang==="en"?"Official document":"Document officiel"},
-    {id:"etat",    l:t.inspection||"État des lieux", d:t.lang==="en"?"Before / After":"Avant / Après"},
-    {id:"devis",   l:t.quote||"Devis", d:t.lang==="en"?"Price proposal":"Proposition de prix"},
+    {id:"contrat", l:t.contract||"Contrat", d:"Location auto"},
+    {id:"facture", l:t.invoice||"Facture", d:"Document officiel"},
+    {id:"etat",    l:t.inspection||"État des lieux", d:"Avant / Après"},
+    {id:"devis",   l:t.quote||"Devis", d:"Proposition de prix"},
   ];
 
   const checkItems = [
@@ -2015,7 +2029,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
 
   return (
-    <Page title={t.documents||"Documents"} sub={t.lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
+    <Page title={t.documents||"Documents"} sub={"Générez contrats, devis et factures légalement conformes"}>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
         {docTypes.map(dt=>{
           const active=docType===dt.id;
@@ -2042,7 +2056,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
                 <select value={p.clientId} onChange={e=>up("clientId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                  <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
+                  <option value="">{"— Sélectionner —"}</option>
                   {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                 </select>
               </div>
@@ -2052,15 +2066,15 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
                 <select value={p.vehicleId} onChange={e=>up("vehicleId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                  <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
+                  <option value="">{"— Sélectionner —"}</option>
                   {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
                 </select>
               </div>
 
               <Input label={t.price||"Prix/jour (€)"} value={p.price} onChange={v=>up("price",v)} type="number"/>
               <Input label={t.deposit||"Caution (€)"} value={p.deposit} onChange={v=>up("deposit",v)} type="number"/>
-              <Input label={t.lang==="en"?"Start mileage":"Km départ"} value={p.km} onChange={v=>up("km",v)} type="number"/>
-              {(docType==="etat"||docType==="contrat") && <Input label={t.lang==="en"?"End mileage":"Km retour"} value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
+              <Input label={"Km départ"} value={p.km} onChange={v=>up("km",v)} type="number"/>
+              {(docType==="etat"||docType==="contrat") && <Input label={"Km retour"} value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
               <Input label={t.start||"Début"} type="date" value={p.startDate} onChange={v=>up("startDate",v)}/>
               <Input label={t.end||"Fin"} type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
 
@@ -2116,7 +2130,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
-                  {{contrat:t.lang==="en"?"Rental Contract":"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
+                  {{contrat:"Contrat de Location",facture:t.invoice||"Facture",etat:"État des Lieux",devis:t.quote||"Devis"}[docType]}
                 </div>
                 <div style={{ fontSize:10, color:"#888", marginTop:3 }}>N° {docNum}</div>
                 <div style={{ fontSize:10, color:"#888" }}>Date : {new Date().toLocaleDateString("fr-FR")}</div>
@@ -2159,7 +2173,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
 
             {/* Location details */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
-              {[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} {t.lang==="en"?"day(s)":"jour(s)"}`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
+              {[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} {"jour(s)"}`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                   <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
                   <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
@@ -2597,7 +2611,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
           [t.inProgress||"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
           [t.reserved||"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
           [t.completed||"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
-          [t.lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
+          ["Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
         ].map(([label,value,color])=>(
           <Card key={label}>
             <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{label}</div>
@@ -2611,7 +2625,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
-              <tr>{["Client","Véhicule",t.lang==="en"?"Period":t.lang==="en"?"Period":"Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
+              <tr>{["Client","Véhicule","Période",t.total||"Total",t.status||"Statut",t.actions||"Actions"].map(l=>(
                 <th key={l} style={{ textAlign:"left", padding:"11px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
               ))}</tr>
             </thead>
@@ -2685,7 +2699,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
+                <option value="">{"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
               </select>
             </div>
@@ -2694,7 +2708,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
               <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>x.id===e.target.value); if(v) up("pricePerDay",v.price||""); }}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                <option value="">{t.lang==="en"?"— Select —":"— Sélectionner —"}</option>
+                <option value="">{"— Sélectionner —"}</option>
                 {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
               </select>
             </div>
@@ -2703,11 +2717,11 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
             <Input label={t.end||"Fin"} type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
             <Input label={t.price||"Prix/jour (€)"} type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
             <Input label={t.deposit||"Caution (€)"} type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
-            <Input label={t.lang==="en"?"Start mileage":"Km départ"} type="number" value={form.km} onChange={v=>up("km",v)}/>
+            <Input label={"Km départ"} type="number" value={form.km} onChange={v=>up("km",v)}/>
             
             {days>0 && (
               <div style={{ gridColumn:"1/-1", padding:"12px 14px", background:T.goldDim, border:`1px solid ${T.gold}30`, borderRadius:10 }}>
-                <span style={{ fontSize:12, color:T.muted }}>{t.duration||"Durée"} : {days} {t.lang==="en"?"day(s)":"jour(s)"} · </span>
+                <span style={{ fontSize:12, color:T.muted }}>{t.duration||"Durée"} : {days} {"jour(s)"} · </span>
                 <span style={{ fontSize:14, fontWeight:700, color:T.gold }}>Total : {total} €</span>
               </div>
             )}
@@ -2843,7 +2857,7 @@ export default function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
