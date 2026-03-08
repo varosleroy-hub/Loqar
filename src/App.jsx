@@ -211,7 +211,6 @@ function UpgradeModal({ onClose, reason }) {
         </div>
       </div>
     </div>
-    </LangContext.Provider>
   );
 }
 
@@ -2910,5 +2909,8 @@ export default function App() {
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
     </div>
+    </LangContext.Provider>
   );
 }
+
+export default App;
