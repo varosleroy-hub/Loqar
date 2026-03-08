@@ -211,6 +211,7 @@ function UpgradeModal({ onClose, reason }) {
         </div>
       </div>
     </div>
+    </LangContext.Provider>
   );
 }
 
@@ -1241,7 +1242,6 @@ function AuthScreen() {
   };
 
   return (
-    <LangContext.Provider value={lang}>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg }}>
       <div style={{ flex:1, background:T.surface, display:"flex", flexDirection:"column", justifyContent:"space-between", padding:52, position:"relative", overflow:"hidden", borderRight:`1px solid ${T.border}` }}>
         <div style={{ position:"absolute", inset:0, background:`linear-gradient(160deg, ${T.gold}08 0%, transparent 50%)`, pointerEvents:"none" }}/>
@@ -1307,6 +1307,7 @@ function AuthScreen() {
   );
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
+
 function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
@@ -2910,4 +2911,4 @@ export default function App() {
       </main>
     </div>
   );
-} 
+}
