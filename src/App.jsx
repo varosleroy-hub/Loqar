@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase.js";
 
-const TR = { fr: {
+const TR = {
+fr: {
   dashboard:"Tableau de bord", vehicles:"Véhicules", clients:"Clients",
   rentals:"Locations", payments:"Paiements", documents:"Documents",
   signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres",
@@ -26,7 +27,34 @@ const TR = { fr: {
   saveProfile:"Sauvegarder le profil", profile:"Profil agence",
   logout:"Déconnexion", planPro:"Plan Pro", fleetStatus:"Flotte",
   totalVehicles:"Total véhicules", noRentals:"Aucune location active",
-}};
+},
+en: {
+  dashboard:"Dashboard", vehicles:"Vehicles", clients:"Clients",
+  rentals:"Rentals", payments:"Payments", documents:"Documents",
+  signatures:"Signatures", pricing:"Pricing", settings:"Settings",
+  welcome:"Welcome to Loqar", newRental:"New rental",
+  addVehicle:"Add vehicle", newClient:"New client",
+  newPayment:"New payment", save:"Save", cancel:"Cancel",
+  delete:"Delete", edit:"Edit", add:"Add",
+  search:"Search…", available:"Available", rented:"Rented",
+  maintenance:"Maintenance", inProgress:"In progress", reserved:"Reserved",
+  completed:"Completed", cancelled:"Cancelled", collected:"Collected",
+  pending:"Pending", late:"Late", client:"Client", vehicle:"Vehicle",
+  start:"Start", end:"End", price:"Price/day (€)", deposit:"Deposit (€)",
+  km:"Mileage", notes:"Notes", total:"Total", method:"Method",
+  amount:"Amount", date:"Date", status:"Status", actions:"Actions",
+  revenue:"Revenue collected", activeRentals:"Active rentals",
+  availableVehicles:"Available vehicles", downloadPDF:"Download PDF",
+  contract:"Contract", invoice:"Invoice", inspection:"Inspection report", quote:"Quote",
+  firstName:"First name", lastName:"Last name", email:"Email", phone:"Phone",
+  licenseExpiry:"License expiry", type:"Type", individual:"Individual",
+  company:"Company", collect:"Collect", livePreview:"Live preview",
+  agencyName:"Agency name", address:"Address", siret:"Company ID",
+  saveProfile:"Save profile", profile:"Agency profile",
+  logout:"Logout", planPro:"Pro Plan", fleetStatus:"Fleet",
+  totalVehicles:"Total vehicles", noRentals:"No active rentals",
+},
+};
 
 
 
@@ -493,8 +521,8 @@ function OnboardingScreen({ onDone, onNav }) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
-function Settings({ agencyProfile, setAgencyProfile }) {
-  const t = TR.fr;
+function Settings({ agencyProfile, setAgencyProfile, lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
@@ -611,7 +639,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
 function SignaturePage() {
-  const t = TR.fr;
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
@@ -764,8 +792,8 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [] }) {
-  const t = TR.fr;
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], lang = "fr", onLangChange }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const lateP = payments.filter(p=>p.status==="en retard").length;
   return (
@@ -855,6 +883,15 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
         <Btn label="Passer au Pro" variant="primary" size="sm" full onClick={()=>window.open("https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07","_blank")}/>
       </div>
       )}
+
+      {/* Lang toggle */}
+      <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+        {["fr","en"].map(l=>(
+          <button key={l} onClick={()=>onLangChange&&onLangChange(l)} style={{ flex:1, padding:"6px 0", borderRadius:8, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit", background:lang===l?T.goldDim:"transparent", color:lang===l?T.gold:T.muted, border:`1px solid ${lang===l?T.gold+"50":T.border}`, transition:"all .2s", textTransform:"uppercase", letterSpacing:".05em" }}>
+            {l==="fr"?"🇫🇷 FR":"🇬🇧 EN"}
+          </button>
+        ))}
+      </div>
 
       {/* User */}
       <div style={{ borderTop:`1px solid ${T.border}`, paddingTop:14, display:"flex", alignItems:"center", gap:10 }}>
@@ -1264,8 +1301,8 @@ function AuthScreen() {
   );
 }
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
-  const t = TR.fr;
+function Dashboard({ vehicles, rentals, payments, clients, onNav, lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
 
   // Real data calculations
   const totalRevenue = (payments||[]).filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0);
@@ -1492,8 +1529,8 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
-  const t = TR.fr;
+function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
@@ -1686,8 +1723,8 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
-function Clients({ clients, setClients, user }) {
-  const t = TR.fr;
+function Clients({ clients, setClients, user, lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
@@ -1812,8 +1849,8 @@ function Clients({ clients, setClients, user }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user }) {
-  const t = TR.fr;
+function Payments({ payments, setPayments, clients, rentals, user, lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [filter, setFilter] = useState("all");
   const [modal, setModal]   = useState(false);
@@ -1986,8 +2023,8 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
 }
 
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
-function Documents({ agencyProfile, vehicles, clients }) {
-  const t = TR.fr;
+function Documents({ agencyProfile, vehicles, clients, lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
@@ -2432,7 +2469,7 @@ function FaqItem({ q, a }) {
 }
 
 function Pricing() {
-  const t = TR.fr;
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [annual, setAnnual] = useState(false);
   return (
@@ -2544,8 +2581,8 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter" }) {
-  const t = TR.fr;
+function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", lang = "fr" }) {
+  const t = TR[lang]||TR.fr;
   const lang = "fr";
   const [modal, setModal] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
@@ -2757,6 +2794,8 @@ export default function App() {
   const [payments,       setPayments]       = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [lang, setLang] = useState(() => localStorage.getItem("loqar_lang") || "fr");
+  const handleLang = (l) => { setLang(l); localStorage.setItem("loqar_lang", l); };
   const [showSuccess, setShowSuccess] = useState(() => new URLSearchParams(window.location.search).get("success") === "true");
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
@@ -2841,15 +2880,15 @@ export default function App() {
   if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
 
   const screens = {
-    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan}/>,
-    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user}/>,
-    clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
-    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
+    dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)} lang={lang}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} lang={lang}/>,
+    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} lang={lang}/>,
+    clients:   <Clients   clients={clients}   setClients={setClients} user={user} lang={lang}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} lang={lang}/>,
+    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} lang={lang}/>,
     signature: <SignaturePage/>,
     pricing:   <Pricing/>,
-    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
+    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} lang={lang}/>,
   };
 
   return (
@@ -2857,7 +2896,7 @@ export default function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} lang={lang} onLangChange={handleLang}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
