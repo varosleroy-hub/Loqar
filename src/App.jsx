@@ -3,7 +3,7 @@ import { supabase } from "./supabase.js";
 
 const TR = {
 fr: {
-  dashboard:"Tableau de bord", vehicles:"Véhicules", clients:lang==="en"?"Clients":"Clients",
+  dashboard:"Tableau de bord", vehicles:"Véhicules", clients:"Clients",
   rentals:"Locations", payments:"Paiements", documents:"Documents",
   signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres",
   welcome:"Bienvenue sur Loqar", newRental:"Nouvelle location",
@@ -17,8 +17,8 @@ fr: {
   start:"Début", end:"Fin", price:"Prix/jour (€)", deposit:"Caution (€)",
   km:"Kilométrage", notes:"Notes", total:"Total", method:"Méthode",
   amount:"Montant", date:"Date", status:"Statut", actions:"Actions",
-  revenue:"Revenus encaissés", activeRentals:lang==="en"?"Active rentals":"Locations actives",
-  availableVehicles:lang==="en"?"Available vehicles":"Véhicules disponibles", downloadPDF:"Télécharger PDF",
+  revenue:"Revenus encaissés", activeRentals:"Locations actives",
+  availableVehicles:"Véhicules disponibles", downloadPDF:"Télécharger PDF",
   contract:"Contrat", invoice:"Facture", inspection:"État des lieux", quote:"Devis",
   firstName:"Prénom", lastName:"Nom", email:"Email", phone:"Téléphone",
   licenseExpiry:"Expiration du permis", type:"Type", individual:"Particulier",
@@ -29,7 +29,7 @@ fr: {
   totalVehicles:"Total véhicules", noRentals:"Aucune location active",
 },
 en: {
-  dashboard:"Dashboard", vehicles:"Vehicles", clients:lang==="en"?"Clients":"Clients",
+  dashboard:"Dashboard", vehicles:"Vehicles", clients:"Clients",
   rentals:"Rentals", payments:"Payments", documents:"Documents",
   signatures:"Signatures", pricing:"Pricing", settings:"Settings",
   welcome:"Welcome to Loqar", newRental:"New rental",
@@ -269,6 +269,7 @@ function Badge({ label, color=T.gold, bg, dot=false }) {
 }
 
 function StatusBadge({ status }) {
+  const lang = useLang();
   const m = {
     "disponible":  { c:T.success, l:lang==="en"?"Available":"Disponible" },
     "en location": { c:T.gold,    l:lang==="en"?"Rented":"En location" },
@@ -366,7 +367,7 @@ function Card({ children, style={}, onClick }) {
 
 // ─── COMMAND BAR ─────────────────────────────────────────────────────────────
 const CMD = [
-  { cat:"Navigation", items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:lang==="en"?"Clients":"Clients",icon:Icons.users,page:"clients"},{l:"Locations",icon:Icons.calendar,page:"rentals"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
+  { cat:"Navigation", items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:"Clients",icon:Icons.users,page:"clients"},{l:"Locations",icon:Icons.calendar,page:"rentals"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
   { cat:"Actions",    items:[{l:"Ajouter un véhicule",icon:Icons.plus,page:"vehicles"},{l:"Nouveau client",icon:Icons.plus,page:"clients"},{l:"Générer un contrat",icon:Icons.doc,page:"documents"}]},
 ];
 
