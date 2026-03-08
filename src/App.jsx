@@ -3,7 +3,7 @@ import { supabase } from "./supabase.js";
 
 const TR = {
 fr: {
-  dashboard:"Tableau de bord", vehicles:"Véhicules", clients:"Clients",
+  dashboard:"Tableau de bord", vehicles:"Véhicules", clients:lang==="en"?"Clients":"Clients",
   rentals:"Locations", payments:"Paiements", documents:"Documents",
   signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres",
   welcome:"Bienvenue sur Loqar", newRental:"Nouvelle location",
@@ -17,8 +17,8 @@ fr: {
   start:"Début", end:"Fin", price:"Prix/jour (€)", deposit:"Caution (€)",
   km:"Kilométrage", notes:"Notes", total:"Total", method:"Méthode",
   amount:"Montant", date:"Date", status:"Statut", actions:"Actions",
-  revenue:"Revenus encaissés", activeRentals:"Locations actives",
-  availableVehicles:"Véhicules disponibles", downloadPDF:"Télécharger PDF",
+  revenue:"Revenus encaissés", activeRentals:lang==="en"?"Active rentals":"Locations actives",
+  availableVehicles:lang==="en"?"Available vehicles":"Véhicules disponibles", downloadPDF:"Télécharger PDF",
   contract:"Contrat", invoice:"Facture", inspection:"État des lieux", quote:"Devis",
   firstName:"Prénom", lastName:"Nom", email:"Email", phone:"Téléphone",
   licenseExpiry:"Expiration du permis", type:"Type", individual:"Particulier",
@@ -29,7 +29,7 @@ fr: {
   totalVehicles:"Total véhicules", noRentals:"Aucune location active",
 },
 en: {
-  dashboard:"Dashboard", vehicles:"Vehicles", clients:"Clients",
+  dashboard:"Dashboard", vehicles:"Vehicles", clients:lang==="en"?"Clients":"Clients",
   rentals:"Rentals", payments:"Payments", documents:"Documents",
   signatures:"Signatures", pricing:"Pricing", settings:"Settings",
   welcome:"Welcome to Loqar", newRental:"New rental",
@@ -273,7 +273,7 @@ function StatusBadge({ status }) {
     "disponible":  { c:T.success, l:lang==="en"?"Available":"Disponible" },
     "en location": { c:T.gold,    l:lang==="en"?"Rented":"En location" },
     "entretien":   { c:T.red,     l:lang==="en"?"Maintenance":"Entretien" },
-    "en cours":    { c:T.gold,    l:lang==="en"?"In progress":lang==="en"?"In progress":"En cours" },
+    "en cours":    { c:T.gold,    l:lang==="en"?"In progress":"En cours" },
     "terminée":    { c:T.muted,   l:"Terminée" },
     "réservée":    { c:T.blue,    l:"Réservée" },
     "encaissé":    { c:T.success, l:"Encaissé" },
@@ -366,7 +366,7 @@ function Card({ children, style={}, onClick }) {
 
 // ─── COMMAND BAR ─────────────────────────────────────────────────────────────
 const CMD = [
-  { cat:"Navigation", items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:"Clients",icon:Icons.users,page:"clients"},{l:"Locations",icon:Icons.calendar,page:"rentals"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
+  { cat:"Navigation", items:[{l:"Tableau de bord",icon:Icons.dash,page:"dashboard"},{l:"Véhicules",icon:Icons.car,page:"vehicles"},{l:lang==="en"?"Clients":"Clients",icon:Icons.users,page:"clients"},{l:"Locations",icon:Icons.calendar,page:"rentals"},{l:"Paiements",icon:Icons.dollar,page:"payments"},{l:"Documents",icon:Icons.doc,page:"documents"}]},
   { cat:"Actions",    items:[{l:"Ajouter un véhicule",icon:Icons.plus,page:"vehicles"},{l:"Nouveau client",icon:Icons.plus,page:"clients"},{l:"Générer un contrat",icon:Icons.doc,page:"documents"}]},
 ];
 
@@ -1115,7 +1115,7 @@ function LandingPage({ onGetStarted }) {
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"200px 1fr", minHeight:340 }}>
               <div style={{ background:T.surface, borderRight:`1px solid ${T.border}`, padding:"14px 10px", display:"flex", flexDirection:"column", gap:3 }}>
-                {[[Icons.dash,"Tableau de bord",true],[Icons.car,"Véhicules"],[Icons.users,"Clients"],[Icons.calendar,"Locations"],[Icons.dollar,"Paiements"],[Icons.doc,"Documents"]].map(([icon,label,active])=>(
+                {[[Icons.dash,"Tableau de bord",true],[Icons.car,"Véhicules"],[Icons.users,lang==="en"?"Clients":"Clients"],[Icons.calendar,"Locations"],[Icons.dollar,"Paiements"],[Icons.doc,"Documents"]].map(([icon,label,active])=>(
                   <div key={label} style={{ padding:"8px 10px", borderRadius:9, fontSize:12, fontWeight:600, color:active?T.gold:T.sub, background:active?T.goldDim:"transparent", display:"flex", alignItems:"center", gap:9 }}>
                     <div style={{ width:28, height:28, borderRadius:7, background:active?T.goldDim:T.card2, display:"flex", alignItems:"center", justifyContent:"center", color:active?T.gold:T.muted }}>{icon}</div>
                     {label}
@@ -1126,7 +1126,7 @@ function LandingPage({ onGetStarted }) {
                 <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", marginBottom:3 }}>Tableau de bord</div>
                 <div style={{ fontSize:12, color:T.muted, marginBottom:18 }}>Mercredi 5 mars · Bienvenue sur Loqar</div>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:16 }}>
-                  {[["Revenus","4 280 €",T.gold,"↑ +12%"],["Locations","12",T.blue,"actives"],["Véhicules","8",T.success,"disponibles"],["Clients","24",T.amber,"total"]].map(([l,v,c,s])=>(
+                  {[["Revenus","4 280 €",T.gold,"↑ +12%"],["Locations","12",T.blue,"actives"],["Véhicules","8",T.success,"disponibles"],[lang==="en"?"Clients":"Clients","24",T.amber,"total"]].map(([l,v,c,s])=>(
                     <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:11, padding:12 }}>
                       <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", marginBottom:5 }}>{l}</div>
                       <div style={{ fontSize:20, fontWeight:800, color:c, letterSpacing:"-0.03em" }}>{v}</div>
@@ -1138,7 +1138,7 @@ function LandingPage({ onGetStarted }) {
                   <div style={{ padding:"9px 14px", background:T.card2, display:"grid", gridTemplateColumns:"1fr 1fr 80px", fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", fontWeight:700 }}>
                     <span>Client</span><span>Véhicule</span><span>Statut</span>
                   </div>
-                  {[["Martin Dupont","Peugeot 308",T.gold,lang==="en"?"In progress":lang==="en"?"In progress":"En cours"],["Sarah Leroy","Renault Clio",T.blue,"Réservée"],["Pierre Martin","BMW 320i",T.success,"Terminée"]].map(([n,v,c,s])=>(
+                  {[["Martin Dupont","Peugeot 308",T.gold,lang==="en"?"In progress":"En cours"],["Sarah Leroy","Renault Clio",T.blue,"Réservée"],["Pierre Martin","BMW 320i",T.success,"Terminée"]].map(([n,v,c,s])=>(
                     <div key={n} style={{ padding:"10px 14px", borderTop:`1px solid ${T.border}`, display:"grid", gridTemplateColumns:"1fr 1fr 80px", alignItems:"center", fontSize:12 }}>
                       <span>{n}</span>
                       <span style={{ color:T.sub }}>{v}</span>
@@ -1349,31 +1349,31 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
   return (
     <Page title={lang==="en"?"Dashboard":"Tableau de bord"}
       sub={`${new Date().toLocaleDateString(lang==="en"?"en-US":"fr-FR",{weekday:"long",day:"numeric",month:"long"})} · ${lang==="en"?"Welcome to Loqar":"Bienvenue sur Loqar"}`}
-      actions={<button onClick={()=>onNav&&onNav("rentals")} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
+      actions={<button onClick={()=>onNav&&onNav("rentals")} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
 
       {/* ── Revenue banner ── */}
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:18, padding:"28px 32px", marginBottom:18, position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", inset:0, background:`linear-gradient(115deg,${T.gold}08 0%,transparent 55%)`, pointerEvents:"none" }}/>
         <div style={{ position:"relative", display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:24, flexWrap:"wrap" }}>
           <div>
-            <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".12em", textTransform:"uppercase", marginBottom:8 }}>Revenus encaissés · Total</div>
+            <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".12em", textTransform:"uppercase", marginBottom:8 }}>{lang==="en"?"Collected Revenue · Total":"Revenus encaissés · Total"}</div>
             <div style={{ fontSize:56, fontWeight:700, letterSpacing:"-0.04em", color:T.gold, lineHeight:1 }}>
               {fmt(revCount)} <span style={{ fontSize:24, color:T.sub }}>€</span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:10 }}>
               <span style={{ display:"inline-flex", alignItems:"center", gap:5, background:T.success+"18", border:`1px solid ${T.success}30`, color:T.success, padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600 }}>
-                {Icons.trend} {(payments||[]).filter(p=>p.status==="encaissé").length} transactions
+                {Icons.trend} {(payments||[]).filter(p=>p.status==="encaissé").length} {lang==="en"?"transactions":"transactions"}
               </span>
               {latePayments.length > 0 && (
                 <span style={{ display:"inline-flex", alignItems:"center", gap:5, background:T.red+"18", border:`1px solid ${T.red}30`, color:T.red, padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600 }}>
-                  ⚠ {latePayments.length} en retard
+                  ⚠ {latePayments.length} {lang==="en"?"late":"en retard"}
                 </span>
               )}
             </div>
           </div>
           {/* Mini bar chart */}
           <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
-            <div style={{ fontSize:10, color:T.muted, letterSpacing:".1em", textTransform:"uppercase" }}>Revenus 6 derniers mois</div>
+            <div style={{ fontSize:10, color:T.muted, letterSpacing:".1em", textTransform:"uppercase" }}>{lang==="en"?"Revenue last 6 months":"Revenus 6 derniers mois"}</div>
             <div style={{ display:"flex", alignItems:"flex-end", gap:5, height:52 }}>
               {monthData.map((m,i)=>(
                 <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
@@ -1389,10 +1389,10 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
       {/* ── Stats row ── */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:18 }}>
         {[
-          { label:"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:lang==="en"?"In progress":lang==="en"?"In progress":"En cours" },
-          { label:"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:`Sur ${(vehicles||[]).length} total` },
-          { label:"Clients",                value:(clients||[]).length,       color:T.blue,    icon:Icons.users,    sub:lang==="en"?"Registered":"Enregistrés" },
-          { label:"Paiements en attente",   value:pendingPayments.length,    color:T.amber,   icon:Icons.dollar,   sub:`${pendingPayments.reduce((a,p)=>a+(p.amount||0),0)} €` },
+          { label:lang==="en"?"Active rentals":"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:lang==="en"?"In progress":"En cours" },
+          { label:lang==="en"?"Available vehicles":"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:lang==="en"?`Out of ${(vehicles||[]).length} total`:`Sur ${(vehicles||[]).length} total` },
+          { label:lang==="en"?"Clients":"Clients",                value:(clients||[]).length,       color:T.blue,    icon:Icons.users,    sub:lang==="en"?"Registered":"Enregistrés" },
+          { label:lang==="en"?"Pending payments":"Paiements en attente",   value:pendingPayments.length,    color:T.amber,   icon:Icons.dollar,   sub:`${pendingPayments.reduce((a,p)=>a+(p.amount||0),0)} €` },
         ].map(s=>{
           const c = useCounter(s.value, 900);
           return (
@@ -1419,11 +1419,11 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
           {/* Locations actives */}
           <Card>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-              <h3 style={{ fontSize:15, fontWeight:700, color:T.text }}>Locations en cours</h3>
-              <button onClick={()=>onNav&&onNav("rentals")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir tout →</button>
+              <h3 style={{ fontSize:15, fontWeight:700, color:T.text }}>{lang==="en"?"Active rentals":"Locations en cours"}</h3>
+              <button onClick={()=>onNav&&onNav("rentals")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{lang==="en"?"View all →":"Voir tout →"}</button>
             </div>
             {activeRentals.length === 0 ? (
-              <div style={{ textAlign:"center", padding:"32px 0", color:T.muted, fontSize:13 }}>{lang==="en"?"No active rentals":lang==="en"?"No active rentals":"Aucune location active pour le moment"}</div>
+              <div style={{ textAlign:"center", padding:"32px 0", color:T.muted, fontSize:13 }}>{lang==="en"?"No active rentals":"Aucune location active pour le moment"}</div>
             ) : (
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 {activeRentals.slice(0,5).map(r=>{
@@ -1453,10 +1453,10 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 
           {/* Statut locations */}
           <Card>
-            <h3 style={{ fontSize:15, fontWeight:700, color:T.text, marginBottom:16 }}>Répartition des locations</h3>
+            <h3 style={{ fontSize:15, fontWeight:700, color:T.text, marginBottom:16 }}>{lang==="en"?"Rental breakdown":"Répartition des locations"}</h3>
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {[
-                { label:lang==="en"?"In progress":lang==="en"?"In progress":"En cours",  value:statusCount["en cours"],  color:T.gold,    total:(rentals||[]).length },
+                { label:lang==="en"?"In progress":"En cours", value:statusCount["en cours"],  color:T.gold,    total:(rentals||[]).length },
                 { label:lang==="en"?"Reserved":"Réservées", value:statusCount["réservée"],  color:T.blue,    total:(rentals||[]).length },
                 { label:lang==="en"?"Completed":"Terminées", value:statusCount["terminée"],  color:T.success, total:(rentals||[]).length },
               ].map(s=>(
@@ -1478,24 +1478,24 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
           {/* Flotte */}
           <Card>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-              <h3 style={{ fontSize:14, fontWeight:700, color:T.text }}>État de la flotte</h3>
-              <button onClick={()=>onNav&&onNav("vehicles")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir →</button>
+              <h3 style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Fleet status":"État de la flotte"}</h3>
+              <button onClick={()=>onNav&&onNav("vehicles")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{lang==="en"?"View →":"Voir →"}</button>
             </div>
             {(vehicles||[]).slice(0,4).map(v=>(
               <div key={v.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                 <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, background:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}/>
                 <div style={{ flex:1, fontSize:12, color:T.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v.name||v.make}</div>
-                <span style={{ fontSize:10, fontWeight:600, color:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}>{v.status==="disponible"?"Dispo":v.status==="en location"?"Loué":lang==="en"?"Maintenance":"Entretien"}</span>
+                <span style={{ fontSize:10, fontWeight:600, color:v.status==="disponible"?T.success:v.status==="en location"?T.gold:T.red }}>{v.status==="disponible"?lang==="en"?"Avail.":"Dispo":v.status==="en location"?lang==="en"?"Rented":"Loué":lang==="en"?"Maintenance":"Entretien"}</span>
               </div>
             ))}
-            {(vehicles||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>Aucun véhicule</div>}
+            {(vehicles||[]).length === 0 && <div style={{ fontSize:13, color:T.muted, textAlign:"center", padding:"16px 0" }}>{lang==="en"?"No vehicles":"Aucun véhicule"}</div>}
           </Card>
 
           {/* Paiements récents */}
           <Card>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-              <h3 style={{ fontSize:14, fontWeight:700, color:T.text }}>Paiements récents</h3>
-              <button onClick={()=>onNav&&onNav("payments")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Voir →</button>
+              <h3 style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Recent payments":"Paiements récents"}</h3>
+              <button onClick={()=>onNav&&onNav("payments")} style={{ fontSize:12, color:T.gold, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>{lang==="en"?"View →":"Voir →"}</button>
             </div>
             {(payments||[]).slice(0,4).map(p=>(
               <div key={p.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
@@ -1515,17 +1515,17 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
           {/* Alertes */}
           {(latePayments.length > 0 || (vehicles||[]).filter(v=>v.status==="entretien").length > 0) && (
             <Card>
-              <h3 style={{ fontSize:14, fontWeight:700, color:T.text, marginBottom:12 }}>Alertes</h3>
+              <h3 style={{ fontSize:14, fontWeight:700, color:T.text, marginBottom:12 }}>{lang==="en"?"Alerts":"Alertes"}</h3>
               {latePayments.map(p=>(
                 <div key={p.id} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:T.red+"0C", border:`1px solid ${T.red}25` }}>
                   {Icons.alert}
-                  <span style={{ fontSize:12, color:T.sub }}>Paiement en retard · {p.client_name} · {p.amount}€</span>
+                  <span style={{ fontSize:12, color:T.sub }}>{lang==="en"?"Late payment · ":"Paiement en retard · "}{p.client_name} · {p.amount}€</span>
                 </div>
               ))}
               {(vehicles||[]).filter(v=>v.status==="entretien").map(v=>(
                 <div key={v.id} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:T.amber+"0C", border:`1px solid ${T.amber}25` }}>
                   {Icons.alert}
-                  <span style={{ fontSize:12, color:T.sub }}>{v.name} en entretien</span>
+                  <span style={{ fontSize:12, color:T.sub }}>{v.name}{lang==="en"?" in maintenance":" en entretien"}</span>
                 </div>
               ))}
             </Card>
@@ -1741,7 +1741,7 @@ function Clients({ clients, setClients, user }) {
   const filtered = clients.filter(c=>!search||`${c.firstName} ${c.lastName} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <Page title={t.clients||"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
+    <Page title={t.clients||lang==="en"?"Clients":"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
       actions={<Btn label={t.newClient||"Nouveau client"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
       <div style={{ position:"relative", marginBottom:16 }}>
         <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
@@ -2535,7 +2535,7 @@ function Pricing() {
             <tbody>
               {[
                 [t.vehicles||"Véhicules","3","15","Illimité"],
-                [t.clients||"Clients","Illimité","Illimité","Illimité"],
+                [t.clients||lang==="en"?"Clients":"Clients","Illimité","Illimité","Illimité"],
                 [lang==="en"?"PDF Contracts":"Contrats PDF","✓","✓","✓"],
                 [t.payments||"Paiements","✓","✓","✓"],
                 [lang==="en"?"Gantt view":"Vue Gantt","✓","✓","✓"],
@@ -2649,12 +2649,12 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
 
   return (
     <Page title={t.rentals||"Locations"} sub={`${rentals.length} location(s) enregistrée(s)`}
-      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} Nouvelle location</button>}>
+      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
       
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
         {[
-          [t.inProgress||lang==="en"?"In progress":lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
+          [t.inProgress||lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
           [t.reserved||lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
           [t.completed||lang==="en"?"Completed":"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
           [lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
