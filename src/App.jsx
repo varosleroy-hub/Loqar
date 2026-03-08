@@ -2500,7 +2500,7 @@ function Pricing() {
 
       {/* Cartes plans */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48, alignItems:"start" }}>
-        {PLANS.map(plan=><PlanCard key={plan.id} plan={plan} annual={annual}/>)}
+        {getPlans(lang).map(plan=><PlanCard key={plan.id} plan={plan} annual={annual}/>)}
       </div>
 
       {/* Locataire gratuit */}
