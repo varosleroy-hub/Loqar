@@ -1721,7 +1721,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
             <Btn label={t.add||"Ajouter"} onClick={async ()=>{
               const newV = { user_id: user.id, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
-              if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.prix_per_day, cat: data.catégorie }]);
+              if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.catégorie }]);
               setModal(false);
             }} variant="primary"/>
           </div>
@@ -2833,7 +2833,7 @@ export default function App() {
       supabase.from("rentals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("payments").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
     ]);
-    if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.prix_per_day, cat: x.category })));
+    if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.price_per_day, cat: x.category })));
     if (c) setClients(c.map(x => ({ ...x, firstName: x.first_name, lastName: x.last_name, licenseExpiry: x.license_expiry, totalSpent: x.total_spent, locations: x.locations_count })));
     if (r) setRentals(r);
     if (py) setPayments(py);
