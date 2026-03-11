@@ -1719,7 +1719,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.add||"Ajouter"} onClick={async ()=>{
-              const newV = { utilisateur_id: user.id, nom: form.name, plaque: form.plate, carburant: form.fuel, transmission: form.trans, km: parseInt(form.e_per_day: parseInt(form.price)||0, année: parseInt(form.year)||2023, catégorie: form.cat, statut: "disponible", photo_url: form.photo };
+              const newV = { utilisateur_id: user.id, nom: form.name, plaque: form.plate, carburant: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, prix_per_day: parseInt(form.price)||0, année: parseInt(form.year)||2023, catégorie: form.cat, statut: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
               if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.prix_per_day, cat: data.category }]);
               setModal(false);
