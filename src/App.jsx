@@ -1845,7 +1845,7 @@ function Clients({ clients, setClients, user }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.save||"Créer le client"} onClick={async ()=>{
-              const newC = { utilisateur_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
+              const newC = { user_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
               const { data, error } = await supabase.from("clients").insert(newC).select().single();
               if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
               setModal(false);
@@ -1877,7 +1877,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
   const handleAdd = async () => {
     const client = clients.find(c=>String(c.id)===String(form.clientId));
     const newP = {
-      utilisateur_id: user.id,
+      user_id: user.id,
       client_id: form.clientId,
       rental_id: form.rentalId||null,
       client_name: client?`${client.first_name} ${client.last_name}`:"—",
@@ -2611,7 +2611,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
     if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
     const newR = {
-      utilisateur_id: user.id,
+      user_id: user.id,
       client_id: form.clientId,
       vehicle_id: form.vehicleId,
       client_name: `${client.first_name} ${client.last_name}`,
@@ -2620,7 +2620,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       end_date: form.endDate,
       prix_per_day: parseInt(form.pricePerDay)||0,
       deposit: parseInt(form.deposit)||0,
-      total_amount: total,
+      total: total,
       km_start: parseInt(form.km)||0,
       notes: form.notes,
       status: "réservée",
