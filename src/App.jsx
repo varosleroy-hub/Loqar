@@ -1739,7 +1739,7 @@ function Clients({ clients, setClients, user }) {
   const [search, setSearch]= useState("");
   const [modal, setModal]  = useState(false);
   const [form, setForm]    = useState({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:""});
-  const filtered = clients.filter(c=>!search||`${c.firstName} ${c.lastName} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = clients.filter(c=>!search||`${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <Page title={t.clients||lang==="en"?"Clients":"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
@@ -1770,9 +1770,9 @@ function Clients({ clients, setClients, user }) {
                     onMouseLeave={e=>{if(!selected)e.currentTarget.style.background=selected?T.goldDim:"transparent"}}>
                     <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
                       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                        <Avatar name={`${c.firstName} ${c.lastName}`} size={34}/>
+                        <Avatar name={`${c.first_name} ${c.last_name}`} size={34}/>
                         <div>
-                          <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{c.firstName} {c.lastName}</div>
+                          <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{c.first_name} {c.last_name}</div>
                           {c.blacklist && <Badge label="Liste noire" color={T.red}/>}
                         </div>
                       </div>
@@ -1992,7 +1992,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
                 <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
-                {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                {clients.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
               </select>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -2103,7 +2103,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <select value={p.clientId} onChange={e=>up("clientId",e.target.value)}
                   style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
                   <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
-                  {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                  {clients.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
                 </select>
               </div>
 
@@ -2747,7 +2747,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
                 <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
-                {clients.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                {clients.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
               </select>
             </div>
 
