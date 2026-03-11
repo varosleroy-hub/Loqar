@@ -1719,9 +1719,9 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.add||"Ajouter"} onClick={async ()=>{
-              const newV = { user_id: user.id, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
+              const newV = { utilisateur_id: user.id, nom: form.name, plaque: form.plate, carburant: form.fuel, transmission: form.trans, km: parseInt(form.e_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, statut: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
-              if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.category }]);
+              if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.prix_per_day, cat: data.category }]);
               setModal(false);
             }} variant="primary"/>
           </div>
@@ -1845,7 +1845,7 @@ function Clients({ clients, setClients, user }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.save||"Créer le client"} onClick={async ()=>{
-              const newC = { user_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
+              const newC = { utilisateur_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
               const { data, error } = await supabase.from("clients").insert(newC).select().single();
               if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
               setModal(false);
@@ -1877,7 +1877,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
   const handleAdd = async () => {
     const client = clients.find(c=>c.id===form.clientId);
     const newP = {
-      user_id: user.id,
+      utilisateur_id: user.id,
       client_id: form.clientId,
       rental_id: form.rentalId||null,
       client_name: client?`${client.firstName} ${client.lastName}`:"—",
@@ -2611,14 +2611,14 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
     if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
     const newR = {
-      user_id: user.id,
+      utilisateur_id: user.id,
       client_id: form.clientId,
       vehicle_id: form.vehicleId,
       client_name: `${client.firstName} ${client.lastName}`,
       vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
       start_date: form.startDate,
       end_date: form.endDate,
-      price_per_day: parseInt(form.pricePerDay)||0,
+      prix_per_day: parseInt(form.pricePerDay)||0,
       deposit: parseInt(form.deposit)||0,
       total_amount: total,
       km_start: parseInt(form.km)||0,
@@ -2719,7 +2719,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
                 <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Détail location</div>
                 <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
               </div>
-              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
+              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.prix_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                   <span style={{ fontSize:12, color:T.muted }}>{k}</span>
                   <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
@@ -2833,7 +2833,7 @@ export default function App() {
       supabase.from("rentals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       supabase.from("payments").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
     ]);
-    if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.price_per_day, cat: x.category })));
+    if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.prix_per_day, cat: x.category })));
     if (c) setClients(c.map(x => ({ ...x, firstName: x.first_name, lastName: x.last_name, licenseExpiry: x.license_expiry, totalSpent: x.total_spent, locations: x.locations_count })));
     if (r) setRentals(r);
     if (py) setPayments(py);
