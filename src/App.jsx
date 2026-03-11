@@ -1880,7 +1880,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
       utilisateur_id: user.id,
       client_id: form.clientId,
       rental_id: form.rentalId||null,
-      client_name: client?`${client.firstName} ${client.lastName}`:"—",
+      client_name: client?`${client.first_name} ${client.last_name}`:"—",
       amount: parseInt(form.amount)||0,
       deposit: parseInt(form.deposit)||0,
       method: form.method,
@@ -2614,7 +2614,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       utilisateur_id: user.id,
       client_id: form.clientId,
       vehicle_id: form.vehicleId,
-      client_name: `${client.firstName} ${client.lastName}`,
+      client_name: `${client.first_name} ${client.last_name}`,
       vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
       start_date: form.startDate,
       end_date: form.endDate,
@@ -2629,7 +2629,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     if (data) {
       setRentals([data, ...rentals]);
       const cl = clients.find(c=>c.id===form.clientId);
-      if (cl?.email) sendEmail("rental", cl.email, { clientName: cl.firstName+" "+cl.lastName, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
+      if (cl?.email) sendEmail("rental", cl.email, { clientName: cl.first_name+" "+cl.last_name, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
     }
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
