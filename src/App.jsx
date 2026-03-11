@@ -1875,7 +1875,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
   ];
 
   const handleAdd = async () => {
-    const client = clients.find(c=>c.id===form.clientId);
+    const client = clients.find(c=>String(c.id)===String(form.clientId));
     const newP = {
       utilisateur_id: user.id,
       client_id: form.clientId,
@@ -2606,8 +2606,8 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
   const statusColor = { "en cours":T.success, "terminée":T.muted, "annulée":T.red, "réservée":T.amber };
 
   const handleAdd = async () => {
-    const client  = clients.find(c=>c.id===form.clientId);
-    const vehicle = vehicles.find(v=>v.id===form.vehicleId);
+    const client  = clients.find(c=>String(c.id)===String(form.clientId));
+    const vehicle = vehicles.find(v=>String(v.id)===String(form.vehicleId));
     if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
     if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
     const newR = {
@@ -2628,7 +2628,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
     if (data) {
       setRentals([data, ...rentals]);
-      const cl = clients.find(c=>c.id===form.clientId);
+      const cl = clients.find(c=>String(c.id)===String(form.clientId));
       if (cl?.email) sendEmail("rental", cl.email, { clientName: cl.first_name+" "+cl.last_name, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
     }
     setModal(false);
