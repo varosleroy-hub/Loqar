@@ -2037,6 +2037,16 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const t = TR[lang]||TR.fr;
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
+  const [elementPhotos, setElementPhotos] = useState({});
+  const handleElementPhoto = async (element, file) => {
+    if (!file) return;
+    const path = `inspections/${Date.now()}_${element}.${file.name.split('.').pop()}`;
+    const { data } = await supabase.storage.from('photos').upload(path, file, { upsert: true });
+    if (data) {
+      const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(path);
+      setElementPhotos(prev => ({ ...prev, [element]: publicUrl }));
+    }
+  };
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
   const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
   const total = (parseInt(p.price)||0)*(days>0?days:0);
