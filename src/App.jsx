@@ -1441,7 +1441,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
                         <div style={{ fontSize:11, color:T.muted }}>{r.vehicle_name||"—"}</div>
                       </div>
                       <div style={{ textAlign:"right" }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>{r.total_amount||0} €</div>
+                        <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>{r.total||0} €</div>
                         {dl !== null && <div style={{ fontSize:10, color:dl<=2?T.red:T.muted }}>J-{dl}</div>}
                       </div>
                       <StatusBadge status={r.status}/>
@@ -2658,7 +2658,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
           [t.inProgress||lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
           [t.reserved||lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
           [t.completed||lang==="en"?"Completed":"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
-          [lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total_amount||0),0)+"€", T.gold],
+          [lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total||0),0)+"€", T.gold],
         ].map(([label,value,color])=>(
           <Card key={label}>
             <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{label}</div>
@@ -2692,7 +2692,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
                   <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.sub }}>
                     {fmtDate(r.start_date)} → {fmtDate(r.end_date)}
                   </td>
-                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:14, fontWeight:700, color:T.gold }}>{fmt(r.total_amount)} €</td>
+                  <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:14, fontWeight:700, color:T.gold }}>{fmt(r.total)} €</td>
                   <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
                     <select value={r.status} onClick={e=>e.stopPropagation()} onChange={e=>handleStatusChange(r.id,e.target.value)}
                       style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"4px 8px", color:statusColor[r.status]||T.text, fontSize:12, fontFamily:"inherit", outline:"none", cursor:"pointer" }}>
@@ -2719,7 +2719,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
                 <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Détail location</div>
                 <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
               </div>
-              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.prix_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total_amount+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
+              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.prix_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                   <span style={{ fontSize:12, color:T.muted }}>{k}</span>
                   <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
