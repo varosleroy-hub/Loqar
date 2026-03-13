@@ -2083,6 +2083,16 @@ function Documents({ agencyProfile, vehicles, clients }) {
   ];
   const [checks, setChecks] = useState({});
   const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
+  const [elementPhotos, setElementPhotos] = useState({});
+  const handleElementPhoto = async (element, file) => {
+    if (!file) return;
+    const path = `inspections/${Date.now()}_${element}.${file.name.split('.').pop()}`;
+    const { data } = await supabase.storage.from('photos').upload(path, file, { upsert: true });
+    if (data) {
+      const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(path);
+      setElementPhotos(prev => ({ ...prev, [element]: publicUrl }));
+    }
+  };
 
   return (
     <Page title={t.documents||"Documents"} sub={lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
