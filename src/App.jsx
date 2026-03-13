@@ -2047,6 +2047,52 @@ function Documents({ agencyProfile, vehicles, clients }) {
       setElementPhotos(prev => ({ ...prev, [element]: publicUrl }));
     }
   };
+  const up = (k,v) => setP(prev=>({...prev,[k]:v}));
+  const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
+  const total = (parseInt(p.price)||0)*(days>0?days:0);
+  const tva   = Math.round(total * 0.20);
+  const totalHT = total - tva;
+  const selectedClient  = clients.find(c=>c.id===p.clientId)||null;
+  const selectedVehicle = vehicles.find(v=>v.id===p.vehicleId)||null;
+  const agencyName = agencyProfile?.agency_name || "Mon Agence";
+  const agencyAddress = agencyProfile?.address || "Adresse de l'agence";
+  const agencySiret = agencyProfile?.siret || "SIRET : XX XXX XXX XXXXX";
+  const docNum = `LQ-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
+
+  const printDoc = () => {
+    const el = document.getElementById("doc-preview");
+    if (!el) return;
+    const w = window.open("","_blank");
+    w.document.write(`<html><head><title>Document Loqar</title><style>body{margin:0;font-family:Arial,sans-serif;color:#1A1510;}@media print{body{margin:0}}</style></head><body>${el.innerHTML}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(()=>{ w.print(); w.close(); }, 400);
+  };
+
+  const docTypes = [
+    {id:"contrat", l:t.contract||"Contrat", d:"Location auto"},
+    {id:"facture", l:t.invoice||"Facture", d:"Document officiel"},
+    {id:"etat",    l:t.inspection||"État des lieux", d:"Avant / Après"},
+    {id:"devis",   l:t.quote||"Devis", d:"Proposition de prix"},
+  ];
+
+  const checkItems = [
+    "Carrosserie avant","Carrosserie arrière","Carrosserie gauche","Carrosserie droite",
+    "Toit","Pare-brise","Vitres","Rétroviseurs","Pneus et jantes","Intérieur / Sièges",
+    t.dashboard||"Tableau de bord","Coffre","Roue de secours","Documents du véhicule","Clés"
+  ];
+  const [checks, setChecks] = useState({});
+  const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
+  const [elementPhotos, setElementPhotos] = useState({});
+  const handleElementPhoto = async (element, file) => {
+    if (!file) return;
+    const path = `inspections/${Date.now()}_${element}.${file.name.split('.').pop()}`;
+    const { data } = await supabase.storage.from('photos').upload(path, file, { upsert: true });
+    if (data) {
+      const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(path);
+      setElementPhotos(prev => ({ ...prev, [element]: publicUrl }));
+    }
+  };
 
   return (
     <Page title={t.documents||"Documents"} sub={lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
