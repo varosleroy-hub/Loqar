@@ -1043,13 +1043,13 @@ function LandingPage({ onGetStarted }) {
       <section style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", padding:"100px 24px 80px", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse 70% 50% at 50% 10%, ${T.goldDim}, transparent)`, pointerEvents:"none" }}/>
         <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:99, padding:"5px 14px", fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:28 }}>
-          🚗 &nbsp;Logiciel de gestion de location auto
+          ⚡ LE MOUVEMENT DES LOUEURS AMBITIEUX
         </div>
         <h1 style={{ fontSize:"clamp(38px,6vw,70px)", fontWeight:800, letterSpacing:"-0.04em", lineHeight:1.06, maxWidth:760, marginBottom:20 }}>
           Gérez <span style={{ color:T.gold }}>moins.</span> Louez plus.
         </h1>
         <p style={{ fontSize:"clamp(15px,1.8vw,17px)", color:T.sub, maxWidth:480, lineHeight:1.7, marginBottom:40 }}>
-          Loqar centralise votre flotte, vos clients, vos contrats et vos paiements dans une seule plateforme intuitive.
+         Pendant que tu gères des papiers, tes concurrents grandissent. Loqar automatise tout — pour que toi, tu construises quelque chose de grand.
         </p>
         <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center" }}>
           <button onClick={onGetStarted} style={{ background:T.gold, color:"#0F0D0B", padding:"11px 26px", borderRadius:9, fontSize:14, fontWeight:700, border:"none", cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}
