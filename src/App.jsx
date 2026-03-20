@@ -1046,7 +1046,7 @@ function LandingPage({ onGetStarted }) {
           🚗 &nbsp;Logiciel de gestion de location auto
         </div>
         <h1 style={{ fontSize:"clamp(38px,6vw,70px)", fontWeight:800, letterSpacing:"-0.04em", lineHeight:1.06, maxWidth:760, marginBottom:20 }}>
-          Gérez votre agence de location <span style={{ color:T.gold }}>sans effort</span>
+          Gérez <span style={{ color:T.gold }}>moins.</span> Louez plus.
         </h1>
         <p style={{ fontSize:"clamp(15px,1.8vw,17px)", color:T.sub, maxWidth:480, lineHeight:1.7, marginBottom:40 }}>
           Loqar centralise votre flotte, vos clients, vos contrats et vos paiements dans une seule plateforme intuitive.
