@@ -1045,7 +1045,7 @@ function LandingPage({ onGetStarted }) {
         <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:99, padding:"5px 14px", fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:28 }}>
           ⚡ LE MOUVEMENT DES LOUEURS AMBITIEUX
         </div>
-        <h1 style={{ fontSize:"clamp(38px,6vw,70px)", fontWeight:800, letterSpacing:"-0.04em", lineHeight:1.06, maxWidth:760, marginBottom:20 }}>
+        <h1 style={{ fontSize:"clamp(38px,6vw,70px)", fontWeight:800,fontFamily:"'Barlow Condensed',sans-serif", letterSpacing:"-0.04em", lineHeight:1.06, maxWidth:760, marginBottom:20 }}>
           Gérez <span style={{ color:T.gold }}>moins.</span> Louez plus.
         </h1>
         <p style={{ fontSize:"clamp(15px,1.8vw,17px)", color:T.sub, maxWidth:480, lineHeight:1.7, marginBottom:40 }}>
