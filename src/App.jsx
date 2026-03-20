@@ -1041,7 +1041,7 @@ function LandingPage({ onGetStarted }) {
 
       {/* HERO */}
       <section style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", padding:"100px 24px 80px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse 70% 50% at 50% 10%, ${T.goldDim}, transparent)`, pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse 110% 70% at 50% 0%, #1F1608 0%, #080705 65%) at 50% 10%, ${T.goldDim}, transparent)`, pointerEvents:"none" }}/>
         <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:99, padding:"5px 14px", fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:28 }}>
           ⚡ LE MOUVEMENT DES LOUEURS AMBITIEUX
         </div>
@@ -1058,7 +1058,7 @@ function LandingPage({ onGetStarted }) {
             Commencer gratuitement →
           </button>
           <button onClick={onGetStarted} style={{ background:"transparent", color:T.sub, padding:"10px 22px", borderRadius:9, fontSize:14, fontWeight:600, border:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit" }}>
-            Voir la démo
+            Comment ça marche ▶
           </button>
         </div>
         <div style={{ display:"flex", gap:24, marginTop:44, flexWrap:"wrap", justifyContent:"center" }}>
