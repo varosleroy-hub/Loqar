@@ -665,9 +665,9 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
     if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
     if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
     const newR = {
-      user_id: user.id,
-      client_id: form.clientId,
-      vehicle_id: form.vehicleId,
+      user_id: user?.id,
+      client_id: parseInt(form.clientId)||form.clientId,
+      vehicle_id: parseInt(form.vehicleId)||form.vehicleId,
       client_name: `${client.first_name} ${client.last_name}`,
       vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
       start_date: form.startDate,
@@ -679,7 +679,8 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       notes: form.notes,
       status: "réservée",
     };
-    const { data } = await supabase.from("rentals").insert(newR).select().single();
+    const { data, error } = await supabase.from("rentals").insert(newR).select().single();
+    if (error) { alert("Erreur : " + error.message); return; }
     if (data && setRentals) setRentals(prev => [data, ...prev]);
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
