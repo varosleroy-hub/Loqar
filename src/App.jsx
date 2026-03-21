@@ -644,7 +644,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
 }
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
-function SignaturePage() {
+function SignaturePage({ rentals = [], clients = [], vehicles = [] }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [selected, setSelected] = useState(null);
@@ -654,8 +654,16 @@ function SignaturePage() {
   const [hasDrawn, setHasDrawn] = useState(false);
   const canvasRef = useRef(null);
 
-  const contracts = [
-  ];
+  const contracts = rentals
+    .filter(r => r.status === "réservée" || r.status === "en cours" || r.status === "terminée")
+    .map(r => ({
+      id: r.id,
+      client: r.client_name || "",
+      vehicle: r.vehicle_name || "",
+      date: r.start_date ? fmtDate(r.start_date) : "—",
+      amount: r.total || 0,
+      status: r.status === "terminée" ? "signé" : "en attente signature",
+    }));
 
   const startDraw = e => { setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(e.clientX-r.left,e.clientY-r.top); };
   const draw = e => { if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2; ctx.lineCap="round"; ctx.lineTo(e.clientX-r.left,e.clientY-r.top); ctx.stroke(); };
@@ -2907,7 +2915,7 @@ export default function App() {
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
-    signature: <SignaturePage/>,
+    signature: <SignaturePage rentals={rentals} clients={clients} vehicles={vehicles}/>,
     pricing:   <Pricing/>,
     settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
   };
