@@ -704,7 +704,8 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
   const confirmSign = () => { setSigned(s=>[...s,selected?.id]); setSigStep("done"); };
 
   return (
-    <Page title={lang==="en"?"Electronic signature":"Signature électronique"} sub={lang==="en"?"Send contracts for signing in one click":"Envoyez vos contrats à signer en un clic"}>
+    <Page title={lang==="en"?"Electronic signature":"Signature électronique"} sub={lang==="en"?"Send contracts for signing in one click":"Envoyez vos contrats à signer en un clic"}
+      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New contract":"Nouveau contrat"}</button>}>
 
       {sigStep==="signing" && selected && (
         <div style={{ position:"fixed", inset:0, zIndex:500, background:"#00000090", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(6px)" }}>
@@ -773,9 +774,8 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
 
       {/* Contracts list */}
       <Card style={{ padding:0, overflow:"hidden" }}>
-        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}` }}>
           <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Contracts pending signature":"Contrats en attente de signature"}</div>
-          <Btn label={lang==="en"?"New contract":"Nouveau contrat"} variant="outline" size="sm" icon={Icons.plus} onClick={()=>setModal(true)}/>
         </div>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
