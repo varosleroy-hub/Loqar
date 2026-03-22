@@ -697,8 +697,9 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       status: r.status === "terminée" ? "signé" : "en attente signature",
     }));
 
-  const startDraw = e => { setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(e.clientX-r.left,e.clientY-r.top); };
-  const draw = e => { if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2; ctx.lineCap="round"; ctx.lineTo(e.clientX-r.left,e.clientY-r.top); ctx.stroke(); };
+  const getXY = e => { const t=e.touches?.[0]??e; return {x:t.clientX,y:t.clientY}; };
+  const startDraw = e => { e.preventDefault?.(); setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(x-r.left,y-r.top); };
+  const draw = e => { e.preventDefault?.(); if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2; ctx.lineCap="round"; ctx.lineTo(x-r.left,y-r.top); ctx.stroke(); };
   const endDraw = () => setDrawing(false);
   const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
   const confirmSign = () => { setSigned(s=>[...s,selected?.id]); setSigStep("done"); };
@@ -726,7 +727,8 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
               <div style={{ position:"relative", background:"#FDFBF7", borderRadius:10, border:`2px dashed ${hasDrawn?T.gold:T.border2}`, overflow:"hidden", transition:"border-color .2s" }}>
                 <canvas ref={canvasRef} width={436} height={120}
                   onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
-                  style={{ display:"block", cursor:"crosshair", width:"100%", height:120 }}/>
+                  onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
+                  style={{ display:"block", cursor:"crosshair", width:"100%", height:120, touchAction:"none" }}/>
                 {!hasDrawn && <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none", color:T.muted, fontSize:12 }}>Dessinez votre signature ici</div>}
               </div>
               {hasDrawn && <button onClick={clearCanvas} style={{ fontSize:11, color:T.muted, background:"none", border:"none", cursor:"pointer", marginTop:6, fontFamily:"inherit" }}>Effacer</button>}
