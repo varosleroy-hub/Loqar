@@ -690,6 +690,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
     .filter(r => r.status === "réservée" || r.status === "en cours" || r.status === "terminée")
     .map(r => ({
       id: r.id,
+      client_id: r.client_id,
       client: r.client_name || "",
       vehicle: r.vehicle_name || "",
       date: r.start_date ? fmtDate(r.start_date) : "—",
@@ -702,7 +703,14 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
   const draw = e => { e.preventDefault?.(); if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2; ctx.lineCap="round"; ctx.lineTo(x-r.left,y-r.top); ctx.stroke(); };
   const endDraw = () => setDrawing(false);
   const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
-  const confirmSign = () => { setSigned(s=>[...s,selected?.id]); setSigStep("done"); };
+  const confirmSign = async () => {
+    setSigned(s=>[...s,selected?.id]);
+    const client = clients.find(c=>String(c.id)===String(selected?.client_id));
+    if (client?.email) {
+      await sendEmail("rental", client.email, { clientName: selected.client, vehicle: selected.vehicle, startDate: selected.date, total: selected.amount });
+    }
+    setSigStep("done");
+  };
 
   return (
     <Page title={lang==="en"?"Electronic signature":"Signature électronique"} sub={lang==="en"?"Send contracts for signing in one click":"Envoyez vos contrats à signer en un clic"}
