@@ -644,7 +644,7 @@ function Settings({ agencyProfile, setAgencyProfile }) {
 }
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
-function SignaturePage() {
+function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], user }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [selected, setSelected] = useState(null);
@@ -653,9 +653,49 @@ function SignaturePage() {
   const [drawing, setDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const canvasRef = useRef(null);
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
+  const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
+  const days = Math.ceil((new Date(form.endDate)-new Date(form.startDate))/86400000);
+  const total = (parseInt(form.pricePerDay)||0)*(days>0?days:0);
 
-  const contracts = [
-  ];
+  const handleAdd = async () => {
+    const client  = clients.find(c=>String(c.id)===String(form.clientId));
+    const vehicle = vehicles.find(v=>String(v.id)===String(form.vehicleId));
+    if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
+    if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
+    const newR = {
+      user_id: user?.id,
+      client_id: parseInt(form.clientId)||form.clientId,
+      vehicle_id: parseInt(form.vehicleId)||form.vehicleId,
+      client_name: `${client.first_name} ${client.last_name}`,
+      vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
+      start_date: form.startDate,
+      end_date: form.endDate,
+      prix_per_day: parseInt(form.pricePerDay)||0,
+      deposit: parseInt(form.deposit)||0,
+      total,
+      km_start: parseInt(form.km)||0,
+      notes: form.notes,
+      status: "réservée",
+    };
+    const { data, error } = await supabase.from("rentals").insert(newR).select().single();
+    if (error) { alert("Erreur : " + error.message); return; }
+    if (data && setRentals) setRentals(prev => [data, ...prev]);
+    setModal(false);
+    setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
+  };
+
+  const contracts = rentals
+    .filter(r => r.status === "réservée" || r.status === "en cours" || r.status === "terminée")
+    .map(r => ({
+      id: r.id,
+      client: r.client_name || "",
+      vehicle: r.vehicle_name || "",
+      date: r.start_date ? fmtDate(r.start_date) : "—",
+      amount: r.total || 0,
+      status: r.status === "terminée" ? "signé" : "en attente signature",
+    }));
 
   const startDraw = e => { setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(e.clientX-r.left,e.clientY-r.top); };
   const draw = e => { if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2; ctx.lineCap="round"; ctx.lineTo(e.clientX-r.left,e.clientY-r.top); ctx.stroke(); };
@@ -664,7 +704,8 @@ function SignaturePage() {
   const confirmSign = () => { setSigned(s=>[...s,selected?.id]); setSigStep("done"); };
 
   return (
-    <Page title={lang==="en"?"Electronic signature":"Signature électronique"} sub={lang==="en"?"Send contracts for signing in one click":"Envoyez vos contrats à signer en un clic"}>
+    <Page title={lang==="en"?"Electronic signature":"Signature électronique"} sub={lang==="en"?"Send contracts for signing in one click":"Envoyez vos contrats à signer en un clic"}
+      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New contract":"Nouveau contrat"}</button>}>
 
       {sigStep==="signing" && selected && (
         <div style={{ position:"fixed", inset:0, zIndex:500, background:"#00000090", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(6px)" }}>
@@ -733,9 +774,8 @@ function SignaturePage() {
 
       {/* Contracts list */}
       <Card style={{ padding:0, overflow:"hidden" }}>
-        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}` }}>
           <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Contracts pending signature":"Contrats en attente de signature"}</div>
-          <Btn label={lang==="en"?"New contract":"Nouveau contrat"} variant="outline" size="sm" icon={Icons.plus}/>
         </div>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
@@ -779,6 +819,49 @@ function SignaturePage() {
           </tbody>
         </table>
       </Card>
+
+      {modal && (
+        <Modal title="Nouveau contrat de location" onClose={()=>setModal(false)}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
+              <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                <option value="">— Sélectionner —</option>
+                {clients.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
+              </select>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
+              <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>String(x.id)===e.target.value); if(v) up("pricePerDay",v.price||""); }}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                <option value="">— Sélectionner —</option>
+                {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
+              </select>
+            </div>
+            <Input label="Début" type="date" value={form.startDate} onChange={v=>up("startDate",v)}/>
+            <Input label="Fin" type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
+            <Input label="Prix/jour (€)" type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
+            <Input label="Caution (€)" type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
+            <Input label="Km départ" type="number" value={form.km} onChange={v=>up("km",v)}/>
+            {days>0 && (
+              <div style={{ gridColumn:"1/-1", padding:"12px 14px", background:T.goldDim, border:`1px solid ${T.gold}30`, borderRadius:10 }}>
+                <span style={{ fontSize:12, color:T.muted }}>Durée : {days} jour(s) · </span>
+                <span style={{ fontSize:14, fontWeight:700, color:T.gold }}>Total : {total} €</span>
+              </div>
+            )}
+            <div style={{ gridColumn:"1/-1", display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Notes</label>
+              <textarea value={form.notes} onChange={e=>up("notes",e.target.value)} rows={2}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", resize:"vertical" }}/>
+            </div>
+          </div>
+          <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
+            <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>Annuler</button>
+            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Créer le contrat</button>
+          </div>
+        </Modal>
+      )}
     </Page>
   );
 }
@@ -2907,7 +2990,7 @@ export default function App() {
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
-    signature: <SignaturePage/>,
+    signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     pricing:   <Pricing/>,
     settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
   };
