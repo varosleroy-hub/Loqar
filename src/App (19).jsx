@@ -105,6 +105,20 @@ const isExpired = d => new Date(d) < new Date();
 const aColor   = name => { const c=[T.gold,"#7A9BB5","#B5856E","#8FB58E","#9B8AB5"]; return c[(name?.charCodeAt(0)||0)%c.length]; };
 const initials = name => name?.split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase()||"?";
 
+// ─── EMAIL HELPER ────────────────────────────────────────────────────────────
+const sendEmail = async (type, to, data) => {
+  if (!to) return;
+  try {
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, to, data })
+    });
+  } catch(e) {
+    console.error("Email error:", e);
+  }
+};
+
 // ─── COUNTER HOOK ────────────────────────────────────────────────────────────
 function useCounter(target, duration=1100) {
   const [val, setVal] = useState(0);
@@ -1466,14 +1480,32 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
       paid_at: form.paidAt||new Date().toISOString().split("T")[0],
     };
     const { data } = await supabase.from("payments").insert(newP).select().single();
-    if (data) setPayments([data, ...payments]);
+    if (data) {
+      setPayments([data, ...payments]);
+      if (form.status === "encaissé" && client?.email) sendEmail("payment_received", client.email, {
+        clientName: `${client.firstName} ${client.lastName}`,
+        amount: parseInt(form.amount)||0,
+        method: form.method,
+        date: form.paidAt||new Date().toISOString().split("T")[0]
+      });
+    }
     setModal(false);
     setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
   };
 
   const handleEncaisser = async (id) => {
     await supabase.from("payments").update({ status:"encaissé" }).eq("id", id);
+    const payment = payments.find(p=>p.id===id);
     setPayments(payments.map(p=>p.id===id?{...p,status:"encaissé"}:p));
+    if (payment) {
+      const client = clients.find(c=>c.id===payment.client_id);
+      if (client?.email) sendEmail("payment_received", client.email, {
+        clientName: payment.client_name,
+        amount: payment.amount,
+        method: payment.method,
+        date: new Date().toISOString().split("T")[0]
+      });
+    }
   };
 
   const handleDelete = async (id) => {
@@ -1617,6 +1649,9 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const agencySiret = agencyProfile?.siret || "SIRET : XX XXX XXX XXXXX";
   const docNum = `LQ-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
 
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
   const printDoc = () => {
     const el = document.getElementById("doc-preview");
     if (!el) return;
@@ -1625,6 +1660,24 @@ function Documents({ agencyProfile, vehicles, clients }) {
     w.document.close();
     w.focus();
     setTimeout(()=>{ w.print(); w.close(); }, 400);
+  };
+
+  const sendDocByEmail = async () => {
+    if (!selectedClient?.email) return alert("Ce client n'a pas d'adresse email renseignée");
+    const el = document.getElementById("doc-preview");
+    const contractHtml = el ? el.innerHTML : "";
+    setEmailSending(true);
+    await sendEmail("contract", selectedClient.email, {
+      clientName: `${selectedClient.firstName} ${selectedClient.lastName}`,
+      vehicle: selectedVehicle ? `${selectedVehicle.name} — ${selectedVehicle.plate}` : "",
+      startDate: fmtDate(p.startDate),
+      endDate: fmtDate(p.endDate),
+      total,
+      contractHtml
+    });
+    setEmailSending(false);
+    setEmailSent(true);
+    setTimeout(() => setEmailSent(false), 3000);
   };
 
   const docTypes = [
@@ -1718,6 +1771,10 @@ function Documents({ agencyProfile, vehicles, clients }) {
               <button onClick={printDoc}
                 style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
                 {Icons.download} Télécharger PDF
+              </button>
+              <button onClick={sendDocByEmail} disabled={emailSending}
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px 18px", background:emailSent?T.successDim:T.card2, border:`1px solid ${emailSent?T.success:T.border2}`, borderRadius:10, color:emailSent?T.success:T.text, fontSize:13, fontWeight:600, cursor:emailSending?"not-allowed":"pointer", fontFamily:"inherit", opacity:emailSending?0.7:1 }}>
+                {emailSent ? <>{Icons.check} Email envoyé !</> : <>{Icons.mail} {emailSending ? "Envoi…" : "Envoyer par email"}</>}
               </button>
             </div>
           </Card>
@@ -2190,7 +2247,16 @@ function Rentals({ rentals, setRentals, vehicles, clients, user }) {
       status: "réservée",
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
-    if (data) setRentals([data, ...rentals]);
+    if (data) {
+      setRentals([data, ...rentals]);
+      if (client.email) sendEmail("rental", client.email, {
+        clientName: `${client.firstName} ${client.lastName}`,
+        vehicle: `${vehicle.name} — ${vehicle.plate}`,
+        startDate: fmtDate(form.startDate),
+        endDate: fmtDate(form.endDate),
+        total
+      });
+    }
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   };
