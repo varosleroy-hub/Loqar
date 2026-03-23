@@ -405,6 +405,30 @@ function Modal({ title, onClose, children, width=540 }) {
   );
 }
 
+function SkeletonRow({ cols=5 }) {
+  return (
+    <tr>
+      {Array.from({length:cols}).map((_,i)=>(
+        <td key={i} style={{ padding:"14px 16px", borderBottom:`1px solid ${T.border}` }}>
+          <div style={{ height:12, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:i===0?"60%":i===cols-1?"30%":"80%" }}/>
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
+      <div style={{ height:130, background:T.card2, animation:"pulse 1.4s ease-in-out infinite" }}/>
+      <div style={{ padding:"14px 16px", display:"flex", flexDirection:"column", gap:8 }}>
+        <div style={{ height:13, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"70%" }}/>
+        <div style={{ height:10, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"40%" }}/>
+      </div>
+    </div>
+  );
+}
+
 function ConfirmModal({ message, confirmLabel="Supprimer", onConfirm, onCancel }) {
   return (
     <div style={{ position:"fixed", inset:0, zIndex:600, background:"#00000095", display:"flex", alignItems:"center", justifyContent:"center", padding:20, backdropFilter:"blur(8px)" }}
@@ -596,6 +620,7 @@ function OnboardingScreen({ onDone, onNav }) {
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user }) {
+  const toast = useToast();
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [form, setForm] = useState(agencyProfile);
@@ -642,7 +667,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
     if (deleteInput !== t.deleteConfirmWord) return;
     setDeleteLoading(true);
     const { error } = await supabase.rpc("delete_user");
-    if (error) { alert("Impossible de supprimer automatiquement. Contactez support@loqar.fr"); setDeleteLoading(false); return; }
+    if (error) { toast("Impossible de supprimer automatiquement. Contactez support@loqar.fr", "error"); setDeleteLoading(false); return; }
     await supabase.auth.signOut();
   };
 
@@ -875,6 +900,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
 function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], user }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
+  const toast = useToast();
   const [selected, setSelected] = useState(null);
   const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
   const [signed, setSigned] = useState([]);
@@ -890,8 +916,8 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
   const handleAdd = async () => {
     const client  = clients.find(c=>String(c.id)===String(form.clientId));
     const vehicle = vehicles.find(v=>String(v.id)===String(form.vehicleId));
-    if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
-    if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
+    if (!client || !vehicle) { toast("Sélectionnez un client et un véhicule", "error"); return; }
+    if (!form.startDate || !form.endDate) { toast("Renseignez les dates", "error"); return; }
     const newR = {
       user_id: user?.id,
       client_id: parseInt(form.clientId)||form.clientId,
@@ -908,7 +934,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       status: "réservée",
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
-    if (error) { alert("Erreur : " + error.message); return; }
+    if (error) { toast("Erreur : " + error.message, "error"); return; }
     if (data && setRentals) setRentals(prev => [data, ...prev]);
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
@@ -1885,7 +1911,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAgencyId = null }) {
+function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -1954,7 +1980,8 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
       <div style={{ display:"flex", gap:20 }}>
         {/* Grid */}
         <div style={{ flex:1, display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(236px,1fr))", gap:16, alignContent:"start" }}>
-          {filtered.map(v=>{
+          {dataLoading && Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}
+          {!dataLoading && filtered.map(v=>{
             const selected = sel?.id===v.id;
             return (
               <div key={v.id} onClick={()=>setSel(selected?null:v)}
@@ -1990,7 +2017,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
               </div>
             );
           })}
-          {!filtered.length && (
+          {!dataLoading && !filtered.length && (
             <div style={{ gridColumn:"1/-1", textAlign:"center", padding:80, color:T.muted }}>
               <div style={{ display:"flex", justifyContent:"center", opacity:.3, marginBottom:12 }}><CarSilhouette cat="Berline" color={T.muted} size={100}/></div>
               Aucun véhicule trouvé
@@ -2090,7 +2117,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
-function Clients({ clients, setClients, user, activeAgencyId = null }) {
+function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -2121,7 +2148,16 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c=>{
+              {dataLoading && Array.from({length:5}).map((_,i)=><SkeletonRow key={i} cols={6}/>)}
+              {!dataLoading && filtered.length===0 && (
+                <tr><td colSpan={6} style={{ textAlign:"center", padding:60 }}>
+                  <div style={{ fontSize:32, marginBottom:12 }}>👥</div>
+                  <div style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:6 }}>Aucun client</div>
+                  <div style={{ fontSize:12, color:T.muted, marginBottom:16 }}>Ajoutez votre premier client pour commencer</div>
+                  <Btn label="Nouveau client" variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>
+                </td></tr>
+              )}
+              {!dataLoading && filtered.map(c=>{
                 const exp=isExpired(c.licenseExpiry), selected=sel?.id===c.id;
                 return (
                   <tr key={c.id} onClick={()=>setSel(selected?null:c)}
@@ -2223,7 +2259,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter", activeAgencyId = null }) {
+function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -2316,10 +2352,16 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
             ))}</tr>
           </thead>
           <tbody>
-            {filtered.length===0 && (
-              <tr><td colSpan={8} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>{lang==="en"?'No payments found':'Aucun paiement trouvé'}</td></tr>
+            {dataLoading && Array.from({length:5}).map((_,i)=><SkeletonRow key={i} cols={8}/>)}
+            {!dataLoading && filtered.length===0 && (
+              <tr><td colSpan={8} style={{ textAlign:"center", padding:60 }}>
+                <div style={{ fontSize:32, marginBottom:12 }}>💳</div>
+                <div style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:6 }}>Aucun paiement</div>
+                <div style={{ fontSize:12, color:T.muted, marginBottom:16 }}>Les paiements apparaîtront ici</div>
+                <Btn label="Nouveau paiement" variant="primary" icon={Icons.plus} onClick={openAdd}/>
+              </td></tr>
             )}
-            {filtered.map(p=>{
+            {!dataLoading && filtered.map(p=>{
               const rental = rentals.find(r=>String(r.id)===String(p.rental_id));
               return (
               <tr key={p.id} style={{ transition:"background .1s" }}
@@ -2350,9 +2392,9 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
                     {p.status==="en retard" && (
                       <button onClick={async ()=>{
                         const client = clients.find(c=>c.id===p.client_id);
-                        if (!PLAN_LIMITS[userPlan]?.emails) { alert("Les emails automatiques sont disponibles à partir du plan Pro."); return; }
-                        if(client?.email) { await sendEmail("payment_reminder", client.email, { clientName:p.client_name, amount:p.amount }); alert("Rappel envoyé !"); }
-                        else alert("Email client introuvable");
+                        if (!PLAN_LIMITS[userPlan]?.emails) { toast("Les emails automatiques sont disponibles à partir du plan Pro.", "warn"); return; }
+                        if(client?.email) { await sendEmail("payment_reminder", client.email, { clientName:p.client_name, amount:p.amount }); toast("Rappel envoyé !"); }
+                        else toast("Email client introuvable", "error");
                       }} style={{ padding:"5px 10px", background:T.amberDim||"#2A2010", border:`1px solid ${T.amber}30`, borderRadius:8, color:T.amber, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
                         📧 {lang==="en"?"Remind":"Rappel"}
                       </button>
@@ -3113,7 +3155,7 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", activeAgencyId = null }) {
+function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -3226,10 +3268,16 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
               ))}</tr>
             </thead>
             <tbody>
-              {rentals.length===0 && (
-                <tr><td colSpan={6} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>{lang==="en"?'No rentals — click "New rental" to start':'Aucune location — cliquez sur "Nouvelle location" pour commencer'}</td></tr>
+              {dataLoading && Array.from({length:5}).map((_,i)=><SkeletonRow key={i} cols={6}/>)}
+              {!dataLoading && rentals.length===0 && (
+                <tr><td colSpan={6} style={{ textAlign:"center", padding:60 }}>
+                  <div style={{ fontSize:32, marginBottom:12 }}>🚗</div>
+                  <div style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:6 }}>Aucune location</div>
+                  <div style={{ fontSize:12, color:T.muted, marginBottom:16 }}>Créez votre première location pour commencer</div>
+                  <Btn label="Nouvelle location" variant="primary" icon={Icons.plus} onClick={()=>{ setModal(true); setFormErrors({}); }}/>
+                </td></tr>
               )}
-              {rentals.map(r=>(
+              {!dataLoading && rentals.map(r=>(
                 <tr key={r.id} onClick={()=>setSel(sel?.id===r.id?null:r)}
                   style={{ cursor:"pointer", background:sel?.id===r.id?T.goldDim:"transparent", transition:"background .1s" }}
                   onMouseEnter={e=>{ if(sel?.id!==r.id) e.currentTarget.style.background=T.card2; }}
@@ -3364,6 +3412,7 @@ export default function App() {
   const [clients,        setClients]        = useState([]);
   const [rentals,        setRentals]        = useState([]);
   const [payments,       setPayments]       = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
   const [lang, setLang] = useState(() => localStorage.getItem("loqar_lang") || "fr");
@@ -3390,6 +3439,7 @@ export default function App() {
   }, []);
 
   const fetchData = async (uid, agencyId = null) => {
+    setDataLoading(true);
     const fa = (q) => agencyId ? q.eq("agency_id", String(agencyId)) : q.is("agency_id", null);
     const [{ data: v }, { data: c }, { data: r }, { data: py }] = await Promise.all([
       fa(supabase.from("vehicles").select("*").eq("user_id", uid)).order("created_at", { ascending: false }),
@@ -3401,6 +3451,7 @@ export default function App() {
     if (c) setClients(c.map(x => ({ ...x, firstName: x.first_name, lastName: x.last_name, licenseExpiry: x.license_expiry, totalSpent: x.total_spent, locations: x.locations_count })));
     if (r) setRentals(r);
     if (py) setPayments(py);
+    setDataLoading(false);
   };
 
   const handleSwitchAgency = (agency) => {
@@ -3476,10 +3527,10 @@ export default function App() {
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null}/>,
-    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null}/>,
-    clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
