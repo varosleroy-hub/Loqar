@@ -2234,8 +2234,8 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
           onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
       </div>
 
-      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
-        <table style={{ width:"100%", borderCollapse:"collapse" }}>
+      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", minWidth:700 }}>
           <thead>
             <tr>{[t.client||"Client",lang==="en"?"Rental":"Location",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
               <th key={l} style={{ textAlign:"left", padding:"10px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
