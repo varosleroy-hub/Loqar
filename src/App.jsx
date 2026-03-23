@@ -1031,10 +1031,10 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
 
       {/* User */}
       <div style={{ borderTop:`1px solid ${T.border}`, paddingTop:14, display:"flex", alignItems:"center", gap:10 }}>
-        <Avatar name={user?.name||"Alexandre Dubois"} size={32}/>
+        <Avatar name={user?.user_metadata?.name||user?.email||"?"} size={32}/>
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:13, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", color:T.text }}>{user?.name||"Alexandre Dubois"}</div>
-          <div style={{ fontSize:10, color:T.muted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.email||"demo@loqar.fr"}</div>
+          <div style={{ fontSize:13, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", color:T.text }}>{user?.user_metadata?.name||user?.email||"—"}</div>
+          <div style={{ fontSize:10, color:T.muted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.email||"—"}</div>
         </div>
         <button onClick={onLogout}
           style={{ background:"none", border:"none", color:T.muted, display:"flex", padding:5, cursor:"pointer", borderRadius:7 }}
