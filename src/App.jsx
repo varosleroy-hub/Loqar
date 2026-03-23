@@ -3072,12 +3072,12 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) { fetchData(session.user.id); fetchProfile(session.user.id); }
+      if (session?.user) { fetchData(session.user.id); fetchProfile(session.user.id, session.user); }
       setLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) { fetchData(session.user.id); fetchProfile(session.user.id); }
+      if (session?.user) { fetchData(session.user.id); fetchProfile(session.user.id, session.user); }
       else { setLoading(false); }
     });
     return () => subscription.unsubscribe();
@@ -3096,9 +3096,9 @@ export default function App() {
     if (py) setPayments(py);
   };
 
-  const fetchProfile = async (uid) => {
+  const fetchProfile = async (uid, currentUser) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); const ownerEmail = "kenson.lry@gmail.com"; setUserPlan(user?.email===ownerEmail ? "enterprise" : (data.plan||"starter")); }
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); const ownerEmail = "kenson.lry@gmail.com"; setUserPlan((currentUser||user)?.email===ownerEmail ? "enterprise" : (data.plan||"starter")); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
