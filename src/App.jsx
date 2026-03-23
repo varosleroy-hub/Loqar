@@ -75,9 +75,9 @@ const T = {
   text:     "#F5F0E8",
   sub:      "#9A9488",
   muted:    "#5A5650",
-  gold:     "var(--brand, #C8A96E)",
-  goldDim:  "var(--brand-dim, #C8A96E14)",
-  goldGlow: "var(--brand-glow, #C8A96E35)",
+  gold:     "#C8A96E",
+  goldDim:  "#C8A96E14",
+  goldGlow: "#C8A96E35",
   cream:    "#EDE5D4",
   red:      "#E05555",
   redDim:   "#E0555514",
@@ -3119,10 +3119,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const hex = agencyProfile.brandColor || "#C8A96E";
-    document.documentElement.style.setProperty("--brand", hex);
-    document.documentElement.style.setProperty("--brand-dim", hex + "14");
-    document.documentElement.style.setProperty("--brand-glow", hex + "35");
+    const hex = agencyProfile.brandColor;
+    if (!hex || hex === "#C8A96E") return;
+    const existing = document.getElementById("loqar-brand-style");
+    if (existing) existing.remove();
+    const s = document.createElement("style");
+    s.id = "loqar-brand-style";
+    s.textContent = `
+      :root { --brand: ${hex}; }
+      button[data-brand], a[data-brand] { background-color: ${hex} !important; }
+    `;
+    document.head.appendChild(s);
+    return () => { const el = document.getElementById("loqar-brand-style"); if(el) el.remove(); };
   }, [agencyProfile.brandColor]);
 
   useEffect(() => {
