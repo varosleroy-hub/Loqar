@@ -5,7 +5,7 @@ const TR = {
 fr: {
   dashboard:"Tableau de bord", vehicles:"Véhicules", clients:"Clients",
   rentals:"Locations", payments:"Paiements", documents:"Documents",
-  signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres",
+  signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres", agencies:"Multi-agences",
   welcome:"Bienvenue sur Loqar", newRental:"Nouvelle location",
   addVehicle:"Ajouter un véhicule", newClient:"Nouveau client",
   newPayment:"Nouveau paiement", save:"Enregistrer", cancel:"Annuler",
@@ -31,7 +31,7 @@ fr: {
 en: {
   dashboard:"Dashboard", vehicles:"Vehicles", clients:"Clients",
   rentals:"Rentals", payments:"Payments", documents:"Documents",
-  signatures:"Signatures", pricing:"Pricing", settings:"Settings",
+  signatures:"Signatures", pricing:"Pricing", settings:"Settings", agencies:"Multi-agencies",
   welcome:"Welcome to Loqar", newRental:"New rental",
   addVehicle:"Add vehicle", newClient:"New client",
   newPayment:"New payment", save:"Save", cancel:"Cancel",
@@ -75,9 +75,9 @@ const T = {
   text:     "#F5F0E8",
   sub:      "#9A9488",
   muted:    "#5A5650",
-  gold:     "#C8A96E",
-  goldDim:  "#C8A96E14",
-  goldGlow: "#C8A96E35",
+  gold:     "var(--brand, #C8A96E)",
+  goldDim:  "var(--brand-dim, #C8A96E14)",
+  goldGlow: "var(--brand-glow, #C8A96E35)",
   cream:    "#EDE5D4",
   red:      "#E05555",
   redDim:   "#E0555514",
@@ -179,9 +179,9 @@ const sendEmail = async (type, to, data) => {
 
 // ─── PLAN LIMITS ──────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
-  starter:    { vehicles: 3,  rentals: 50,  emails: false, label: "Starter" },
-  pro:        { vehicles: 15, rentals: Infinity, emails: true, label: "Pro" },
-  enterprise: { vehicles: Infinity, rentals: Infinity, emails: true, label: "Enterprise" },
+  starter:    { vehicles: 5,        rentals: 50,       emails: false, label: "Starter" },
+  pro:        { vehicles: Infinity, rentals: Infinity, emails: true,  label: "Pro" },
+  enterprise: { vehicles: Infinity, rentals: Infinity, emails: true,  label: "Enterprise" },
 };
 
 function PlanBadge({ plan }) {
@@ -527,7 +527,7 @@ function OnboardingScreen({ onDone, onNav }) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
-function Settings({ agencyProfile, setAgencyProfile }) {
+function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter" }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [form, setForm] = useState(agencyProfile);
@@ -561,6 +561,31 @@ function Settings({ agencyProfile, setAgencyProfile }) {
                 <button key={e} onClick={()=>up("logo",e)} style={{ width:32, height:32, borderRadius:8, background:form.logo===e?T.goldDim:T.card2, border:`1px solid ${form.logo===e?T.gold:T.border}`, fontSize:16, cursor:"pointer" }}>{e}</button>
               ))}
             </div>
+          </div>
+
+          {/* Marque blanche — couleur de marque (Enterprise) */}
+          <div style={{ marginBottom:18 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Couleur de marque</label>
+              {userPlan !== "enterprise" && <span style={{ fontSize:10, background:T.amberDim, color:T.amber, border:`1px solid ${T.amber}30`, borderRadius:6, padding:"2px 7px", fontWeight:700 }}>Enterprise</span>}
+            </div>
+            {userPlan === "enterprise" ? (
+              <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+                {["#C8A96E","#5B8DB8","#6AAF7A","#D4854A","#9B8AB5","#E05555"].map(c=>(
+                  <button key={c} onClick={()=>up("brandColor",c)} title={c}
+                    style={{ width:28, height:28, borderRadius:"50%", background:c, border:`2px solid ${(form.brandColor||"#C8A96E")===c?"#fff":"transparent"}`, cursor:"pointer", transition:"border-color .15s" }}/>
+                ))}
+                <input type="color" value={form.brandColor||"#C8A96E"} onChange={e=>up("brandColor",e.target.value)}
+                  style={{ width:28, height:28, borderRadius:"50%", border:"none", cursor:"pointer", background:"none", padding:0 }} title="Couleur personnalisée"/>
+                <span style={{ fontSize:12, color:T.muted }}>{form.brandColor||"#C8A96E"}</span>
+              </div>
+            ) : (
+              <div style={{ display:"flex", gap:6, opacity:.4, pointerEvents:"none" }}>
+                {["#C8A96E","#5B8DB8","#6AAF7A","#D4854A","#9B8AB5","#E05555"].map(c=>(
+                  <div key={c} style={{ width:28, height:28, borderRadius:"50%", background:c }}/>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
@@ -886,6 +911,7 @@ const NAV_KEYS = [
   { id:"payments",   labelKey:"payments",  icon:Icons.dollar},
   { id:"documents",  labelKey:"documents", icon:Icons.doc  },
   { id:"signature",  labelKey:"signatures",icon:Icons.pen  },
+  { id:"agencies",   labelKey:"agencies",  icon:Icons.building },
   { id:"pricing",    labelKey:"pricing",   icon:Icons.zap  },
   { id:"settings",   labelKey:"settings",  icon:Icons.settings },
 ];
@@ -1953,7 +1979,7 @@ function Clients({ clients, setClients, user }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user }) {
+function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter" }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [filter, setFilter] = useState("all");
@@ -2061,6 +2087,7 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
                     {p.status==="en retard" && (
                       <button onClick={async ()=>{
                         const client = clients.find(c=>c.id===p.client_id);
+                        if (!PLAN_LIMITS[userPlan]?.emails) { alert("Les emails automatiques sont disponibles à partir du plan Pro."); return; }
                         if(client?.email) { await sendEmail("payment_reminder", client.email, { clientName:p.client_name, amount:p.amount }); alert("Rappel envoyé !"); }
                         else alert("Email client introuvable");
                       }} style={{ padding:"5px 10px", background:T.amberDim||"#2A2010", border:`1px solid ${T.amber}30`, borderRadius:8, color:T.amber, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
@@ -2119,6 +2146,121 @@ function Payments({ payments, setPayments, clients, rentals, user }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||"Annuler"}</button>
             <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Enregistrer"}</button>
+          </div>
+        </Modal>
+      )}
+    </Page>
+  );
+}
+
+// ─── MULTI-AGENCES ────────────────────────────────────────────────────────────
+function MultiAgences({ user, userPlan = "starter" }) {
+  const [agencies, setAgencies] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [modal,    setModal]    = useState(false);
+  const [form,     setForm]     = useState({ name:"", email:"", phone:"", city:"" });
+  const up = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  useEffect(() => {
+    if (!user || userPlan !== "enterprise") { setLoading(false); return; }
+    supabase.from("profiles").select("sub_agencies").eq("id", user.id).single()
+      .then(({ data }) => { setAgencies(data?.sub_agencies || []); setLoading(false); });
+  }, [user, userPlan]);
+
+  const saveAgencies = async (list) => {
+    setAgencies(list);
+    await supabase.from("profiles").update({ sub_agencies: list }).eq("id", user.id);
+  };
+
+  const handleAdd = async () => {
+    if (!form.name.trim()) return;
+    const newA = { id: Date.now(), ...form, status: "active", createdAt: new Date().toISOString() };
+    await saveAgencies([...agencies, newA]);
+    setModal(false);
+    setForm({ name:"", email:"", phone:"", city:"" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Supprimer cette agence ?")) return;
+    await saveAgencies(agencies.filter(a => a.id !== id));
+  };
+
+  const toggleStatus = async (id) => {
+    await saveAgencies(agencies.map(a => a.id === id ? { ...a, status: a.status === "active" ? "inactive" : "active" } : a));
+  };
+
+  if (userPlan !== "enterprise") return (
+    <Page title="Multi-agences" sub="Gérez plusieurs agences depuis un seul compte">
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 0", textAlign:"center", gap:16 }}>
+        <div style={{ fontSize:40 }}>🏢</div>
+        <div style={{ fontSize:18, fontWeight:700, color:T.text }}>Fonctionnalité Enterprise</div>
+        <div style={{ fontSize:14, color:T.muted, maxWidth:360, lineHeight:1.7 }}>
+          La gestion multi-agences est disponible exclusivement avec le plan Enterprise à 249€/mois.
+        </div>
+        <button onClick={()=>{}} style={{ marginTop:8, background:T.gold, color:"#0F0D0B", border:"none", borderRadius:10, padding:"10px 24px", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>
+          Passer à Enterprise →
+        </button>
+      </div>
+    </Page>
+  );
+
+  return (
+    <Page title="Multi-agences" sub={`${agencies.length} agence${agencies.length!==1?"s":""} gérée${agencies.length!==1?"s":""}`}>
+      <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:20 }}>
+        <Btn label="Ajouter une agence" variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>
+      </div>
+
+      {loading ? (
+        <div style={{ color:T.muted, textAlign:"center", padding:40 }}>Chargement…</div>
+      ) : agencies.length === 0 ? (
+        <Card>
+          <div style={{ textAlign:"center", padding:"40px 0", color:T.muted }}>
+            <div style={{ fontSize:32, marginBottom:12 }}>🏢</div>
+            <div style={{ fontSize:14 }}>Aucune agence ajoutée. Créez votre première agence.</div>
+          </div>
+        </Card>
+      ) : (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:16 }}>
+          {agencies.map(a => (
+            <Card key={a.id}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:T.goldDim, border:`1px solid ${T.gold}30`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🏢</div>
+                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                  <button onClick={()=>toggleStatus(a.id)} style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:6, border:"none", cursor:"pointer", fontFamily:"inherit",
+                    background: a.status==="active" ? T.successDim : T.redDim,
+                    color: a.status==="active" ? T.success : T.red }}>
+                    {a.status==="active" ? "Actif" : "Inactif"}
+                  </button>
+                  <button onClick={()=>handleDelete(a.id)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", fontSize:14, padding:"2px 4px" }}>✕</button>
+                </div>
+              </div>
+              <div style={{ fontWeight:700, fontSize:15, color:T.text, marginBottom:4 }}>{a.name}</div>
+              {a.city && <div style={{ fontSize:12, color:T.muted, marginBottom:4 }}>📍 {a.city}</div>}
+              {a.email && <div style={{ fontSize:12, color:T.muted, marginBottom:2 }}>✉ {a.email}</div>}
+              {a.phone && <div style={{ fontSize:12, color:T.muted }}>📞 {a.phone}</div>}
+              <div style={{ fontSize:11, color:T.muted, marginTop:10, paddingTop:10, borderTop:`1px solid ${T.border}` }}>
+                Ajoutée le {new Date(a.createdAt).toLocaleDateString("fr-FR")}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {modal && (
+        <Modal title="Nouvelle agence" onClose={()=>{ setModal(false); setForm({ name:"", email:"", phone:"", city:"" }); }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            {[["Nom de l'agence *","name","Ex: Loqar Paris"],["Email","email","contact@paris.loqar.fr"],["Téléphone","phone","+33 1 23 45 67 89"],["Ville","city","Paris"]].map(([lbl,key,ph])=>(
+              <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
+                <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
+                  style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
+                  onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
+              </div>
+            ))}
+            <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:4 }}>
+              <Btn label="Annuler" onClick={()=>setModal(false)}/>
+              <Btn label="Créer l'agence" variant="primary" onClick={handleAdd}/>
+            </div>
           </div>
         </Modal>
       )}
@@ -2712,6 +2854,15 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
   const statusColor = { "en cours":T.success, "terminée":T.muted, "annulée":T.red, "réservée":T.amber };
 
   const handleAdd = async () => {
+    const limit = PLAN_LIMITS[userPlan]?.rentals;
+    if (limit !== Infinity) {
+      const now = new Date();
+      const monthRentals = rentals.filter(r => {
+        const d = new Date(r.start_date);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      });
+      if (monthRentals.length >= limit) { setUpgradeModal(true); return; }
+    }
     const client  = clients.find(c=>String(c.id)===String(form.clientId));
     const vehicle = vehicles.find(v=>String(v.id)===String(form.vehicleId));
     if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
@@ -2735,7 +2886,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     if (data) {
       setRentals([data, ...rentals]);
       const cl = clients.find(c=>String(c.id)===String(form.clientId));
-      if (cl?.email) sendEmail("rental", cl.email, { clientName: cl.first_name+" "+cl.last_name, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
+      if (cl?.email && PLAN_LIMITS[userPlan]?.emails) sendEmail("rental", cl.email, { clientName: cl.first_name+" "+cl.last_name, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
     }
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
@@ -2947,13 +3098,13 @@ export default function App() {
 
   const fetchProfile = async (uid) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €" }); setUserPlan(data.plan||"starter"); }
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); setUserPlan(data.plan||"starter"); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
   const handleSaveProfile = async (profile) => {
     setAgencyProfile(profile);
-    await supabase.from("profiles").update({ agency_name: profile.name, logo: profile.logo, address: profile.address, phone: profile.phone, email: profile.email, website: profile.website, siret: profile.siret, iban: profile.iban, bic: profile.bic, bank_holder: profile.bankHolder, terms: profile.terms, franchise: profile.franchise }).eq("id", user.id);
+    await supabase.from("profiles").update({ agency_name: profile.name, logo: profile.logo, address: profile.address, phone: profile.phone, email: profile.email, website: profile.website, siret: profile.siret, iban: profile.iban, bic: profile.bic, bank_holder: profile.bankHolder, terms: profile.terms, franchise: profile.franchise, brand_color: profile.brandColor||null }).eq("id", user.id);
   };
 
   const handleLogout = async () => {
@@ -2966,6 +3117,13 @@ export default function App() {
     document.addEventListener("keydown", h);
     return () => document.removeEventListener("keydown", h);
   }, []);
+
+  useEffect(() => {
+    const hex = agencyProfile.brandColor || "#C8A96E";
+    document.documentElement.style.setProperty("--brand", hex);
+    document.documentElement.style.setProperty("--brand-dim", hex + "14");
+    document.documentElement.style.setProperty("--brand-glow", hex + "35");
+  }, [agencyProfile.brandColor]);
 
   useEffect(() => {
     const s = document.createElement("style");
@@ -3000,11 +3158,12 @@ export default function App() {
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} userPlan={userPlan}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
+    agencies:  <MultiAgences user={user} userPlan={userPlan}/>,
     pricing:   <Pricing/>,
-    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile}/>,
+    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan}/>,
   };
 
   return (
