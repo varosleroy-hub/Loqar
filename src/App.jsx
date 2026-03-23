@@ -1705,6 +1705,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
   const availableVehicles = (vehicles||[]).filter(v=>v.status==="disponible");
   const pendingPayments = (payments||[]).filter(p=>p.status==="en attente");
   const latePayments = (payments||[]).filter(p=>p.status==="en retard");
+  const expiredLicenses = (clients||[]).filter(c=>isExpired(c.license_expiry||c.licenseExpiry));
 
   // Monthly revenue for chart (last 6 months)
   const monthlyRevenue = () => {
@@ -1900,7 +1901,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
           </Card>
 
           {/* Alertes */}
-          {(latePayments.length > 0 || (vehicles||[]).filter(v=>v.status==="entretien").length > 0) && (
+          {(latePayments.length > 0 || (vehicles||[]).filter(v=>v.status==="entretien").length > 0 || expiredLicenses.length > 0) && (
             <Card>
               <h3 style={{ fontSize:14, fontWeight:700, color:T.text, marginBottom:12 }}>{lang==="en"?"Alerts":"Alertes"}</h3>
               {latePayments.map(p=>(
@@ -1913,6 +1914,12 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
                 <div key={v.id} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:T.amber+"0C", border:`1px solid ${T.amber}25` }}>
                   {Icons.alert}
                   <span style={{ fontSize:12, color:T.sub }}>{v.name}{lang==="en"?" in maintenance":" en entretien"}</span>
+                </div>
+              ))}
+              {expiredLicenses.map(c=>(
+                <div key={c.id} style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", borderRadius:9, marginBottom:5, background:T.amber+"0C", border:`1px solid ${T.amber}25` }}>
+                  {Icons.alert}
+                  <span style={{ fontSize:12, color:T.sub }}>{lang==="en"?"Expired license · ":"Permis expiré · "}{c.first_name} {c.last_name}</span>
                 </div>
               ))}
             </Card>
@@ -2321,6 +2328,26 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
   const openAdd = () => { setEditId(null); setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" }); setModal(true); };
   const openEdit = (p) => { setEditId(p.id); setForm({ clientId:String(p.client_id||""), rentalId:String(p.rental_id||""), amount:String(p.amount||""), deposit:String(p.deposit||""), method:p.method||"Espèces", status:p.status||"en attente", paidAt:p.paid_at||"" }); setModal(true); };
 
+  const exportCSV = () => {
+    if (userPlan === "starter") { toast(lang==="en"?"CSV export available from Pro plan":"Export CSV disponible à partir du plan Pro", "warn"); return; }
+    const headers = [lang==="en"?"Date":"Date", lang==="en"?"Client":"Client", lang==="en"?"Rental":"Location", lang==="en"?"Amount":"Montant", lang==="en"?"Deposit":"Caution", lang==="en"?"Method":"Méthode", lang==="en"?"Status":"Statut"];
+    const rows = payments.map(p=>[
+      p.paid_at ? new Date(p.paid_at).toLocaleDateString("fr-FR") : "—",
+      p.client_name||"—",
+      p.rental_id ? `LOC-${p.rental_id}` : "—",
+      p.amount||0,
+      p.deposit||0,
+      p.method||"—",
+      p.status||"—",
+    ]);
+    const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF"+csv], { type:"text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`loqar-paiements-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const updateClientTotalSpent = async (clientId, delta) => {
     const client = clients.find(c=>String(c.id)===String(clientId));
     if (!client) return;
@@ -2380,7 +2407,10 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
 
   return (
     <Page title={t.payments||"Paiements"} sub={lang==="en"?"Collections, transactions and deposits":"Encaissements, transactions et cautions"}
-      actions={<button onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>}>
+      actions={<div style={{ display:"flex", gap:8 }}>
+        <button onClick={exportCSV} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>↓ CSV</button>
+        <button onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>
+      </div>}>
       
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
         {stats.map(s=>{ const c=useCounter(s.value,900); return (
@@ -2691,8 +2721,10 @@ function Documents({ agencyProfile, vehicles, clients }) {
     "Toit","Pare-brise","Vitres","Rétroviseurs","Pneus et jantes","Intérieur / Sièges",
     t.dashboard||"Tableau de bord","Coffre","Roue de secours","Documents du véhicule","Clés"
   ];
-  const [checks, setChecks] = useState({});
-  const toggleCheck = (item, val) => setChecks(prev=>({...prev,[item]:val}));
+  const [checks, setChecks] = useState(()=>{ try { return JSON.parse(localStorage.getItem(`loqar_checks_${p.vehicleId||"draft"}`)||"{}").checks||{}; } catch(e) { return {}; } });
+  const [checkNotes, setCheckNotes] = useState(()=>{ try { return JSON.parse(localStorage.getItem(`loqar_checks_${p.vehicleId||"draft"}`)||"{}").notes||{}; } catch(e) { return {}; } });
+  const toggleCheck = (item, val) => setChecks(prev=>{ const n={...prev,[item]:val}; try { localStorage.setItem(`loqar_checks_${p.vehicleId||"draft"}`,JSON.stringify({checks:n,notes:checkNotes})); } catch(e){} return n; });
+  const setCheckNote = (item, val) => setCheckNotes(prev=>{ const n={...prev,[item]:val}; try { localStorage.setItem(`loqar_checks_${p.vehicleId||"draft"}`,JSON.stringify({checks,notes:n})); } catch(e){} return n; });
   const [elementPhotos, setElementPhotos] = useState({});
   const handleElementPhoto = async (element, file) => {
     if (!file) return;
@@ -2893,7 +2925,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
                           <input type="radio" name={item} value="dmg" checked={checks[item]==="dmg"} onChange={()=>toggleCheck(item,"dmg")}/>
                         </td>
                         <td style={{ padding:"6px 10px" }}>
-                          <input placeholder="..." style={{ border:"none", borderBottom:"1px solid #DDD", background:"transparent", width:"100%", fontSize:10, outline:"none" }}/>
+                          <input value={checkNotes[item]||""} onChange={e=>setCheckNote(item,e.target.value)} placeholder="..." style={{ border:"none", borderBottom:"1px solid #DDD", background:"transparent", width:"100%", fontSize:10, outline:"none" }}/>
                         </td>
                       </tr>
                     ))}
@@ -3228,6 +3260,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
   const [modal, setModal] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [sel, setSel]     = useState(null);
+  const [viewMode, setViewMode] = useState("list");
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   const [formErrors, setFormErrors] = useState({});
   const [confirm, setConfirm] = useState(null);
@@ -3342,7 +3375,14 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
 
   return (
     <Page title={t.rentals||"Locations"} sub={lang==="en"?`${rentals.length} rental(s) registered`:`${rentals.length} location(s) enregistrée(s)`}
-      actions={<button onClick={()=>{ setModal(true); setFormErrors({}); }} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
+      actions={<div style={{ display:"flex", gap:8 }}>
+        <div style={{ display:"flex", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden" }}>
+          {[["list","☰"],["gantt","▬"]].map(([m,icon])=>(
+            <button key={m} onClick={()=>setViewMode(m)} style={{ padding:"9px 14px", background:viewMode===m?T.goldDim:"transparent", border:"none", borderRight:m==="list"?`1px solid ${T.border}`:"none", cursor:"pointer", fontSize:13, color:viewMode===m?T.gold:T.muted, fontFamily:"inherit" }}>{icon} {lang==="en"?(m==="list"?"List":"Timeline"):(m==="list"?"Liste":"Gantt")}</button>
+          ))}
+        </div>
+        <button onClick={()=>{ setModal(true); setFormErrors({}); }} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>
+      </div>}>
       
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
@@ -3359,8 +3399,75 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
         ))}
       </div>
 
+      {/* Gantt view */}
+      {viewMode==="gantt" && (() => {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const windowStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+        const days = Array.from({length:daysInMonth},(_,i)=>{ const d=new Date(windowStart); d.setDate(i+1); return d; });
+        const statusColor = { "en cours":T.success, "terminée":T.muted, "annulée":T.red, "réservée":T.amber };
+        const visible = rentals.filter(r=>r.start_date&&r.end_date).filter(r=>{
+          const s=new Date(r.start_date); const e=new Date(r.end_date);
+          return s<=days[days.length-1] && e>=days[0];
+        });
+        return (
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"auto" }}>
+            <div style={{ minWidth:700 }}>
+              {/* Header jours */}
+              <div style={{ display:"grid", gridTemplateColumns:`180px repeat(${daysInMonth},1fr)`, borderBottom:`1px solid ${T.border}` }}>
+                <div style={{ padding:"10px 14px", fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>
+                  {new Date().toLocaleDateString(lang==="en"?"en-US":"fr-FR",{month:"long",year:"numeric"})}
+                </div>
+                {days.map((d,i)=>{
+                  const isToday = d.getTime()===today.getTime();
+                  const isWE = d.getDay()===0||d.getDay()===6;
+                  return (
+                    <div key={i} style={{ padding:"8px 0", textAlign:"center", fontSize:10, fontWeight:isToday?800:500, color:isToday?T.gold:isWE?T.amber:T.muted, background:isToday?T.goldDim:isWE?T.amber+"08":"transparent", borderLeft:`1px solid ${T.border}` }}>
+                      {d.getDate()}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Lignes rentals */}
+              {visible.length===0 && (
+                <div style={{ padding:40, textAlign:"center", fontSize:13, color:T.muted }}>Aucune location ce mois-ci</div>
+              )}
+              {visible.map(r=>{
+                const rStart = new Date(r.start_date); rStart.setHours(0,0,0,0);
+                const rEnd   = new Date(r.end_date);   rEnd.setHours(0,0,0,0);
+                const col0 = Math.max(0, Math.round((rStart-windowStart)/86400000));
+                const colSpan = Math.min(daysInMonth-col0, Math.round((rEnd-rStart)/86400000)+1);
+                const color = statusColor[r.status]||T.gold;
+                return (
+                  <div key={r.id} style={{ display:"grid", gridTemplateColumns:`180px repeat(${daysInMonth},1fr)`, borderBottom:`1px solid ${T.border}`, alignItems:"center", minHeight:44 }}
+                    onMouseEnter={e=>e.currentTarget.style.background=T.card2}
+                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    <div style={{ padding:"0 14px" }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:T.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.client_name}</div>
+                      <div style={{ fontSize:10, color:T.muted, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.vehicle_name?.split("—")[0]?.trim()}</div>
+                    </div>
+                    {days.map((d,i)=>{
+                      const isWE = d.getDay()===0||d.getDay()===6;
+                      const isToday = d.getTime()===today.getTime();
+                      const inBar = i>=col0 && i<col0+colSpan;
+                      const isBarStart = i===col0;
+                      const isBarEnd = i===col0+colSpan-1;
+                      return (
+                        <div key={i} style={{ height:32, background:inBar?color+"33":isWE?T.amber+"05":isToday?T.goldDim:"transparent", borderLeft:`1px solid ${inBar?"transparent":T.border}`, borderRadius:inBar?(isBarStart&&isBarEnd?"8px":isBarStart?"8px 0 0 8px":isBarEnd?"0 8px 8px 0":"0"):"0", position:"relative" }}>
+                          {inBar && <div style={{ position:"absolute", inset:"6px 2px", background:color+"55", borderRadius:isBarStart&&isBarEnd?"6px":isBarStart?"6px 0 0 6px":isBarEnd?"0 6px 6px 0":"0" }}/>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Table */}
-      <div style={{ display:"flex", gap:20 }}>
+      {viewMode==="list" && <div style={{ display:"flex", gap:20 }}>
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
@@ -3432,7 +3539,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
             </Card>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Modal nouvelle location */}
       {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
