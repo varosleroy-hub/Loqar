@@ -2008,7 +2008,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
                   <ProgressBar value={sel.km} max={150000} color={sel.km>100000?T.red:sel.km>70000?T.amber:T.gold}/>
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>setModal("edit")}>{Icons.edit} Modifier</button>
+                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ name:sel.name, plate:sel.plate, fuel:sel.fuel, trans:sel.transmission||sel.trans, km:String(sel.km), price:String(sel.price_per_day||sel.price), year:String(sel.year), cat:sel.category||sel.cat, photo:sel.photo_url||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
                   <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); }}/>
                 </div>
               </div>
@@ -2019,7 +2019,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
 
       {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.vehicles} véhicules. Passez en Pro pour une flotte illimitée.`} onClose={()=>setUpgradeModal(false)}/>}
       {modal && (
-      <Modal title={t.addVehicle||"Ajouter un véhicule"} onClose={()=>setModal(false)}>
+      <Modal title={modal==="edit"?"Modifier le véhicule":(t.addVehicle||"Ajouter un véhicule")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ gridColumn:"1/-1" }}><Input label="Nom du véhicule" value={form.name} onChange={v=>setForm({...form,name:v})} placeholder="Renault Clio"/></div>
             <div style={{ gridColumn:"1/-1" }}>
@@ -2048,10 +2048,16 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
-            <Btn label={t.add||"Ajouter"} onClick={async ()=>{
-              const newV = { user_id: user.id, agency_id: activeAgencyId||null, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
-              const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
-              if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.catégorie }]);
+            <Btn label={modal==="edit"?"Enregistrer":(t.add||"Ajouter")} onClick={async ()=>{
+              const payload = { name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, photo_url: form.photo };
+              if (modal==="edit") {
+                await supabase.from("vehicles").update(payload).eq("id", sel.id);
+                setVehicles(vehicles.map(v=>v.id===sel.id?{...v,...payload,trans:payload.transmission,price:payload.price_per_day,cat:payload.category}:v));
+                setSel(s=>s?{...s,...payload,trans:payload.transmission,price:payload.price_per_day,cat:payload.category}:s);
+              } else {
+                const { data } = await supabase.from("vehicles").insert({ ...payload, user_id: user.id, agency_id: activeAgencyId||null, status: "disponible" }).select().single();
+                if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.category }]);
+              }
               setModal(false);
             }} variant="primary"/>
           </div>
@@ -2150,12 +2156,12 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
                 <div style={{ fontSize:26, fontWeight:700, color:T.gold, letterSpacing:"-0.03em" }}>{fmt(sel.totalSpent)} €</div>
               </div>
               <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>setModal("edit")}>{Icons.edit} Modifier</button>
-                <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ 
+                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ firstName:sel.first_name||sel.firstName||"", lastName:sel.last_name||sel.lastName||"", email:sel.email||"", phone:sel.phone||"", type:sel.type||"particulier", licenseExpiry:sel.license_expiry||sel.licenseExpiry||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
+                <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{
                   if(!window.confirm("Supprimer ce client ?")) return;
-                  await supabase.from("clients").delete().eq("id", sel.id); 
-                  setClients(clients.filter(c=>c.id!==sel.id)); 
-                  setSel(null); 
+                  await supabase.from("clients").delete().eq("id", sel.id);
+                  setClients(clients.filter(c=>c.id!==sel.id));
+                  setSel(null);
                 }}/>
               </div>
             </Card>
@@ -2164,7 +2170,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
       </div>
 
       {modal && (
-        <Modal title={t.newClient||"Nouveau client"} onClose={()=>setModal(false)}>
+        <Modal title={modal==="edit"?"Modifier le client":(t.newClient||"Nouveau client")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <Input label="Prénom" value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
             <Input label="Nom" value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
@@ -2174,10 +2180,17 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
-            <Btn label={t.save||"Créer le client"} onClick={async ()=>{
-              const newC = { user_id: user.id, agency_id: activeAgencyId||null, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
-              const { data, error } = await supabase.from("clients").insert(newC).select().single();
-              if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
+            <Btn label={modal==="edit"?"Enregistrer":(t.save||"Créer le client")} onClick={async ()=>{
+              const payload = { first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry };
+              if (modal==="edit") {
+                await supabase.from("clients").update(payload).eq("id", sel.id);
+                const updated = { ...sel, ...payload, firstName: payload.first_name, lastName: payload.last_name, licenseExpiry: payload.license_expiry };
+                setClients(clients.map(c=>c.id===sel.id?updated:c));
+                setSel(updated);
+              } else {
+                const { data } = await supabase.from("clients").insert({ ...payload, user_id: user.id, agency_id: activeAgencyId||null, locations_count: 0, total_spent: 0 }).select().single();
+                if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
+              }
               setModal(false);
             }} variant="primary"/>
           </div>
