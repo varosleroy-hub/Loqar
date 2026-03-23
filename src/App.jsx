@@ -958,6 +958,19 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
   const endDraw = () => setDrawing(false);
   const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
   const confirmSign = async () => {
+    // Upload de la signature dans Supabase Storage
+    const canvas = canvasRef.current;
+    if (canvas) {
+      try {
+        const blob = await (await fetch(canvas.toDataURL("image/png"))).blob();
+        const path = `signatures/${user?.id}/${selected.id}_${Date.now()}.png`;
+        await supabase.storage.from("photos").upload(path, blob, { contentType:"image/png", upsert:true });
+      } catch(e) { console.error("Erreur upload signature:", e); }
+    }
+    // Mettre le statut de la location à "terminée"
+    await supabase.from("rentals").update({ status:"terminée" }).eq("id", selected.id);
+    if (setRentals) setRentals(prev=>prev.map(r=>r.id===selected.id?{...r,status:"terminée"}:r));
+
     setSigned(s=>[...s,selected?.id]);
     const client = clients.find(c=>String(c.id)===String(selected?.client_id));
     if (client?.email) {
@@ -2651,7 +2664,8 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const agencyName = agencyProfile?.agency_name || "Mon Agence";
   const agencyAddress = agencyProfile?.address || "Adresse de l'agence";
   const agencySiret = agencyProfile?.siret || "SIRET : XX XXX XXX XXXXX";
-  const docNum = `LQ-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
+  const docNumRef = useRef(`LQ-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,"0")}-${Date.now().toString(36).toUpperCase().slice(-4)}`);
+  const docNum = docNumRef.current;
 
   const printDoc = () => {
     if (!p.clientId) { toast("Veuillez sélectionner un client avant de générer le document.", "error"); return; }
@@ -3207,7 +3221,7 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
+function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -3278,6 +3292,11 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     if (data) {
       setRentals([data, ...rentals]);
       const cl = clients.find(c=>String(c.id)===String(form.clientId));
+      if (cl) {
+        const newCount = (cl.locations||0) + 1;
+        await supabase.from("clients").update({ locations_count: newCount }).eq("id", cl.id);
+        if (setClients) setClients(prev=>prev.map(c=>String(c.id)===String(form.clientId)?{...c,locations:newCount,locations_count:newCount}:c));
+      }
       if (cl?.email && PLAN_LIMITS[userPlan]?.emails) sendEmail("rental", cl.email, { clientName: cl.first_name+" "+cl.last_name, vehicle: newR.vehicle_name, startDate: form.startDate, endDate: form.endDate, total });
     }
     setModal(false);
@@ -3285,7 +3304,21 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
   };
 
   const handleDelete = (id) => {
-    setConfirm({ message:"Supprimer cette location ? Cette action est irréversible.", onConfirm: async ()=>{ await supabase.from("rentals").delete().eq("id", id); setRentals(rentals.filter(r=>r.id!==id)); setSel(null); toast("Location supprimée"); } });
+    const rental = rentals.find(r=>r.id===id);
+    setConfirm({ message:"Supprimer cette location ? Cette action est irréversible.", onConfirm: async ()=>{
+      await supabase.from("rentals").delete().eq("id", id);
+      setRentals(rentals.filter(r=>r.id!==id));
+      setSel(null);
+      toast("Location supprimée");
+      if (rental?.client_id && setClients) {
+        const cl = clients.find(c=>String(c.id)===String(rental.client_id));
+        if (cl) {
+          const newCount = Math.max(0, (cl.locations||0) - 1);
+          await supabase.from("clients").update({ locations_count: newCount }).eq("id", cl.id);
+          setClients(prev=>prev.map(c=>String(c.id)===String(rental.client_id)?{...c,locations:newCount,locations_count:newCount}:c));
+        }
+      }
+    }});
   };
 
   const handleStatusChange = (id, newStatus) => {
@@ -3591,7 +3624,7 @@ export default function App() {
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
