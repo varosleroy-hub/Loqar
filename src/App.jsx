@@ -87,6 +87,33 @@ en: {
 const LangContext = createContext("fr");
 const useLang = () => useContext(LangContext);
 
+// ─── MOBILE HOOK ──────────────────────────────────────────────────────────────
+const useIsMobile = () => {
+  const [w, setW] = useState(typeof window!=="undefined"?window.innerWidth:1200);
+  useEffect(()=>{ const h=()=>setW(window.innerWidth); window.addEventListener("resize",h); return ()=>window.removeEventListener("resize",h); },[]);
+  return w < 768;
+};
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+const ToastContext = createContext(()=>{});
+const useToast = () => useContext(ToastContext);
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const show = (msg, type="success") => { const id=Date.now(); setToasts(p=>[...p,{id,msg,type}]); setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3200); };
+  return (
+    <ToastContext.Provider value={show}>
+      {children}
+      <div style={{ position:"fixed", bottom:24, right:24, zIndex:9999, display:"flex", flexDirection:"column", gap:10, pointerEvents:"none" }}>
+        {toasts.map(t=>(
+          <div key={t.id} style={{ padding:"12px 18px", borderRadius:12, background:t.type==="error"?"#C0392B":t.type==="warn"?T.amber:T.success, color:"#fff", fontSize:13, fontWeight:600, boxShadow:"0 8px 30px #00000060", animation:"fadeUp .2s", display:"flex", alignItems:"center", gap:8, maxWidth:320 }}>
+            {t.type==="error"||t.type==="warn"?Icons.alert:Icons.check} {t.msg}
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
 
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
 const T = {
@@ -1080,7 +1107,18 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const lateP = payments.filter(p=>p.status==="en retard").length;
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
+
+  if (isMobile && !open) return (
+    <button onClick={()=>setOpen(true)} style={{ position:"fixed", top:14, left:14, zIndex:200, background:T.gold, border:"none", borderRadius:10, width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#0F0D0B", fontSize:20, boxShadow:"0 4px 20px #00000060" }}>
+      ☰
+    </button>
+  );
+
   return (
+    <>
+    {isMobile && <div onClick={()=>setOpen(false)} style={{ position:"fixed", inset:0, background:"#00000070", zIndex:99 }}/>}
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
 
       {/* Logo + bell */}
@@ -1203,6 +1241,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
         </button>
       </div>
     </aside>
+    </>
   );
 }
 
@@ -1363,7 +1402,7 @@ function LandingPage({ onGetStarted }) {
 
       {/* STATS */}
       <div style={{ background:T.surface, borderTop:`1px solid ${T.border}`, borderBottom:`1px solid ${T.border}`, padding:"30px 24px" }}>
-        <div style={{ maxWidth:860, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, textAlign:"center" }}>
+        <div style={{ maxWidth:860, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, textAlign:"center" }}>
           {[["500+","Véhicules gérés"],["2 min","Pour créer un contrat"],["100%","Conforme légalement"],["24/7","Accès en ligne"]].map(([n,l])=>(
             <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:14, padding:20 }}>
               <div style={{ fontSize:32, fontWeight:800, color:T.gold, letterSpacing:"-0.04em" }}>{n}</div>
@@ -1417,7 +1456,7 @@ function LandingPage({ onGetStarted }) {
               <div style={{ padding:22 }}>
                 <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", marginBottom:3 }}>Tableau de bord</div>
                 <div style={{ fontSize:12, color:T.muted, marginBottom:18 }}>Mercredi 5 mars · Bienvenue sur Loqar</div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:16 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10, marginBottom:16 }}>
                   {[["Revenus","4 280 €",T.gold,"↑ +12%"],["Locations","12",T.blue,"actives"],["Véhicules","8",T.success,"disponibles"],[lang==="en"?"Clients":"Clients","24",T.amber,"total"]].map(([l,v,c,s])=>(
                     <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:11, padding:12 }}>
                       <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", marginBottom:5 }}>{l}</div>
@@ -1679,7 +1718,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
       </div>
 
       {/* ── Stats row ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:18 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:14, marginBottom:18 }}>
         {[
           { label:lang==="en"?"Active rentals":"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:lang==="en"?"In progress":"En cours" },
           { label:lang==="en"?"Available vehicles":"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:lang==="en"?`Out of ${(vehicles||[]).length} total`:`Sur ${(vehicles||[]).length} total` },
@@ -1969,7 +2008,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
                   <ProgressBar value={sel.km} max={150000} color={sel.km>100000?T.red:sel.km>70000?T.amber:T.gold}/>
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>setModal("edit")}>{Icons.edit} Modifier</button>
+                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ name:sel.name, plate:sel.plate, fuel:sel.fuel, trans:sel.transmission||sel.trans, km:String(sel.km), price:String(sel.price_per_day||sel.price), year:String(sel.year), cat:sel.category||sel.cat, photo:sel.photo_url||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
                   <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); }}/>
                 </div>
               </div>
@@ -1980,7 +2019,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
 
       {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.vehicles} véhicules. Passez en Pro pour une flotte illimitée.`} onClose={()=>setUpgradeModal(false)}/>}
       {modal && (
-      <Modal title={t.addVehicle||"Ajouter un véhicule"} onClose={()=>setModal(false)}>
+      <Modal title={modal==="edit"?"Modifier le véhicule":(t.addVehicle||"Ajouter un véhicule")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ gridColumn:"1/-1" }}><Input label="Nom du véhicule" value={form.name} onChange={v=>setForm({...form,name:v})} placeholder="Renault Clio"/></div>
             <div style={{ gridColumn:"1/-1" }}>
@@ -2009,10 +2048,16 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
-            <Btn label={t.add||"Ajouter"} onClick={async ()=>{
-              const newV = { user_id: user.id, agency_id: activeAgencyId||null, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
-              const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
-              if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.catégorie }]);
+            <Btn label={modal==="edit"?"Enregistrer":(t.add||"Ajouter")} onClick={async ()=>{
+              const payload = { name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, photo_url: form.photo };
+              if (modal==="edit") {
+                await supabase.from("vehicles").update(payload).eq("id", sel.id);
+                setVehicles(vehicles.map(v=>v.id===sel.id?{...v,...payload,trans:payload.transmission,price:payload.price_per_day,cat:payload.category}:v));
+                setSel(s=>s?{...s,...payload,trans:payload.transmission,price:payload.price_per_day,cat:payload.category}:s);
+              } else {
+                const { data } = await supabase.from("vehicles").insert({ ...payload, user_id: user.id, agency_id: activeAgencyId||null, status: "disponible" }).select().single();
+                if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.category }]);
+              }
               setModal(false);
             }} variant="primary"/>
           </div>
@@ -2042,8 +2087,8 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
       </div>
 
       <div style={{ display:"flex", gap:20 }}>
-        <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+        <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", minWidth:600 }}>
             <thead>
               <tr>
                 {["Client","Contact","Permis",t.rentals||"Locations","Total dépensé",t.type||"Type"].map(l=>(
@@ -2111,12 +2156,12 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
                 <div style={{ fontSize:26, fontWeight:700, color:T.gold, letterSpacing:"-0.03em" }}>{fmt(sel.totalSpent)} €</div>
               </div>
               <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>setModal("edit")}>{Icons.edit} Modifier</button>
-                <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ 
+                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ firstName:sel.first_name||sel.firstName||"", lastName:sel.last_name||sel.lastName||"", email:sel.email||"", phone:sel.phone||"", type:sel.type||"particulier", licenseExpiry:sel.license_expiry||sel.licenseExpiry||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
+                <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{
                   if(!window.confirm("Supprimer ce client ?")) return;
-                  await supabase.from("clients").delete().eq("id", sel.id); 
-                  setClients(clients.filter(c=>c.id!==sel.id)); 
-                  setSel(null); 
+                  await supabase.from("clients").delete().eq("id", sel.id);
+                  setClients(clients.filter(c=>c.id!==sel.id));
+                  setSel(null);
                 }}/>
               </div>
             </Card>
@@ -2125,7 +2170,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
       </div>
 
       {modal && (
-        <Modal title={t.newClient||"Nouveau client"} onClose={()=>setModal(false)}>
+        <Modal title={modal==="edit"?"Modifier le client":(t.newClient||"Nouveau client")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <Input label="Prénom" value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
             <Input label="Nom" value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
@@ -2135,10 +2180,17 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
-            <Btn label={t.save||"Créer le client"} onClick={async ()=>{
-              const newC = { user_id: user.id, agency_id: activeAgencyId||null, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
-              const { data, error } = await supabase.from("clients").insert(newC).select().single();
-              if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
+            <Btn label={modal==="edit"?"Enregistrer":(t.save||"Créer le client")} onClick={async ()=>{
+              const payload = { first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry };
+              if (modal==="edit") {
+                await supabase.from("clients").update(payload).eq("id", sel.id);
+                const updated = { ...sel, ...payload, firstName: payload.first_name, lastName: payload.last_name, licenseExpiry: payload.license_expiry };
+                setClients(clients.map(c=>c.id===sel.id?updated:c));
+                setSel(updated);
+              } else {
+                const { data } = await supabase.from("clients").insert({ ...payload, user_id: user.id, agency_id: activeAgencyId||null, locations_count: 0, total_spent: 0 }).select().single();
+                if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
+              }
               setModal(false);
             }} variant="primary"/>
           </div>
@@ -2210,7 +2262,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
     <Page title={t.payments||"Paiements"} sub={lang==="en"?"Collections, transactions and deposits":"Encaissements, transactions et cautions"}
       actions={<button onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>}>
       
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
         {stats.map(s=>{ const c=useCounter(s.value,900); return (
           <Card key={s.label}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
@@ -2234,8 +2286,8 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
           onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
       </div>
 
-      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
-        <table style={{ width:"100%", borderCollapse:"collapse" }}>
+      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", minWidth:700 }}>
           <thead>
             <tr>{[t.client||"Client",lang==="en"?"Rental":"Location",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
               <th key={l} style={{ textAlign:"left", padding:"10px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
@@ -2523,7 +2575,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
 
   return (
     <Page title={t.documents||"Documents"} sub={lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, marginBottom:26 }}>
         {docTypes.map(dt=>{
           const active=docType===dt.id;
           return (
@@ -2653,7 +2705,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
             <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8, marginBottom:20 }}>
               <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Vehicle":"Véhicule"}</div>
               {selectedVehicle ? (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:8 }}>
                   {lang==="en"?[["Model",selectedVehicle.name],["Plate",selectedVehicle.plate],["Fuel",selectedVehicle.fuel],["Gearbox",selectedVehicle.trans]]:[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans]].map(([k,v])=>(
                     <div key={k}>
                       <div style={{ fontSize:9, color:"#888" }}>{k}</div>
@@ -2665,7 +2717,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
             </div>
 
             {/* Location details */}
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10, marginBottom:20 }}>
               {lang==="en"?[["Start",fmtDate(p.startDate)||"—"],["End",fmtDate(p.endDate)||"—"],["Duration",days>0?`${days} day(s)`:"—"],["Start km",p.km?fmt(parseInt(p.km))+" km":"—"]]:[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                   <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
@@ -3110,7 +3162,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
       
       {/* Stats */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
         {[
           [t.inProgress||lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
           [t.reserved||lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
@@ -3251,6 +3303,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
   const [page,           setPage]           = useState("dashboard");
@@ -3384,15 +3437,17 @@ export default function App() {
 
   return (
     <LangContext.Provider value={lang}>
+    <ToastProvider>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
       <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>
-      <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
+      <main style={{ flex:1, marginLeft:isMobile?0:220, minHeight:"100vh", paddingTop:isMobile?56:0 }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
     </div>
+    </ToastProvider>
     </LangContext.Provider>
   );
 }
