@@ -2288,7 +2288,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
   const handleSave = async () => {
     const client = clients.find(c=>String(c.id)===String(form.clientId));
     const payload = {
-      client_id: form.clientId,
+      client_id: form.clientId||null,
       rental_id: form.rentalId||null,
       client_name: client?`${client.first_name} ${client.last_name}`:"—",
       amount: parseInt(form.amount)||0,
@@ -2298,13 +2298,16 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
       paid_at: form.paidAt||new Date().toISOString().split("T")[0],
     };
     if (editId) {
-      await supabase.from("payments").update(payload).eq("id", editId);
-      setPayments(payments.map(p=>p.id===editId?{...p,...payload}:p));
+      const { error } = await supabase.from("payments").update(payload).eq("id", editId);
+      if (error) { toast("Erreur : " + error.message, "error"); return; }
+      setPayments(prev => prev.map(p=>p.id===editId?{...p,...payload}:p));
     } else {
-      const { data } = await supabase.from("payments").insert({ ...payload, user_id:user.id, agency_id:activeAgencyId||null }).select().single();
-      if (data) setPayments([data, ...payments]);
+      const { data, error } = await supabase.from("payments").insert({ ...payload, user_id:user.id, agency_id:activeAgencyId||null }).select().single();
+      if (error) { toast("Erreur : " + error.message, "error"); return; }
+      if (data) setPayments(prev => [data, ...prev]);
     }
     setModal(false);
+    toast(editId ? "Paiement modifié" : "Paiement enregistré");
   };
 
   const handleEncaisser = async (id) => {
