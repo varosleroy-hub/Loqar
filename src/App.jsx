@@ -917,7 +917,7 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange, activeAgency = null, onSwitchAgency }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const lateP = payments.filter(p=>p.status==="en retard").length;
@@ -942,6 +942,17 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
           </button>
         </div>
       </div>
+
+      {/* Banner agence active */}
+      {activeAgency && (
+        <div style={{ background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:9, padding:"8px 10px", marginBottom:12, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+          <div>
+            <div style={{ fontSize:10, color:T.gold, fontWeight:700, letterSpacing:".06em", textTransform:"uppercase" }}>Agence active</div>
+            <div style={{ fontSize:12, color:T.text, fontWeight:600, marginTop:2 }}>{activeAgency.name}</div>
+          </div>
+          <button onClick={()=>onSwitchAgency&&onSwitchAgency(null)} style={{ fontSize:10, color:T.muted, background:"none", border:`1px solid ${T.border}`, borderRadius:6, padding:"3px 7px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>✕ Quitter</button>
+        </div>
+      )}
 
       {/* Search */}
       <button onClick={onCmd}
@@ -1659,7 +1670,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
+function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [sel, setSel]       = useState(null);
@@ -1840,7 +1851,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.add||"Ajouter"} onClick={async ()=>{
-              const newV = { user_id: user.id, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
+              const newV = { user_id: user.id, agency_id: activeAgencyId||null, name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, status: "disponible", photo_url: form.photo };
               const { data, error } = await supabase.from("vehicles").insert(newV).select().single();
               if (data) setVehicles([...vehicles, { ...data, trans: data.transmission, price: data.price_per_day, cat: data.catégorie }]);
               setModal(false);
@@ -1853,7 +1864,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter" }) {
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
-function Clients({ clients, setClients, user }) {
+function Clients({ clients, setClients, user, activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [sel,  setSel]    = useState(null);
@@ -1966,7 +1977,7 @@ function Clients({ clients, setClients, user }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={t.save||"Créer le client"} onClick={async ()=>{
-              const newC = { user_id: user.id, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
+              const newC = { user_id: user.id, agency_id: activeAgencyId||null, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, locations_count: 0, total_spent: 0 };
               const { data, error } = await supabase.from("clients").insert(newC).select().single();
               if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
               setModal(false);
@@ -1979,7 +1990,7 @@ function Clients({ clients, setClients, user }) {
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter" }) {
+function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter", activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [filter, setFilter] = useState("all");
@@ -1999,6 +2010,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
     const client = clients.find(c=>String(c.id)===String(form.clientId));
     const newP = {
       user_id: user.id,
+      agency_id: activeAgencyId||null,
       client_id: form.clientId,
       rental_id: form.rentalId||null,
       client_name: client?`${client.first_name} ${client.last_name}`:"—",
@@ -2154,7 +2166,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
 }
 
 // ─── MULTI-AGENCES ────────────────────────────────────────────────────────────
-function MultiAgences({ user, userPlan = "starter" }) {
+function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitchAgency }) {
   const [agencies, setAgencies] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [modal,    setModal]    = useState(false);
@@ -2238,8 +2250,14 @@ function MultiAgences({ user, userPlan = "starter" }) {
               {a.city && <div style={{ fontSize:12, color:T.muted, marginBottom:4 }}>📍 {a.city}</div>}
               {a.email && <div style={{ fontSize:12, color:T.muted, marginBottom:2 }}>✉ {a.email}</div>}
               {a.phone && <div style={{ fontSize:12, color:T.muted }}>📞 {a.phone}</div>}
-              <div style={{ fontSize:11, color:T.muted, marginTop:10, paddingTop:10, borderTop:`1px solid ${T.border}` }}>
-                Ajoutée le {new Date(a.createdAt).toLocaleDateString("fr-FR")}
+              <div style={{ fontSize:11, color:T.muted, marginTop:10, paddingTop:10, borderTop:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <span>Ajoutée le {new Date(a.createdAt).toLocaleDateString("fr-FR")}</span>
+                <button onClick={()=>onSwitchAgency && onSwitchAgency(activeAgency?.id===a.id ? null : a)}
+                  style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:6, border:"none", cursor:"pointer", fontFamily:"inherit",
+                    background: activeAgency?.id===a.id ? T.goldDim : T.card2,
+                    color: activeAgency?.id===a.id ? T.gold : T.sub }}>
+                  {activeAgency?.id===a.id ? "✓ Active" : "Basculer →"}
+                </button>
               </div>
             </Card>
           ))}
@@ -2839,7 +2857,7 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter" }) {
+function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [modal, setModal] = useState(false);
@@ -2869,6 +2887,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
     const newR = {
       user_id: user.id,
+      agency_id: activeAgencyId||null,
       client_id: form.clientId,
       vehicle_id: form.vehicleId,
       client_name: `${client.first_name} ${client.last_name}`,
@@ -3067,6 +3086,7 @@ export default function App() {
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
   const [userPlan,       setUserPlan]       = useState("starter");
+  const [activeAgency,   setActiveAgency]   = useState(null); // null = agence principale
   const unread = NOTIFS.filter(n=>!n.read).length;
 
   useEffect(() => {
@@ -3083,17 +3103,24 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchData = async (uid) => {
+  const fetchData = async (uid, agencyId = null) => {
+    const fa = (q) => agencyId ? q.eq("agency_id", String(agencyId)) : q.is("agency_id", null);
     const [{ data: v }, { data: c }, { data: r }, { data: py }] = await Promise.all([
-      supabase.from("vehicles").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-      supabase.from("clients").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-      supabase.from("rentals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-      supabase.from("payments").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      fa(supabase.from("vehicles").select("*").eq("user_id", uid)).order("created_at", { ascending: false }),
+      fa(supabase.from("clients").select("*").eq("user_id", uid)).order("created_at", { ascending: false }),
+      fa(supabase.from("rentals").select("*").eq("user_id", uid)).order("created_at", { ascending: false }),
+      fa(supabase.from("payments").select("*").eq("user_id", uid)).order("created_at", { ascending: false }),
     ]);
     if (v) setVehicles(v.map(x => ({ ...x, trans: x.transmission, price: x.price_per_day, cat: x.category })));
     if (c) setClients(c.map(x => ({ ...x, firstName: x.first_name, lastName: x.last_name, licenseExpiry: x.license_expiry, totalSpent: x.total_spent, locations: x.locations_count })));
     if (r) setRentals(r);
     if (py) setPayments(py);
+  };
+
+  const handleSwitchAgency = (agency) => {
+    setActiveAgency(agency);
+    fetchData(user.id, agency?.id || null);
+    setPage("dashboard");
   };
 
   const fetchProfile = async (uid, currentUser) => {
@@ -3163,13 +3190,13 @@ export default function App() {
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan}/>,
-    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan}/>,
-    clients:   <Clients   clients={clients}   setClients={setClients} user={user}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} userPlan={userPlan}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null}/>,
+    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null}/>,
+    clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
-    agencies:  <MultiAgences user={user} userPlan={userPlan}/>,
+    agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
     pricing:   <Pricing/>,
     settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan}/>,
   };
@@ -3180,7 +3207,7 @@ export default function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>
       <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
