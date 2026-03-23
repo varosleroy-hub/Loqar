@@ -405,6 +405,23 @@ function Modal({ title, onClose, children, width=540 }) {
   );
 }
 
+function ConfirmModal({ message, confirmLabel="Supprimer", onConfirm, onCancel }) {
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:600, background:"#00000095", display:"flex", alignItems:"center", justifyContent:"center", padding:20, backdropFilter:"blur(8px)" }}
+      onClick={onCancel}>
+      <div style={{ background:T.card, border:`1px solid ${T.border2}`, borderRadius:20, padding:28, width:360, maxWidth:"100%" }}
+        onClick={e=>e.stopPropagation()}>
+        <div style={{ fontSize:16, fontWeight:700, color:T.text, marginBottom:10 }}>Confirmation</div>
+        <div style={{ fontSize:13, color:T.sub, marginBottom:24, lineHeight:1.6 }}>{message}</div>
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+          <Btn label="Annuler" variant="secondary" onClick={onCancel}/>
+          <Btn label={confirmLabel} variant="danger" onClick={onConfirm}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Card({ children, style={}, onClick }) {
   const [hov, setHov] = useState(false);
   return (
@@ -1871,6 +1888,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
+  const toast = useToast();
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -1878,6 +1896,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [form, setForm]     = useState({name:"",plate:"",fuel:"Essence",trans:"Manuelle",km:"",price:"",year:"",cat:"Citadine",photo:""});
   const [uploading, setUploading] = useState(false);
+  const [confirm, setConfirm] = useState(null);
 
   const handlePhotoUpload = async (file) => {
     if (!file) return;
@@ -2009,7 +2028,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ name:sel.name, plate:sel.plate, fuel:sel.fuel, trans:sel.transmission||sel.trans, km:String(sel.km), price:String(sel.price_per_day||sel.price), year:String(sel.year), cat:sel.category||sel.cat, photo:sel.photo_url||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
-                  <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); }}/>
+                  <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={()=>setConfirm({ message:`Supprimer le véhicule "${sel.name}" ? Cette action est irréversible.`, onConfirm: async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); toast("Véhicule supprimé"); } })}/>
                 </div>
               </div>
             </div>
@@ -2017,6 +2036,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
         )}
       </div>
 
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
       {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.vehicles} véhicules. Passez en Pro pour une flotte illimitée.`} onClose={()=>setUpgradeModal(false)}/>}
       {modal && (
       <Modal title={modal==="edit"?"Modifier le véhicule":(t.addVehicle||"Ajouter un véhicule")} onClose={()=>setModal(false)}>
@@ -2049,6 +2069,8 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={modal==="edit"?"Enregistrer":(t.add||"Ajouter")} onClick={async ()=>{
+              if (!form.name.trim()) { toast("Le nom du véhicule est requis", "error"); return; }
+              if (!form.plate.trim()) { toast("L'immatriculation est requise", "error"); return; }
               const payload = { name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, photo_url: form.photo };
               if (modal==="edit") {
                 await supabase.from("vehicles").update(payload).eq("id", sel.id);
@@ -2071,10 +2093,12 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
 function Clients({ clients, setClients, user, activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
+  const toast = useToast();
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
   const [modal, setModal]  = useState(false);
   const [form, setForm]    = useState({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:""});
+  const [confirm, setConfirm] = useState(null);
   const filtered = clients.filter(c=>!search||`${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -2157,18 +2181,14 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
               </div>
               <div style={{ display:"flex", gap:8, marginTop:14 }}>
                 <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ firstName:sel.first_name||sel.firstName||"", lastName:sel.last_name||sel.lastName||"", email:sel.email||"", phone:sel.phone||"", type:sel.type||"particulier", licenseExpiry:sel.license_expiry||sel.licenseExpiry||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
-                <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={async ()=>{
-                  if(!window.confirm("Supprimer ce client ?")) return;
-                  await supabase.from("clients").delete().eq("id", sel.id);
-                  setClients(clients.filter(c=>c.id!==sel.id));
-                  setSel(null);
-                }}/>
+                <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={()=>setConfirm({ message:`Supprimer le client "${sel.first_name||sel.firstName} ${sel.last_name||sel.lastName}" ? Cette action est irréversible.`, onConfirm: async ()=>{ await supabase.from("clients").delete().eq("id", sel.id); setClients(clients.filter(c=>c.id!==sel.id)); setSel(null); toast("Client supprimé"); } })}/>
               </div>
             </Card>
           </div>
         )}
       </div>
 
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
       {modal && (
         <Modal title={modal==="edit"?"Modifier le client":(t.newClient||"Nouveau client")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
@@ -2181,6 +2201,8 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={modal==="edit"?"Enregistrer":(t.save||"Créer le client")} onClick={async ()=>{
+              if (!form.firstName.trim() || !form.lastName.trim()) { toast("Prénom et nom requis", "error"); return; }
+              if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast("Email invalide", "error"); return; }
               const payload = { first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry };
               if (modal==="edit") {
                 await supabase.from("clients").update(payload).eq("id", sel.id);
@@ -2204,11 +2226,13 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
 function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter", activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
+  const toast = useToast();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [modal, setModal]   = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm]     = useState({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
+  const [confirm, setConfirm] = useState(null);
   const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
 
   const filtered = payments.filter(p=>
@@ -2252,10 +2276,8 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
     setPayments(payments.map(p=>p.id===id?{...p,status:"encaissé"}:p));
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Supprimer ce paiement ?")) return;
-    await supabase.from("payments").delete().eq("id", id);
-    setPayments(payments.filter(p=>p.id!==id));
+  const handleDelete = (id) => {
+    setConfirm({ message:"Supprimer ce paiement ? Cette action est irréversible.", onConfirm: async ()=>{ await supabase.from("payments").delete().eq("id", id); setPayments(payments.filter(p=>p.id!==id)); toast("Paiement supprimé"); } });
   };
 
   return (
@@ -2351,6 +2373,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
         </table>
       </div>
 
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
       {modal && (
         <Modal title={editId ? (lang==="en"?"Edit payment":"Modifier le paiement") : (t.newPayment||"Nouveau paiement")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
@@ -3093,11 +3116,14 @@ function Pricing() {
 function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "starter", activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
+  const toast = useToast();
   const [modal, setModal] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [sel, setSel]     = useState(null);
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
-  const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
+  const [formErrors, setFormErrors] = useState({});
+  const [confirm, setConfirm] = useState(null);
+  const up = (k,v) => { setForm(prev=>({...prev,[k]:v})); setFormErrors(prev=>({...prev,[k]:""})); };
 
   const days  = Math.ceil((new Date(form.endDate)-new Date(form.startDate))/86400000);
   const total = (parseInt(form.pricePerDay)||0)*(days>0?days:0);
@@ -3105,6 +3131,25 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
   const statusColor = { "en cours":T.success, "terminée":T.muted, "annulée":T.red, "réservée":T.amber };
 
   const handleAdd = async () => {
+    // Validation
+    const errs = {};
+    if (!form.clientId) errs.clientId = "Sélectionnez un client";
+    if (!form.vehicleId) errs.vehicleId = "Sélectionnez un véhicule";
+    if (!form.startDate) errs.startDate = "Date de début requise";
+    if (!form.endDate) errs.endDate = "Date de fin requise";
+    if (form.startDate && form.endDate && new Date(form.endDate) <= new Date(form.startDate)) errs.endDate = "La fin doit être après le début";
+    if (!form.pricePerDay || parseInt(form.pricePerDay) <= 0) errs.pricePerDay = "Prix requis";
+    if (Object.keys(errs).length) { setFormErrors(errs); return; }
+
+    // Disponibilité véhicule
+    const conflict = rentals.find(r =>
+      String(r.vehicle_id) === String(form.vehicleId) &&
+      r.status !== "terminée" && r.status !== "annulée" &&
+      new Date(r.start_date) <= new Date(form.endDate) &&
+      new Date(r.end_date) >= new Date(form.startDate)
+    );
+    if (conflict) { setFormErrors({ vehicleId: `Déjà réservé du ${fmtDate(conflict.start_date)} au ${fmtDate(conflict.end_date)}` }); return; }
+
     const limit = PLAN_LIMITS[userPlan]?.rentals;
     if (limit !== Infinity) {
       const now = new Date();
@@ -3116,8 +3161,6 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     }
     const client  = clients.find(c=>String(c.id)===String(form.clientId));
     const vehicle = vehicles.find(v=>String(v.id)===String(form.vehicleId));
-    if (!client || !vehicle) return alert("Sélectionnez un client et un véhicule");
-    if (!form.startDate || !form.endDate) return alert("Renseignez les dates");
     const newR = {
       user_id: user.id,
       agency_id: activeAgencyId||null,
@@ -3144,11 +3187,8 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Supprimer cette location ?")) return;
-    await supabase.from("rentals").delete().eq("id", id);
-    setRentals(rentals.filter(r=>r.id!==id));
-    setSel(null);
+  const handleDelete = (id) => {
+    setConfirm({ message:"Supprimer cette location ? Cette action est irréversible.", onConfirm: async ()=>{ await supabase.from("rentals").delete().eq("id", id); setRentals(rentals.filter(r=>r.id!==id)); setSel(null); toast("Location supprimée"); } });
   };
 
   const handleStatusChange = async (id, status) => {
@@ -3159,7 +3199,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
 
   return (
     <Page title={t.rentals||"Locations"} sub={lang==="en"?`${rentals.length} rental(s) registered`:`${rentals.length} location(s) enregistrée(s)`}
-      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
+      actions={<button onClick={()=>{ setModal(true); setFormErrors({}); }} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
       
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
@@ -3246,32 +3286,44 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       </div>
 
       {/* Modal nouvelle location */}
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
       {upgradeModal && <UpgradeModal reason={`Votre plan Starter est limité à ${PLAN_LIMITS.starter.rentals} locations/mois. Passez en Pro pour des locations illimitées.`} onClose={()=>setUpgradeModal(false)}/>}
       {modal && (
-        <Modal title={t.newRental||"Nouvelle location"} onClose={()=>setModal(false)}>
+        <Modal title={t.newRental||"Nouvelle location"} onClose={()=>{ setModal(false); setFormErrors({}); }}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
               <select value={form.clientId} onChange={e=>up("clientId",e.target.value)}
-                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                style={{ background:T.card2, border:`1px solid ${formErrors.clientId?T.red:T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
                 <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
               </select>
+              {formErrors.clientId && <span style={{ fontSize:11, color:T.red }}>{formErrors.clientId}</span>}
             </div>
 
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
-              <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>x.id===e.target.value); if(v) up("pricePerDay",v.price||""); }}
-                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+              <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>x.id===e.target.value); if(v) up("pricePerDay",v.price_per_day||v.price||""); }}
+                style={{ background:T.card2, border:`1px solid ${formErrors.vehicleId?T.red:T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
                 <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
                 {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
               </select>
+              {formErrors.vehicleId && <span style={{ fontSize:11, color:T.red }}>{formErrors.vehicleId}</span>}
             </div>
 
-            <Input label={t.start||"Début"} type="date" value={form.startDate} onChange={v=>up("startDate",v)}/>
-            <Input label={t.end||"Fin"} type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
-            <Input label={t.price||"Prix/jour (€)"} type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <Input label={t.start||"Début"} type="date" value={form.startDate} onChange={v=>up("startDate",v)}/>
+              {formErrors.startDate && <span style={{ fontSize:11, color:T.red }}>{formErrors.startDate}</span>}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <Input label={t.end||"Fin"} type="date" value={form.endDate} onChange={v=>up("endDate",v)}/>
+              {formErrors.endDate && <span style={{ fontSize:11, color:T.red }}>{formErrors.endDate}</span>}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <Input label={t.price||"Prix/jour (€)"} type="number" value={form.pricePerDay} onChange={v=>up("pricePerDay",v)}/>
+              {formErrors.pricePerDay && <span style={{ fontSize:11, color:T.red }}>{formErrors.pricePerDay}</span>}
+            </div>
             <Input label={t.deposit||"Caution (€)"} type="number" value={form.deposit} onChange={v=>up("deposit",v)}/>
             <Input label={"Km départ"} type="number" value={form.km} onChange={v=>up("km",v)}/>
             
