@@ -67,6 +67,50 @@ export default async function handler(req, res) {
           <p style="color:#8A8075;font-size:12px;text-align:center;">Loqar · Logiciel de gestion de location de véhicules</p>
         </div>`
     },
+    payment_received: {
+      subject: `Paiement confirmé — ${data?.amount || ""}€`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#141210;color:#E8E4DF;padding:40px;border-radius:16px;">
+          <div style="text-align:center;margin-bottom:32px;">
+            <h1 style="color:#C9A84C;font-size:28px;margin:0;">Loqar</h1>
+          </div>
+          <h2 style="color:#6AAF7A;">Paiement reçu ✅</h2>
+          <p style="color:#B0A898;">Bonjour <strong>${data?.clientName || ""}</strong>,</p>
+          <p style="color:#B0A898;line-height:1.6;">Nous confirmons la réception de votre paiement.</p>
+          <div style="background:#1F1D1A;border:1px solid #6AAF7A30;border-radius:12px;padding:20px;margin:24px 0;">
+            <p style="margin:0;color:#8A8075;font-size:13px;">Montant encaissé</p>
+            <p style="margin:4px 0 0;color:#6AAF7A;font-size:24px;font-weight:700;">${data?.amount || "—"} €</p>
+            ${data?.method ? `<p style="margin:8px 0 0;color:#8A8075;font-size:13px;">Méthode : ${data.method}</p>` : ""}
+            ${data?.date ? `<p style="margin:4px 0 0;color:#8A8075;font-size:13px;">Date : ${data.date}</p>` : ""}
+          </div>
+          <p style="color:#B0A898;line-height:1.6;">Merci pour votre confiance.</p>
+          <hr style="border:none;border-top:1px solid #2E2B27;margin:32px 0;"/>
+          <p style="color:#8A8075;font-size:12px;text-align:center;">Loqar · Logiciel de gestion de location de véhicules</p>
+        </div>`
+    },
+    contract: {
+      subject: `Votre contrat de location — ${data?.vehicle || "Véhicule"}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#141210;color:#E8E4DF;padding:40px;border-radius:16px;">
+          <div style="text-align:center;margin-bottom:32px;">
+            <h1 style="color:#C9A84C;font-size:28px;margin:0;">Loqar</h1>
+          </div>
+          <h2 style="color:#E8E4DF;">Votre contrat de location 📄</h2>
+          <p style="color:#B0A898;">Bonjour <strong>${data?.clientName || ""}</strong>,</p>
+          <p style="color:#B0A898;line-height:1.6;">Veuillez trouver ci-dessous votre contrat de location.</p>
+          <div style="background:#1F1D1A;border:1px solid #2E2B27;border-radius:12px;padding:20px;margin:24px 0;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="color:#8A8075;font-size:13px;padding:6px 0;">Véhicule</td><td style="color:#E8E4DF;font-weight:600;">${data?.vehicle || "—"}</td></tr>
+              <tr><td style="color:#8A8075;font-size:13px;padding:6px 0;">Début</td><td style="color:#E8E4DF;">${data?.startDate || "—"}</td></tr>
+              <tr><td style="color:#8A8075;font-size:13px;padding:6px 0;">Fin</td><td style="color:#E8E4DF;">${data?.endDate || "—"}</td></tr>
+              <tr><td style="color:#8A8075;font-size:13px;padding:6px 0;">Total</td><td style="color:#C9A84C;font-weight:700;font-size:16px;">${data?.total || "—"} €</td></tr>
+            </table>
+          </div>
+          ${data?.contractHtml ? `<div style="margin:24px 0;padding:20px;background:#FDFBF7;border-radius:12px;color:#1A1510;">${data.contractHtml}</div>` : ""}
+          <hr style="border:none;border-top:1px solid #2E2B27;margin:32px 0;"/>
+          <p style="color:#8A8075;font-size:12px;text-align:center;">Loqar · Logiciel de gestion de location de véhicules</p>
+        </div>`
+    },
     payment_reminder: {
       subject: `Rappel paiement en retard — ${data?.amount || ""}€`,
       html: `
