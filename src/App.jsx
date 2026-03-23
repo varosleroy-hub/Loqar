@@ -2605,7 +2605,7 @@ const getPlans = (lang="fr") => [
     monthlyPrice:49, annualPrice:39, annualTotal:468, color:T.blue, colorDim:T.blueDim,
     highlight:false, cta:lang==="en"?"Start free trial":"Commencer l'essai", note:lang==="en"?"14 days · No card required":"14 jours · Aucune CB requise",
     features:[
-      {t:lang==="en"?"Up to 3 vehicles":"Jusqu'à 3 véhicules",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
+      {t:lang==="en"?"Up to 5 vehicles":"Jusqu'à 5 véhicules",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
       {t:lang==="en"?"PDF contracts & inspections":"Contrats & état des lieux PDF",ok:true},{t:lang==="en"?"Payment tracking":"Suivi des paiements",ok:true},
       {t:lang==="en"?"Gantt calendar view":"Vue Gantt du calendrier",ok:true},{t:lang==="en"?"License expiry alerts":"Alertes permis expirés",ok:true},
       {t:lang==="en"?"1 user":"1 utilisateur",ok:true},{t:lang==="en"?"Advanced reports":"Rapports avancés",ok:false},
@@ -2617,7 +2617,7 @@ const getPlans = (lang="fr") => [
     monthlyPrice:129, annualPrice:99, annualTotal:1188, color:T.gold, colorDim:T.goldDim,
     highlight:true, cta:lang==="en"?"Try Pro":"Essayer le Pro", note:lang==="en"?"14 days · No card required":"14 jours · Aucune CB requise",
     features:[
-      {t:lang==="en"?"Up to 15 vehicles":"Jusqu'à 15 véhicules",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
+      {t:lang==="en"?"Unlimited vehicles":"Véhicules illimités",ok:true},{t:lang==="en"?"Unlimited clients":"Clients illimités",ok:true},
       {t:lang==="en"?"PDF contracts & inspections":"Contrats & état des lieux PDF",ok:true},{t:lang==="en"?"Payment tracking":"Suivi des paiements",ok:true},
       {t:lang==="en"?"Gantt calendar view":"Vue Gantt du calendrier",ok:true},{t:lang==="en"?"License expiry alerts":"Alertes permis expirés",ok:true},
       {t:lang==="en"?"Up to 3 users":"Jusqu'à 3 utilisateurs",ok:true},{t:lang==="en"?"Advanced reports":"Rapports avancés",ok:true},
