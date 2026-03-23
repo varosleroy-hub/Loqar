@@ -2288,7 +2288,6 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
   const handleSave = async () => {
     const client = clients.find(c=>String(c.id)===String(form.clientId));
     const payload = {
-      client_id: form.clientId||null,
       rental_id: form.rentalId||null,
       client_name: client?`${client.first_name} ${client.last_name}`:"—",
       amount: parseInt(form.amount)||0,
