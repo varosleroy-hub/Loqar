@@ -2117,7 +2117,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────────────────────
-function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading = false }) {
+function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading = false, rentals = [] }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -2215,6 +2215,26 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
                 <div style={{ fontSize:11, color:T.muted, marginBottom:4 }}>Total dépensé</div>
                 <div style={{ fontSize:26, fontWeight:700, color:T.gold, letterSpacing:"-0.03em" }}>{fmt(sel.totalSpent)} €</div>
               </div>
+              {(() => {
+                const clientRentals = rentals.filter(r=>String(r.client_id)===String(sel.id));
+                return clientRentals.length > 0 ? (
+                  <div style={{ marginTop:14 }}>
+                    <div style={{ fontSize:11, color:T.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:".08em", marginBottom:8 }}>Historique ({clientRentals.length})</div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:200, overflowY:"auto" }}>
+                      {clientRentals.map(r=>(
+                        <div key={r.id} style={{ padding:"8px 10px", background:T.card2, borderRadius:9 }}>
+                          <div style={{ fontSize:12, fontWeight:600, color:T.text, marginBottom:3 }}>{r.vehicle_name}</div>
+                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                            <span style={{ fontSize:11, color:T.sub }}>{fmtDate(r.start_date)} → {fmtDate(r.end_date)}</span>
+                            <StatusBadge status={r.status}/>
+                          </div>
+                          <div style={{ fontSize:11, color:T.gold, fontWeight:600, marginTop:2 }}>{fmt(r.total)} €</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
               <div style={{ display:"flex", gap:8, marginTop:14 }}>
                 <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ firstName:sel.first_name||sel.firstName||"", lastName:sel.last_name||sel.lastName||"", email:sel.email||"", phone:sel.phone||"", type:sel.type||"particulier", licenseExpiry:sel.license_expiry||sel.licenseExpiry||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
                 <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={()=>setConfirm({ message:`Supprimer le client "${sel.first_name||sel.firstName} ${sel.last_name||sel.lastName}" ? Cette action est irréversible.`, onConfirm: async ()=>{ await supabase.from("clients").delete().eq("id", sel.id); setClients(clients.filter(c=>c.id!==sel.id)); setSel(null); toast("Client supprimé"); } })}/>
@@ -2247,7 +2267,10 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
                 setSel(updated);
               } else {
                 const { data } = await supabase.from("clients").insert({ ...payload, user_id: user.id, agency_id: activeAgencyId||null, locations_count: 0, total_spent: 0 }).select().single();
-                if (data) setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
+                if (data) {
+                  setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
+                  setForm({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:""});
+                }
               }
               setModal(false);
             }} variant="primary"/>
@@ -2259,7 +2282,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
 }
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
-function Payments({ payments, setPayments, clients, rentals, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
+function Payments({ payments, setPayments, clients, setClients, rentals, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -2285,6 +2308,14 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
   const openAdd = () => { setEditId(null); setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" }); setModal(true); };
   const openEdit = (p) => { setEditId(p.id); setForm({ clientId:String(p.client_id||""), rentalId:String(p.rental_id||""), amount:String(p.amount||""), deposit:String(p.deposit||""), method:p.method||"Espèces", status:p.status||"en attente", paidAt:p.paid_at||"" }); setModal(true); };
 
+  const updateClientTotalSpent = async (clientId, delta) => {
+    const client = clients.find(c=>String(c.id)===String(clientId));
+    if (!client) return;
+    const newTotal = Math.max(0, (client.totalSpent||0) + delta);
+    await supabase.from("clients").update({ total_spent: newTotal }).eq("id", client.id);
+    setClients(prev => prev.map(c=>String(c.id)===String(clientId)?{...c, totalSpent:newTotal, total_spent:newTotal}:c));
+  };
+
   const handleSave = async () => {
     const client = clients.find(c=>String(c.id)===String(form.clientId));
     const payload = {
@@ -2297,25 +2328,41 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
       paid_at: form.paidAt||new Date().toISOString().split("T")[0],
     };
     if (editId) {
+      const oldPayment = payments.find(p=>p.id===editId);
       const { error } = await supabase.from("payments").update(payload).eq("id", editId);
       if (error) { toast("Erreur : " + error.message, "error"); return; }
       setPayments(prev => prev.map(p=>p.id===editId?{...p,...payload}:p));
+      if (client) {
+        const wasEncaissed = oldPayment?.status==="encaissé";
+        const isNowEncaissed = payload.status==="encaissé";
+        if (!wasEncaissed && isNowEncaissed) await updateClientTotalSpent(client.id, payload.amount);
+        else if (wasEncaissed && !isNowEncaissed) await updateClientTotalSpent(client.id, -(oldPayment?.amount||0));
+      }
     } else {
       const { data, error } = await supabase.from("payments").insert({ ...payload, user_id:user.id, agency_id:activeAgencyId||null }).select().single();
       if (error) { toast("Erreur : " + error.message, "error"); return; }
       if (data) setPayments(prev => [data, ...prev]);
+      if (payload.status==="encaissé" && client) await updateClientTotalSpent(client.id, payload.amount);
     }
     setModal(false);
     toast(editId ? "Paiement modifié" : "Paiement enregistré");
   };
 
   const handleEncaisser = async (id) => {
+    const payment = payments.find(p=>p.id===id);
     await supabase.from("payments").update({ status:"encaissé" }).eq("id", id);
     setPayments(payments.map(p=>p.id===id?{...p,status:"encaissé"}:p));
+    if (payment?.client_id && payment?.amount) await updateClientTotalSpent(payment.client_id, payment.amount);
   };
 
   const handleDelete = (id) => {
-    setConfirm({ message:"Supprimer ce paiement ? Cette action est irréversible.", onConfirm: async ()=>{ await supabase.from("payments").delete().eq("id", id); setPayments(payments.filter(p=>p.id!==id)); toast("Paiement supprimé"); } });
+    const payment = payments.find(p=>p.id===id);
+    setConfirm({ message:"Supprimer ce paiement ? Cette action est irréversible.", onConfirm: async ()=>{
+      await supabase.from("payments").delete().eq("id", id);
+      setPayments(payments.filter(p=>p.id!==id));
+      toast("Paiement supprimé");
+      if (payment?.status==="encaissé" && payment?.client_id) await updateClientTotalSpent(payment.client_id, -(payment.amount||0));
+    }});
   };
 
   return (
@@ -2590,6 +2637,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
 function Documents({ agencyProfile, vehicles, clients }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
+  const toast = useToast();
   const [docType, setDocType] = useState("contrat");
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
 
@@ -2606,6 +2654,8 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const docNum = `LQ-${new Date().getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
 
   const printDoc = () => {
+    if (!p.clientId) { toast("Veuillez sélectionner un client avant de générer le document.", "error"); return; }
+    if (!p.vehicleId) { toast("Veuillez sélectionner un véhicule avant de générer le document.", "error"); return; }
     const el = document.getElementById("doc-preview");
     if (!el) return;
     const w = window.open("","_blank");
@@ -3205,6 +3255,9 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     }
     const client  = clients.find(c=>String(c.id)===String(form.clientId));
     const vehicle = vehicles.find(v=>String(v.id)===String(form.vehicleId));
+    if (client && isExpired(client.license_expiry||client.licenseExpiry)) {
+      toast("Attention : le permis de ce client est expiré !", "warn");
+    }
     const newR = {
       user_id: user.id,
       agency_id: activeAgencyId||null,
@@ -3235,10 +3288,19 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
     setConfirm({ message:"Supprimer cette location ? Cette action est irréversible.", onConfirm: async ()=>{ await supabase.from("rentals").delete().eq("id", id); setRentals(rentals.filter(r=>r.id!==id)); setSel(null); toast("Location supprimée"); } });
   };
 
-  const handleStatusChange = async (id, status) => {
-    await supabase.from("rentals").update({ status }).eq("id", id);
-    setRentals(rentals.map(r=>r.id===id?{...r,status}:r));
-    if (sel?.id===id) setSel({...sel,status});
+  const handleStatusChange = (id, newStatus) => {
+    const rental = rentals.find(r=>r.id===id);
+    if (!rental || rental.status===newStatus) return;
+    setConfirm({
+      message: `Changer le statut de "${rental.client_name}" de "${rental.status}" → "${newStatus}" ?`,
+      confirmLabel: "Confirmer",
+      onConfirm: async () => {
+        await supabase.from("rentals").update({ status:newStatus }).eq("id", id);
+        setRentals(rentals.map(r=>r.id===id?{...r,status:newStatus}:r));
+        if (sel?.id===id) setSel({...sel,status:newStatus});
+        toast("Statut mis à jour");
+      }
+    });
   };
 
   return (
@@ -3531,8 +3593,8 @@ export default function App() {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
-    clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
-    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
+    payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
