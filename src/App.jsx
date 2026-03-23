@@ -87,6 +87,33 @@ en: {
 const LangContext = createContext("fr");
 const useLang = () => useContext(LangContext);
 
+// ─── MOBILE HOOK ──────────────────────────────────────────────────────────────
+const useIsMobile = () => {
+  const [w, setW] = useState(typeof window!=="undefined"?window.innerWidth:1200);
+  useEffect(()=>{ const h=()=>setW(window.innerWidth); window.addEventListener("resize",h); return ()=>window.removeEventListener("resize",h); },[]);
+  return w < 768;
+};
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+const ToastContext = createContext(()=>{});
+const useToast = () => useContext(ToastContext);
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const show = (msg, type="success") => { const id=Date.now(); setToasts(p=>[...p,{id,msg,type}]); setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3200); };
+  return (
+    <ToastContext.Provider value={show}>
+      {children}
+      <div style={{ position:"fixed", bottom:24, right:24, zIndex:9999, display:"flex", flexDirection:"column", gap:10, pointerEvents:"none" }}>
+        {toasts.map(t=>(
+          <div key={t.id} style={{ padding:"12px 18px", borderRadius:12, background:t.type==="error"?"#C0392B":t.type==="warn"?T.amber:T.success, color:"#fff", fontSize:13, fontWeight:600, boxShadow:"0 8px 30px #00000060", animation:"fadeUp .2s", display:"flex", alignItems:"center", gap:8, maxWidth:320 }}>
+            {t.type==="error"||t.type==="warn"?Icons.alert:Icons.check} {t.msg}
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
 
 // ─── DESIGN TOKENS — Warm Charcoal + Champagne Gold ─────────────────────────
 const T = {
@@ -1080,7 +1107,18 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const lateP = payments.filter(p=>p.status==="en retard").length;
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
+
+  if (isMobile && !open) return (
+    <button onClick={()=>setOpen(true)} style={{ position:"fixed", top:14, left:14, zIndex:200, background:T.gold, border:"none", borderRadius:10, width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#0F0D0B", fontSize:20, boxShadow:"0 4px 20px #00000060" }}>
+      ☰
+    </button>
+  );
+
   return (
+    <>
+    {isMobile && <div onClick={()=>setOpen(false)} style={{ position:"fixed", inset:0, background:"#00000070", zIndex:99 }}/>}
     <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
 
       {/* Logo + bell */}
@@ -1203,6 +1241,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
         </button>
       </div>
     </aside>
+    </>
   );
 }
 
@@ -1363,7 +1402,7 @@ function LandingPage({ onGetStarted }) {
 
       {/* STATS */}
       <div style={{ background:T.surface, borderTop:`1px solid ${T.border}`, borderBottom:`1px solid ${T.border}`, padding:"30px 24px" }}>
-        <div style={{ maxWidth:860, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, textAlign:"center" }}>
+        <div style={{ maxWidth:860, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, textAlign:"center" }}>
           {[["500+","Véhicules gérés"],["2 min","Pour créer un contrat"],["100%","Conforme légalement"],["24/7","Accès en ligne"]].map(([n,l])=>(
             <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:14, padding:20 }}>
               <div style={{ fontSize:32, fontWeight:800, color:T.gold, letterSpacing:"-0.04em" }}>{n}</div>
@@ -1417,7 +1456,7 @@ function LandingPage({ onGetStarted }) {
               <div style={{ padding:22 }}>
                 <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", marginBottom:3 }}>Tableau de bord</div>
                 <div style={{ fontSize:12, color:T.muted, marginBottom:18 }}>Mercredi 5 mars · Bienvenue sur Loqar</div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:16 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10, marginBottom:16 }}>
                   {[["Revenus","4 280 €",T.gold,"↑ +12%"],["Locations","12",T.blue,"actives"],["Véhicules","8",T.success,"disponibles"],[lang==="en"?"Clients":"Clients","24",T.amber,"total"]].map(([l,v,c,s])=>(
                     <div key={l} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:11, padding:12 }}>
                       <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", marginBottom:5 }}>{l}</div>
@@ -1679,7 +1718,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
       </div>
 
       {/* ── Stats row ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:18 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:14, marginBottom:18 }}>
         {[
           { label:lang==="en"?"Active rentals":"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:lang==="en"?"In progress":"En cours" },
           { label:lang==="en"?"Available vehicles":"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:lang==="en"?`Out of ${(vehicles||[]).length} total`:`Sur ${(vehicles||[]).length} total` },
@@ -2042,8 +2081,8 @@ function Clients({ clients, setClients, user, activeAgencyId = null }) {
       </div>
 
       <div style={{ display:"flex", gap:20 }}>
-        <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+        <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", minWidth:600 }}>
             <thead>
               <tr>
                 {["Client","Contact","Permis",t.rentals||"Locations","Total dépensé",t.type||"Type"].map(l=>(
@@ -2210,7 +2249,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
     <Page title={t.payments||"Paiements"} sub={lang==="en"?"Collections, transactions and deposits":"Encaissements, transactions et cautions"}
       actions={<button onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>}>
       
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
         {stats.map(s=>{ const c=useCounter(s.value,900); return (
           <Card key={s.label}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
@@ -2523,7 +2562,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
 
   return (
     <Page title={t.documents||"Documents"} sub={lang==="en"?"Generate legally compliant contracts, quotes and invoices":"Générez contrats, devis et factures légalement conformes"}>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:26 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, marginBottom:26 }}>
         {docTypes.map(dt=>{
           const active=docType===dt.id;
           return (
@@ -2653,7 +2692,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
             <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8, marginBottom:20 }}>
               <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Vehicle":"Véhicule"}</div>
               {selectedVehicle ? (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:8 }}>
                   {lang==="en"?[["Model",selectedVehicle.name],["Plate",selectedVehicle.plate],["Fuel",selectedVehicle.fuel],["Gearbox",selectedVehicle.trans]]:[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans]].map(([k,v])=>(
                     <div key={k}>
                       <div style={{ fontSize:9, color:"#888" }}>{k}</div>
@@ -2665,7 +2704,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
             </div>
 
             {/* Location details */}
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10, marginBottom:20 }}>
               {lang==="en"?[["Start",fmtDate(p.startDate)||"—"],["End",fmtDate(p.endDate)||"—"],["Duration",days>0?`${days} day(s)`:"—"],["Start km",p.km?fmt(parseInt(p.km))+" km":"—"]]:[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                   <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
@@ -3110,7 +3149,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
       actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New rental":"Nouvelle location"}</button>}>
       
       {/* Stats */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
         {[
           [t.inProgress||lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
           [t.reserved||lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
@@ -3251,6 +3290,7 @@ function Rentals({ rentals, setRentals, vehicles, clients, user, userPlan = "sta
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
   const [page,           setPage]           = useState("dashboard");
@@ -3384,15 +3424,17 @@ export default function App() {
 
   return (
     <LangContext.Provider value={lang}>
+    <ToastProvider>
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
       <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>
-      <main style={{ flex:1, marginLeft:220, minHeight:"100vh" }}>
+      <main style={{ flex:1, marginLeft:isMobile?0:220, minHeight:"100vh", paddingTop:isMobile?56:0 }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
     </div>
+    </ToastProvider>
     </LangContext.Provider>
   );
 }
