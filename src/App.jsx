@@ -898,6 +898,248 @@ function Page({ title, sub, actions, children }) {
   );
 }
 
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({ onGetStarted }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [step, setStep]           = useState(0);
+  const [showFinal, setShowFinal] = useState(false);
+  const TOTAL = 5;
+
+  useEffect(() => {
+    const s = document.createElement("style");
+    s.id = "landing-styles";
+    s.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Outfit:wght@300;400;500;600&display=swap');
+      .landing-body { margin:0; padding:0; background:#080705; font-family:'Outfit',sans-serif; color:#F2EDE4; overflow-x:hidden; }
+      @keyframes lFadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes lBlink  { 0%,100%{opacity:1} 50%{opacity:0.3} }
+      @keyframes lStepIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+      .l-anim-1 { animation:lFadeUp .5s ease .1s both }
+      .l-anim-2 { animation:lFadeUp .5s ease .2s both }
+      .l-anim-3 { animation:lFadeUp .5s ease .3s both }
+      .l-anim-4 { animation:lFadeUp .5s ease .4s both }
+      .l-anim-5 { animation:lFadeUp .5s ease .5s both }
+      .l-anim-6 { animation:lFadeUp .5s ease .6s both }
+      .badge-dot { animation:lBlink 2s infinite }
+      .l-step-active { animation:lStepIn .3s ease }
+      .l-modal::-webkit-scrollbar { width:4px }
+      .l-modal::-webkit-scrollbar-thumb { background:rgba(201,168,76,.2); border-radius:2px }
+      .l-cta-main:hover { background:#E8C96A !important; transform:translateY(-2px) }
+      .l-cta-how:hover  { border-color:rgba(201,168,76,.4) !important; color:#C9A84C !important }
+      .l-btn-ghost:hover { border-color:rgba(255,255,255,.25) !important }
+      .l-btn-gold:hover  { background:#E8C96A !important }
+      .l-modal-close:hover { background:rgba(255,255,255,.1) !important }
+      .l-btn-prev:hover:not(:disabled) { border-color:rgba(255,255,255,.2) !important; color:#F2EDE4 !important }
+      .l-btn-next:hover  { background:#E8C96A !important }
+      .l-final-btn:hover { background:#E8C96A !important }
+      .l-prog-dot { cursor:pointer }
+    `;
+    document.head.appendChild(s);
+    return () => { const el = document.getElementById("landing-styles"); if(el) el.remove(); };
+  }, []);
+
+  useEffect(() => {
+    const h = e => {
+      if (!modalOpen) return;
+      if (e.key === "ArrowRight") { if (!showFinal && step < TOTAL-1) setStep(s => s+1); else if (!showFinal && step === TOTAL-1) setShowFinal(true); }
+      if (e.key === "ArrowLeft")  { if (showFinal) { setShowFinal(false); } else if (step > 0) setStep(s => s-1); }
+      if (e.key === "Escape")     closeModal();
+    };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [modalOpen, step, showFinal]);
+
+  const openModal  = () => { setModalOpen(true); document.body.style.overflow = "hidden"; };
+  const closeModal = () => {
+    setModalOpen(false); document.body.style.overflow = "";
+    setTimeout(() => { setStep(0); setShowFinal(false); }, 400);
+  };
+
+  const GOLD  = "#C9A84C";
+  const DARK  = "#080705";
+  const TEXT  = "#F2EDE4";
+  const SUB   = "rgba(242,237,228,0.5)";
+  const BORD  = "rgba(201,168,76,0.2)";
+
+  const steps = [
+    { num:"01", tag:"Première étape",   title:"Tu crées ton compte",             time:"⏱ 30 secondes",
+      text: <>Email, mot de passe — c'est parti. <strong style={{color:"rgba(242,237,228,.85)",fontWeight:500}}>Aucune carte bancaire requise.</strong> Tu accèdes immédiatement à ton espace, propre, vide, prêt à prendre vie.</> },
+    { num:"02", tag:"Deuxième étape",   title:"Tu ajoutes ta flotte",            time:"⏱ 2 minutes",
+      text: <>Marque, modèle, immatriculation, photos. <strong style={{color:"rgba(242,237,228,.85)",fontWeight:500}}>Chaque véhicule dans le système en quelques clics.</strong> Tu vois ta flotte entière d'un seul coup d'œil — dispo, état, historique.</> },
+    { num:"03", tag:"Troisième étape",  title:"Tu crées ta première location",   time:"⏱ 1 minute",
+      text: <>Client, véhicule, dates, prix. Loqar génère <strong style={{color:"rgba(242,237,228,.85)",fontWeight:500}}>un contrat professionnel automatiquement.</strong> Fini les Word bricolés. Fini les fautes qui font mauvaise impression.</> },
+    { num:"04", tag:"Quatrième étape",  title:"Ton client signe, tu encaisses",  time:"⏱ Automatique",
+      text: <>Le contrat part par email. <strong style={{color:"rgba(242,237,228,.85)",fontWeight:500}}>Il signe en ligne en 30 secondes.</strong> Les paiements se suivent dans Loqar — tu sais exactement qui a payé, qui doit, combien tu fais ce mois.</> },
+    { num:"05", tag:"Cinquième étape",  title:"Tu te concentres sur ta croissance", time:"⚡ Dès maintenant",
+      text: <>Ton dashboard te montre tout en temps réel. Revenus, taux d'occupation, clients fidèles. <strong style={{color:"rgba(242,237,228,.85)",fontWeight:500}}>Tu prends de meilleures décisions, plus vite.</strong> Tu construis l'agence que tu mérites.</> },
+  ];
+
+  const goTo = i => { setShowFinal(false); setStep(i); };
+
+  return (
+    <div className="landing-body">
+      {/* ── NAVBAR ── */}
+      <nav style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 40px", position:"relative", zIndex:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:40, height:40, border:`1.5px solid ${GOLD}`, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.8" strokeLinecap="round">
+              <rect x="2" y="8" width="20" height="10" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>
+              <circle cx="7" cy="18" r="1" fill={GOLD} stroke="none"/><circle cx="17" cy="18" r="1" fill={GOLD} stroke="none"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:18, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.05em", lineHeight:1, color:TEXT }}>Loqar</div>
+            <div style={{ fontSize:9, color:GOLD, letterSpacing:"0.35em", textTransform:"uppercase" }}>Location Auto</div>
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:10 }}>
+          <button className="l-btn-ghost" onClick={onGetStarted}
+            style={{ padding:"10px 20px", background:"transparent", border:"1px solid rgba(255,255,255,.12)", borderRadius:10, color:TEXT, fontSize:14, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s" }}>
+            Se connecter
+          </button>
+          <button className="l-btn-gold" onClick={onGetStarted}
+            style={{ padding:"10px 20px", background:GOLD, border:"none", borderRadius:10, color:DARK, fontSize:14, fontWeight:600, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s" }}>
+            Essai gratuit →
+          </button>
+        </div>
+      </nav>
+
+      {/* ── HERO ── */}
+      <section style={{ minHeight:"88vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", padding:"0 28px 80px", position:"relative",
+        background:"radial-gradient(ellipse 110% 70% at 50% 0%, #1F1608 0%, #080705 65%)" }}>
+        {/* Vertical line */}
+        <div style={{ position:"absolute", top:0, left:"50%", width:1, height:"100%", background:"linear-gradient(to bottom, rgba(201,168,76,.15), transparent 60%)", pointerEvents:"none" }}/>
+
+        {/* Badge */}
+        <div className="l-anim-1" style={{ display:"inline-flex", alignItems:"center", gap:8, border:`1px solid rgba(201,168,76,.35)`, borderRadius:100, padding:"7px 18px", marginBottom:40 }}>
+          <div className="badge-dot" style={{ width:6, height:6, borderRadius:"50%", background:GOLD }}/>
+          <span style={{ fontSize:11, letterSpacing:"0.35em", textTransform:"uppercase", color:GOLD, fontWeight:500 }}>Le mouvement des loueurs ambitieux</span>
+        </div>
+
+        {/* Headline */}
+        <h1 className="l-anim-2" style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:"clamp(60px,13vw,100px)", fontWeight:900, textTransform:"uppercase", lineHeight:0.9, letterSpacing:"-0.02em", color:TEXT }}>
+          Gérez <span style={{ color:GOLD }}>moins.</span><br/>Louez plus.
+        </h1>
+
+        <p className="l-anim-3" style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:"clamp(18px,4vw,28px)", fontWeight:700, textTransform:"uppercase", color:"rgba(242,237,228,.2)", letterSpacing:"0.04em", margin:"14px 0 28px" }}>
+          Ton business mérite mieux.
+        </p>
+
+        <p className="l-anim-4" style={{ fontSize:16, lineHeight:1.75, color:"rgba(242,237,228,.5)", fontWeight:300, maxWidth:380, marginBottom:44 }}>
+          Pendant que tu gères des papiers, <strong style={{ color:"rgba(242,237,228,.9)", fontWeight:500 }}>tes concurrents grandissent.</strong> Loqar automatise tout — pour que toi, tu construises quelque chose de grand.
+        </p>
+
+        {/* CTAs */}
+        <div className="l-anim-5" style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:360, marginBottom:40 }}>
+          <button className="l-cta-main" onClick={onGetStarted}
+            style={{ padding:18, background:GOLD, border:"none", borderRadius:12, color:DARK, fontSize:16, fontWeight:600, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s" }}>
+            Commencer gratuitement →
+          </button>
+          <button className="l-cta-how" onClick={openModal}
+            style={{ padding:18, background:"transparent", border:"1px solid rgba(255,255,255,.1)", borderRadius:12, color:TEXT, fontSize:15, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s", display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+            <div style={{ width:28, height:28, borderRadius:"50%", border:"1px solid currentColor", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor"><polygon points="0,0 10,6 0,12"/></svg>
+            </div>
+            Comment ça marche — 5 min chrono
+          </button>
+        </div>
+
+        {/* Reassurance */}
+        <div className="l-anim-6" style={{ display:"flex", flexWrap:"wrap", justifyContent:"center", gap:"6px 20px" }}>
+          {["Sans carte requise","14 jours d'essai","Annulation facile"].map(txt => (
+            <span key={txt} style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(242,237,228,.35)", fontWeight:300 }}>
+              <span style={{ color:"#4CAF6E", fontSize:12 }}>✓</span> {txt}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* ── MODAL ── */}
+      <div onClick={e => { if(e.target === e.currentTarget) closeModal(); }}
+        style={{ position:"fixed", inset:0, zIndex:999, background:"rgba(8,7,5,.85)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", padding:24,
+          opacity: modalOpen ? 1 : 0, pointerEvents: modalOpen ? "all" : "none", transition:"opacity .35s ease" }}>
+        <div className="l-modal"
+          style={{ background:"#0F0E0A", border:`1px solid ${BORD}`, borderRadius:20, width:"100%", maxWidth:680, maxHeight:"90vh", overflowY:"auto",
+            transform: modalOpen ? "translateY(0) scale(1)" : "translateY(32px) scale(0.97)", transition:"transform .35s ease", position:"relative" }}>
+
+          {/* Header */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", padding:"32px 32px 24px", position:"sticky", top:0, background:"#0F0E0A", zIndex:2, borderBottom:"1px solid rgba(255,255,255,.05)" }}>
+            <div>
+              <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:11, letterSpacing:"0.4em", textTransform:"uppercase", color:GOLD, marginBottom:6 }}>Opérationnel en 5 min</div>
+              <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:"clamp(26px,5vw,36px)", fontWeight:900, textTransform:"uppercase", letterSpacing:"-0.01em", lineHeight:1 }}>
+                Comment ça <span style={{ color:GOLD }}>marche</span>
+              </div>
+            </div>
+            <button className="l-modal-close" onClick={closeModal}
+              style={{ width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.1)", color:TEXT, fontSize:18, cursor:"pointer", transition:"all .2s", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              ✕
+            </button>
+          </div>
+
+          {/* Progress dots */}
+          <div style={{ padding:"20px 32px 0", display:"flex", gap:6 }}>
+            {steps.map((_, i) => (
+              <div key={i} className="l-prog-dot" onClick={() => goTo(i)}
+                style={{ flex:1, height:3, borderRadius:2, background: (showFinal || i <= step) ? GOLD : "rgba(201,168,76,.15)", transition:"background .3s" }}/>
+            ))}
+          </div>
+
+          {/* Steps / Final */}
+          <div style={{ padding:"28px 32px 32px" }}>
+            {!showFinal ? (
+              <div className="l-step-active" key={step}>
+                <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20 }}>
+                  <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:64, fontWeight:900, color:"rgba(201,168,76,.12)", lineHeight:1 }}>{steps[step].num}</div>
+                  <div>
+                    <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:10, letterSpacing:"0.4em", textTransform:"uppercase", color:"rgba(201,168,76,.6)", marginBottom:4 }}>{steps[step].tag}</div>
+                    <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:"clamp(24px,4vw,32px)", fontWeight:800, textTransform:"uppercase", color:TEXT, lineHeight:1 }}>{steps[step].title}</div>
+                  </div>
+                </div>
+                <p style={{ fontSize:15, lineHeight:1.8, color:"rgba(242,237,228,.5)", fontWeight:300, marginBottom:20 }}>{steps[step].text}</p>
+                <div style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"6px 14px", background:"rgba(201,168,76,.07)", border:`1px solid rgba(201,168,76,.2)`, borderRadius:100, fontSize:13, color:"rgba(201,168,76,.8)", marginBottom:32 }}>
+                  {steps[step].time}
+                </div>
+                <div style={{ display:"flex", gap:10, justifyContent:"space-between", alignItems:"center" }}>
+                  <button className="l-btn-prev" disabled={step === 0} onClick={() => setStep(s => s-1)}
+                    style={{ padding:"13px 24px", borderRadius:10, fontSize:14, fontFamily:"'Outfit',sans-serif", cursor: step===0 ? "default":"pointer", transition:"all .2s", background:"transparent", border:"1px solid rgba(255,255,255,.1)", color:"rgba(242,237,228,.5)", opacity: step===0 ? .2 : 1 }}>
+                    ← Précédent
+                  </button>
+                  <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:13, letterSpacing:"0.2em", color:"rgba(242,237,228,.2)" }}>{step+1} / {TOTAL}</span>
+                  {step < TOTAL-1 ? (
+                    <button className="l-btn-next" onClick={() => setStep(s => s+1)}
+                      style={{ padding:"13px 24px", borderRadius:10, fontSize:14, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s", background:GOLD, border:"none", color:DARK, fontWeight:600, flex:1 }}>
+                      Suivant →
+                    </button>
+                  ) : (
+                    <button className="l-btn-next" onClick={() => setShowFinal(true)}
+                      style={{ padding:"13px 24px", borderRadius:10, fontSize:14, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s", background:GOLD, border:"none", color:DARK, fontWeight:600, flex:1 }}>
+                      Voir le résultat →
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="l-step-active" style={{ textAlign:"center", padding:"20px 0" }}>
+                <div style={{ fontSize:48, marginBottom:16 }}>🚀</div>
+                <h3 style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:32, fontWeight:900, textTransform:"uppercase", marginBottom:10 }}>
+                  Prêt à passer à la <span style={{ color:GOLD }}>vitesse supérieure</span> ?
+                </h3>
+                <p style={{ fontSize:15, color:"rgba(242,237,228,.5)", fontWeight:300, marginBottom:28, lineHeight:1.7 }}>
+                  5 minutes suffisent pour tout mettre en place.<br/>14 jours gratuits, sans carte, sans engagement.
+                </p>
+                <button className="l-final-btn" onClick={() => { closeModal(); onGetStarted(); }}
+                  style={{ width:"100%", padding:18, background:GOLD, border:"none", borderRadius:12, color:DARK, fontSize:16, fontWeight:600, fontFamily:"'Outfit',sans-serif", cursor:"pointer", transition:"all .2s" }}>
+                  Commencer gratuitement →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 function AuthScreen() {
   const [mode, setMode] = useState("login");
@@ -2423,6 +2665,7 @@ export default function App() {
   const t = TR[lang];
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
+  const [showLanding,    setShowLanding]    = useState(true);
   const [page,           setPage]           = useState("dashboard");
   const [cmdOpen,        setCmdOpen]        = useState(false);
   const [vehicles,       setVehicles]       = useState([]);
@@ -2508,7 +2751,10 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <AuthScreen />;
+  if (!user) {
+    if (showLanding) return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+    return <AuthScreen />;
+  }
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} onNav={p=>setPage(p)} t={t}/>,
