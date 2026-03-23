@@ -3314,8 +3314,12 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
         const cl = clients.find(c=>String(c.id)===String(rental.client_id));
         if (cl) {
           const newCount = Math.max(0, (cl.locations||0) - 1);
-          await supabase.from("clients").update({ locations_count: newCount }).eq("id", cl.id);
-          setClients(prev=>prev.map(c=>String(c.id)===String(rental.client_id)?{...c,locations:newCount,locations_count:newCount}:c));
+          // Récupérer les paiements encaissés liés à cette location
+          const { data: pmts } = await supabase.from("payments").select("amount").eq("rental_id", id).eq("status","encaissé");
+          const paidSum = (pmts||[]).reduce((s,p)=>s+(p.amount||0),0);
+          const newSpent = Math.max(0, (cl.total_spent||0) - paidSum);
+          await supabase.from("clients").update({ locations_count: newCount, total_spent: newSpent }).eq("id", cl.id);
+          setClients(prev=>prev.map(c=>String(c.id)===String(rental.client_id)?{...c,locations:newCount,locations_count:newCount,total_spent:newSpent}:c));
         }
       }
     }});
