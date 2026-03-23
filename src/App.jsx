@@ -2197,7 +2197,7 @@ function MultiAgences({ user, userPlan = "starter" }) {
         <div style={{ fontSize:14, color:T.muted, maxWidth:360, lineHeight:1.7 }}>
           La gestion multi-agences est disponible exclusivement avec le plan Enterprise à 249€/mois.
         </div>
-        <button onClick={()=>{}} style={{ marginTop:8, background:T.gold, color:"#0F0D0B", border:"none", borderRadius:10, padding:"10px 24px", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>
+        <button onClick={()=>window.location.href="https://buy.stripe.com/5kQ9AT79Bcdx1Q4ehR7kc08"} style={{ marginTop:8, background:T.gold, color:"#0F0D0B", border:"none", borderRadius:10, padding:"10px 24px", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>
           Passer à Enterprise →
         </button>
       </div>
