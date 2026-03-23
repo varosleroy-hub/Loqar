@@ -27,6 +27,18 @@ fr: {
   saveProfile:"Sauvegarder le profil", profile:"Profil agence",
   logout:"Déconnexion", planPro:"Plan Pro", fleetStatus:"Flotte",
   totalVehicles:"Total véhicules", noRentals:"Aucune location active",
+  uploadImage:"Uploader une image",
+  myAccount:"Mon compte", displayName:"Nom d'affichage", newPassword:"Nouveau mot de passe",
+  confirmPassword:"Confirmer le mot de passe", updateBtn:"Mettre à jour", updated:"Mis à jour !",
+  pwMismatch:"Les mots de passe ne correspondent pas",
+  emailNotifs:"Notifications emails",
+  notifRentalLabel:"Email à chaque nouvelle location", notifRentalDesc:"Envoyé automatiquement au client lors de la création d'une location",
+  notifPaymentLabel:"Rappel de paiement en retard", notifPaymentDesc:"Envoyé au client lorsqu'un paiement est en retard",
+  notifSignatureLabel:"Confirmation de signature", notifSignatureDesc:"Envoyé au client après signature du contrat",
+  dangerZone:"Zone dangereuse",
+  signOutAll:"Se déconnecter de tous les appareils", signOutAllDesc:"Invalide toutes les sessions actives", signOutBtn:"Déconnecter",
+  deleteAccount:"Supprimer mon compte", deleteAccountDesc:"Cette action est irréversible. Toutes vos données seront supprimées définitivement.",
+  deleteConfirmPlaceholder:'Tapez "SUPPRIMER" pour confirmer', deleteBtn:"Supprimer le compte", deleteConfirmWord:"SUPPRIMER",
 },
 en: {
   dashboard:"Dashboard", vehicles:"Vehicles", clients:"Clients",
@@ -53,6 +65,18 @@ en: {
   saveProfile:"Save profile", profile:"Agency profile",
   logout:"Logout", planPro:"Pro Plan", fleetStatus:"Fleet",
   totalVehicles:"Total vehicles", noRentals:"No active rentals",
+  uploadImage:"Upload image",
+  myAccount:"My account", displayName:"Display name", newPassword:"New password",
+  confirmPassword:"Confirm password", updateBtn:"Update", updated:"Updated!",
+  pwMismatch:"Passwords do not match",
+  emailNotifs:"Email notifications",
+  notifRentalLabel:"Email for each new rental", notifRentalDesc:"Automatically sent to the client when a rental is created",
+  notifPaymentLabel:"Late payment reminder", notifPaymentDesc:"Sent to the client when a payment is overdue",
+  notifSignatureLabel:"Signature confirmation", notifSignatureDesc:"Sent to the client after contract signing",
+  dangerZone:"Danger zone",
+  signOutAll:"Sign out of all devices", signOutAllDesc:"Invalidates all active sessions", signOutBtn:"Sign out",
+  deleteAccount:"Delete my account", deleteAccountDesc:"This action is irreversible. All your data will be permanently deleted.",
+  deleteConfirmPlaceholder:'Type "DELETE" to confirm', deleteBtn:"Delete account", deleteConfirmWord:"DELETE",
 },
 };
 
@@ -541,7 +565,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
   const [profileError, setProfileError] = useState("");
   const saveUserProfile = async () => {
     setProfileError("");
-    if (profileForm.newPw && profileForm.newPw !== profileForm.confirmPw) { setProfileError("Les mots de passe ne correspondent pas"); return; }
+    if (profileForm.newPw && profileForm.newPw !== profileForm.confirmPw) { setProfileError(t.pwMismatch); return; }
     const updates = {};
     if (profileForm.name !== (user?.user_metadata?.name||"")) updates.data = { name: profileForm.name };
     if (profileForm.newPw) updates.password = profileForm.newPw;
@@ -571,7 +595,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const handleSignOutAll = async () => { await supabase.auth.signOut({ scope:"global" }); };
   const handleDeleteAccount = async () => {
-    if (deleteInput !== "SUPPRIMER") return;
+    if (deleteInput !== t.deleteConfirmWord) return;
     setDeleteLoading(true);
     const { error } = await supabase.rpc("delete_user");
     if (error) { alert("Impossible de supprimer automatiquement. Contactez support@loqar.fr"); setDeleteLoading(false); return; }
@@ -601,7 +625,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 <input ref={logoInputRef} type="file" accept="image/*" style={{ display:"none" }} onChange={handleLogoUpload}/>
                 <button onClick={()=>logoInputRef.current?.click()} style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"7px 14px", color:T.text, fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
-                  Uploader une image
+                  {t.uploadImage}
                 </button>
                 <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                   {["🚗","🏢","🔑","⭐","🚙"].map(e=>(
@@ -717,12 +741,12 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
       {/* Mon compte */}
       <Card style={{ marginTop:20 }}>
         <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-          {Icons.user} Mon compte
+          {Icons.user} {t.myAccount}
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Nom d'affichage</label>
-            <input value={profileForm.name} onChange={e=>setProfileForm(p=>({...p,name:e.target.value}))} placeholder="Votre nom"
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{t.displayName}</label>
+            <input value={profileForm.name} onChange={e=>setProfileForm(p=>({...p,name:e.target.value}))} placeholder={t.displayName}
               style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
               onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
           </div>
@@ -732,13 +756,13 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
               style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.muted, fontSize:13, fontFamily:"inherit", outline:"none", opacity:.6 }}/>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Nouveau mot de passe</label>
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{t.newPassword}</label>
             <input type="password" value={profileForm.newPw} onChange={e=>setProfileForm(p=>({...p,newPw:e.target.value}))} placeholder="••••••••"
               style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
               onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Confirmer le mot de passe</label>
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{t.confirmPassword}</label>
             <input type="password" value={profileForm.confirmPw} onChange={e=>setProfileForm(p=>({...p,confirmPw:e.target.value}))} placeholder="••••••••"
               style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
               onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
@@ -746,21 +770,21 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
         </div>
         {profileError && <div style={{ fontSize:12, color:T.red, marginTop:10 }}>{profileError}</div>}
         <div style={{ display:"flex", gap:10, marginTop:16, justifyContent:"flex-end", alignItems:"center" }}>
-          {profileSaved && <span style={{ fontSize:13, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Mis à jour !</span>}
-          <Btn label="Mettre à jour" variant="primary" onClick={saveUserProfile} icon={Icons.check}/>
+          {profileSaved && <span style={{ fontSize:13, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} {t.updated}</span>}
+          <Btn label={t.updateBtn} variant="primary" onClick={saveUserProfile} icon={Icons.check}/>
         </div>
       </Card>
 
       {/* Notifications */}
       <Card style={{ marginTop:20 }}>
         <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
-          {Icons.bell||"🔔"} Notifications emails
+          {Icons.bell||"🔔"} {t.emailNotifs}
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
           {[
-            ["notif_rental",    "Email à chaque nouvelle location",      "Envoyé automatiquement au client lors de la création d'une location"],
-            ["notif_payment",   "Rappel de paiement en retard",          "Envoyé au client lorsqu'un paiement est en retard"],
-            ["notif_signature", "Confirmation de signature",             "Envoyé au client après signature du contrat"],
+            ["notif_rental",    t.notifRentalLabel,    t.notifRentalDesc],
+            ["notif_payment",   t.notifPaymentLabel,   t.notifPaymentDesc],
+            ["notif_signature", t.notifSignatureLabel, t.notifSignatureDesc],
           ].map(([key, label, desc])=>(
             <div key={key} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 14px", background:T.card2, borderRadius:10, border:`1px solid ${T.border}` }}>
               <div style={{ flex:1 }}>
@@ -778,23 +802,23 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
       {/* Danger zone */}
       <Card style={{ marginTop:20, border:`1px solid ${T.red}30` }}>
         <div style={{ fontSize:13, fontWeight:700, color:T.red, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18 }}>
-          Zone dangereuse
+          {t.dangerZone}
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:T.card2, borderRadius:10, border:`1px solid ${T.border}` }}>
             <div>
-              <div style={{ fontSize:13, fontWeight:600, color:T.text }}>Se déconnecter de tous les appareils</div>
-              <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>Invalide toutes les sessions actives</div>
+              <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{t.signOutAll}</div>
+              <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>{t.signOutAllDesc}</div>
             </div>
-            <Btn label="Déconnecter" variant="danger" onClick={handleSignOutAll}/>
+            <Btn label={t.signOutBtn} variant="danger" onClick={handleSignOutAll}/>
           </div>
           <div style={{ padding:"14px", background:T.card2, borderRadius:10, border:`1px solid ${T.red}40` }}>
-            <div style={{ fontSize:13, fontWeight:600, color:T.red, marginBottom:4 }}>Supprimer mon compte</div>
-            <div style={{ fontSize:11, color:T.muted, marginBottom:12 }}>Cette action est irréversible. Toutes vos données seront supprimées définitivement.</div>
+            <div style={{ fontSize:13, fontWeight:600, color:T.red, marginBottom:4 }}>{t.deleteAccount}</div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:12 }}>{t.deleteAccountDesc}</div>
             <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-              <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder='Tapez "SUPPRIMER" pour confirmer'
+              <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder={t.deleteConfirmPlaceholder}
                 style={{ flex:1, background:T.bg, border:`1px solid ${T.red}60`, borderRadius:8, padding:"8px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none" }}/>
-              <Btn label={deleteLoading?"...":"Supprimer le compte"} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput==="SUPPRIMER"?1:.4, pointerEvents:deleteInput==="SUPPRIMER"?"auto":"none" }}/>
+              <Btn label={deleteLoading?"...":t.deleteBtn} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput===t.deleteConfirmWord?1:.4, pointerEvents:deleteInput===t.deleteConfirmWord?"auto":"none" }}/>
             </div>
           </div>
         </div>
@@ -2129,11 +2153,16 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [modal, setModal]   = useState(false);
+  const [editId, setEditId] = useState(null);
   const [form, setForm]     = useState({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
   const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
 
-  const filtered = payments.filter(p=>filter==="all"||p.status===filter);
+  const filtered = payments.filter(p=>
+    (filter==="all"||p.status===filter) &&
+    (!search || (p.client_name||"").toLowerCase().includes(search.toLowerCase()))
+  );
   const stats = [
     {label:t.collected||"Encaissé",   value:payments.filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0),  color:T.success, icon:Icons.check },
     {label:t.pending||"En attente", value:payments.filter(p=>p.status==="en attente").reduce((a,p)=>a+(p.amount||0),0),color:T.amber,   icon:Icons.clock  },
@@ -2141,11 +2170,12 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
     {label:"Cautions",   value:payments.reduce((a,p)=>a+(p.deposit||0),0),                                   color:T.blue,    icon:Icons.shield },
   ];
 
-  const handleAdd = async () => {
+  const openAdd = () => { setEditId(null); setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" }); setModal(true); };
+  const openEdit = (p) => { setEditId(p.id); setForm({ clientId:String(p.client_id||""), rentalId:String(p.rental_id||""), amount:String(p.amount||""), deposit:String(p.deposit||""), method:p.method||"Espèces", status:p.status||"en attente", paidAt:p.paid_at||"" }); setModal(true); };
+
+  const handleSave = async () => {
     const client = clients.find(c=>String(c.id)===String(form.clientId));
-    const newP = {
-      user_id: user.id,
-      agency_id: activeAgencyId||null,
+    const payload = {
       client_id: form.clientId,
       rental_id: form.rentalId||null,
       client_name: client?`${client.first_name} ${client.last_name}`:"—",
@@ -2155,10 +2185,14 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
       status: form.status,
       paid_at: form.paidAt||new Date().toISOString().split("T")[0],
     };
-    const { data } = await supabase.from("payments").insert(newP).select().single();
-    if (data) setPayments([data, ...payments]);
+    if (editId) {
+      await supabase.from("payments").update(payload).eq("id", editId);
+      setPayments(payments.map(p=>p.id===editId?{...p,...payload}:p));
+    } else {
+      const { data } = await supabase.from("payments").insert({ ...payload, user_id:user.id, agency_id:activeAgencyId||null }).select().single();
+      if (data) setPayments([data, ...payments]);
+    }
     setModal(false);
-    setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" });
   };
 
   const handleEncaisser = async (id) => {
@@ -2174,7 +2208,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
 
   return (
     <Page title={t.payments||"Paiements"} sub={lang==="en"?"Collections, transactions and deposits":"Encaissements, transactions et cautions"}
-      actions={<button onClick={()=>setModal(true)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>}>
+      actions={<button onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>}>
       
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
         {stats.map(s=>{ const c=useCounter(s.value,900); return (
@@ -2190,25 +2224,30 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
         );})}
       </div>
 
-      <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+      <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
         {[["all",lang==="en"?"All":"Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
           <button key={k} onClick={()=>setFilter(k)}
             style={{ padding:"7px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:filter===k?T.goldDim:T.card, border:`1px solid ${filter===k?T.gold:T.border}`, color:filter===k?T.gold:T.sub, transition:"all .15s", fontFamily:"inherit" }}>{l}</button>
         ))}
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={lang==="en"?"Search client…":"Rechercher un client…"}
+          style={{ marginLeft:"auto", background:T.card, border:`1px solid ${T.border}`, borderRadius:9, padding:"7px 13px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none", width:200 }}
+          onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
       </div>
 
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
-            <tr>{[t.client||"Client",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
+            <tr>{[t.client||"Client",lang==="en"?"Rental":"Location",t.amount||"Montant",t.deposit||"Caution",t.method||"Méthode",t.date||"Date",t.status||"Statut",t.actions||"Actions"].map(l=>(
               <th key={l} style={{ textAlign:"left", padding:"10px 16px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", borderBottom:`1px solid ${T.border}` }}>{l}</th>
             ))}</tr>
           </thead>
           <tbody>
             {filtered.length===0 && (
-              <tr><td colSpan={7} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>{lang==="en"?'No payments — click "New payment" to start':'Aucun paiement — cliquez sur "Nouveau paiement" pour commencer'}</td></tr>
+              <tr><td colSpan={8} style={{ textAlign:"center", padding:60, color:T.muted, fontSize:13 }}>{lang==="en"?'No payments found':'Aucun paiement trouvé'}</td></tr>
             )}
-            {filtered.map(p=>(
+            {filtered.map(p=>{
+              const rental = rentals.find(r=>String(r.id)===String(p.rental_id));
+              return (
               <tr key={p.id} style={{ transition:"background .1s" }}
                 onMouseEnter={e=>e.currentTarget.style.background=T.card2}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
@@ -2217,6 +2256,9 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
                     <Avatar name={p.client_name||"?"} size={32}/>
                     <span style={{ fontSize:13, fontWeight:600, color:T.text }}>{p.client_name||"—"}</span>
                   </div>
+                </td>
+                <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:12, color:T.sub }}>
+                  {rental ? <span style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:6, padding:"3px 8px" }}>{rental.vehicle_name||"—"}</span> : <span style={{ color:T.muted }}>—</span>}
                 </td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:15, fontWeight:700, color:T.gold }}>{fmt(p.amount)} €</td>
                 <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:13, color:T.sub }}>{fmt(p.deposit)} €</td>
@@ -2228,7 +2270,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
                     {p.status!=="encaissé" && (
                       <button onClick={()=>handleEncaisser(p.id)}
                         style={{ padding:"5px 10px", background:T.successDim, border:`1px solid ${T.success}30`, borderRadius:8, color:T.success, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                        Encaisser
+                        {lang==="en"?"Collect":"Encaisser"}
                       </button>
                     )}
                     {p.status==="en retard" && (
@@ -2238,9 +2280,13 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
                         if(client?.email) { await sendEmail("payment_reminder", client.email, { clientName:p.client_name, amount:p.amount }); alert("Rappel envoyé !"); }
                         else alert("Email client introuvable");
                       }} style={{ padding:"5px 10px", background:T.amberDim||"#2A2010", border:`1px solid ${T.amber}30`, borderRadius:8, color:T.amber, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
-                        📧 Rappel
+                        📧 {lang==="en"?"Remind":"Rappel"}
                       </button>
                     )}
+                    <button onClick={()=>openEdit(p)}
+                      style={{ padding:"5px 9px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, color:T.sub, cursor:"pointer", display:"flex" }}>
+                      {Icons.pen}
+                    </button>
                     <button onClick={()=>handleDelete(p.id)}
                       style={{ padding:"5px 9px", background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, color:T.red, cursor:"pointer", display:"flex" }}>
                       {Icons.trash}
@@ -2248,13 +2294,13 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
                   </div>
                 </td>
               </tr>
-            ))}
+            );})}
           </tbody>
         </table>
       </div>
 
       {modal && (
-        <Modal title={t.newPayment||"Nouveau paiement"} onClose={()=>setModal(false)}>
+        <Modal title={editId ? (lang==="en"?"Edit payment":"Modifier le paiement") : (t.newPayment||"Nouveau paiement")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Client</label>
@@ -2292,7 +2338,7 @@ function Payments({ payments, setPayments, clients, rentals, user, userPlan = "s
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <button onClick={()=>setModal(false)} style={{ padding:"9px 18px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>{t.cancel||"Annuler"}</button>
-            <button onClick={handleAdd} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Enregistrer"}</button>
+            <button onClick={handleSave} style={{ padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{t.save||"Enregistrer"}</button>
           </div>
         </Modal>
       )}
