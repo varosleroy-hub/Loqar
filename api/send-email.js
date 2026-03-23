@@ -19,7 +19,7 @@ export default async function handler(req, res) {
           <h2 style="color:#E8E4DF;">Bienvenue ${data?.name || ""} ! 👋</h2>
           <p style="color:#B0A898;line-height:1.6;">Votre compte Loqar est prêt. Vous pouvez maintenant gérer votre flotte de véhicules, vos clients et vos locations en toute simplicité.</p>
           <div style="margin:32px 0;text-align:center;">
-            <a href="https://loqar.vercel.app" style="background:#C9A84C;color:#141210;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Accéder à mon espace →</a>
+            <a href="https://loqar.fr" style="background:#C9A84C;color:#141210;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Accéder à mon espace →</a>
           </div>
           <hr style="border:none;border-top:1px solid #2E2B27;margin:32px 0;"/>
           <p style="color:#8A8075;font-size:12px;text-align:center;">Loqar · Logiciel de gestion de location de véhicules</p>
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
             <p style="margin:4px 0 0;color:#C9A84C;font-size:20px;font-weight:700;">${data?.plan || "Pro"} — ${data?.price || "79€"}/mois</p>
           </div>
           <div style="margin:32px 0;text-align:center;">
-            <a href="https://loqar.vercel.app" style="background:#C9A84C;color:#141210;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Accéder à mon espace →</a>
+            <a href="https://loqar.fr" style="background:#C9A84C;color:#141210;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">Accéder à mon espace →</a>
           </div>
           <hr style="border:none;border-top:1px solid #2E2B27;margin:32px 0;"/>
           <p style="color:#8A8075;font-size:12px;text-align:center;">Loqar · Logiciel de gestion de location de véhicules</p>
