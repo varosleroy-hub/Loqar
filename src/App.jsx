@@ -3098,7 +3098,7 @@ export default function App() {
 
   const fetchProfile = async (uid) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); setUserPlan(data.plan||"starter"); }
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); const ownerEmail = "kenson.lry@gmail.com"; setUserPlan(user?.email===ownerEmail ? "enterprise" : (data.plan||"starter")); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
