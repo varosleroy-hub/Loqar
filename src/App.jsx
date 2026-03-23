@@ -527,13 +527,56 @@ function OnboardingScreen({ onDone, onNav }) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
-function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter" }) {
+function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
   const save = () => { setAgencyProfile(form); setSaved(true); setTimeout(()=>setSaved(false),2500); };
+
+  // Profil utilisateur
+  const [profileForm, setProfileForm] = useState({ name: user?.user_metadata?.name||"", newPw:"", confirmPw:"" });
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const saveUserProfile = async () => {
+    setProfileError("");
+    if (profileForm.newPw && profileForm.newPw !== profileForm.confirmPw) { setProfileError("Les mots de passe ne correspondent pas"); return; }
+    const updates = {};
+    if (profileForm.name !== (user?.user_metadata?.name||"")) updates.data = { name: profileForm.name };
+    if (profileForm.newPw) updates.password = profileForm.newPw;
+    if (Object.keys(updates).length === 0) { setProfileSaved(true); setTimeout(()=>setProfileSaved(false),2500); return; }
+    const { error } = await supabase.auth.updateUser(updates);
+    if (error) { setProfileError(error.message); return; }
+    setProfileSaved(true); setTimeout(()=>setProfileSaved(false),2500);
+    setProfileForm(p=>({...p, newPw:"", confirmPw:""}));
+  };
+
+  // Upload logo image
+  const logoInputRef = useRef(null);
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => up("logo", ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  // Notifications
+  const [notifs, setNotifs] = useState(() => { try { return JSON.parse(localStorage.getItem("loqar_notifs")||"{}"); } catch { return {}; } });
+  const toggleNotif = (key) => { const updated={...notifs,[key]:!notifs[key]}; setNotifs(updated); localStorage.setItem("loqar_notifs",JSON.stringify(updated)); };
+
+  // Danger zone
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const handleSignOutAll = async () => { await supabase.auth.signOut({ scope:"global" }); };
+  const handleDeleteAccount = async () => {
+    if (deleteInput !== "SUPPRIMER") return;
+    setDeleteLoading(true);
+    const { error } = await supabase.rpc("delete_user");
+    if (error) { alert("Impossible de supprimer automatiquement. Contactez support@loqar.fr"); setDeleteLoading(false); return; }
+    await supabase.auth.signOut();
+  };
 
   return (
     <Page title={t.settings||"Paramètres"} sub={lang==="en"?"Your agency info · shown on PDF contracts":"Informations de votre agence · apparaissent sur vos contrats PDF"}>
@@ -548,18 +591,24 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter" }) {
           {/* Logo upload zone */}
           <div style={{ marginBottom:18 }}>
             <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase", display:"block", marginBottom:8 }}>Logo</label>
-            <div style={{ width:80, height:80, borderRadius:14, background:T.card2, border:`2px dashed ${T.border2}`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", gap:6, transition:"border-color .15s" }}
-              onMouseEnter={e=>e.currentTarget.style.borderColor=T.gold}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=T.border2}>
-              {form.logo
-                ? <div style={{ fontSize:28 }}>{form.logo}</div>
-                : <><span style={{ color:T.muted }}>{Icons.upload}</span><span style={{ fontSize:10, color:T.muted }}>Logo</span></>
-              }
-            </div>
-            <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>
-              {["🚗","🏢","🔑","⭐","🚙"].map(e=>(
-                <button key={e} onClick={()=>up("logo",e)} style={{ width:32, height:32, borderRadius:8, background:form.logo===e?T.goldDim:T.card2, border:`1px solid ${form.logo===e?T.gold:T.border}`, fontSize:16, cursor:"pointer" }}>{e}</button>
-              ))}
+            <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+              <div style={{ width:80, height:80, borderRadius:14, background:T.card2, border:`2px dashed ${T.border2}`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:6, overflow:"hidden", flexShrink:0 }}>
+                {form.logo?.startsWith("data:")||form.logo?.startsWith("http")
+                  ? <img src={form.logo} alt="logo" style={{ width:"100%", height:"100%", objectFit:"cover", borderRadius:12 }}/>
+                  : <div style={{ fontSize:28 }}>{form.logo||"🚗"}</div>
+                }
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                <input ref={logoInputRef} type="file" accept="image/*" style={{ display:"none" }} onChange={handleLogoUpload}/>
+                <button onClick={()=>logoInputRef.current?.click()} style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"7px 14px", color:T.text, fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
+                  Uploader une image
+                </button>
+                <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+                  {["🚗","🏢","🔑","⭐","🚙"].map(e=>(
+                    <button key={e} onClick={()=>up("logo",e)} style={{ width:30, height:30, borderRadius:7, background:form.logo===e?T.goldDim:T.card2, border:`1px solid ${form.logo===e?T.gold:T.border}`, fontSize:15, cursor:"pointer" }}>{e}</button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -664,6 +713,92 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter" }) {
         {saved && <span style={{ fontSize:13, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Enregistré !</span>}
         <Btn label={t.saveProfile||"Enregistrer les modifications"} variant="primary" onClick={save} icon={Icons.check}/>
       </div>
+
+      {/* Mon compte */}
+      <Card style={{ marginTop:20 }}>
+        <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
+          {Icons.user} Mon compte
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Nom d'affichage</label>
+            <input value={profileForm.name} onChange={e=>setProfileForm(p=>({...p,name:e.target.value}))} placeholder="Votre nom"
+              style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
+              onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Email</label>
+            <input value={user?.email||""} disabled
+              style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.muted, fontSize:13, fontFamily:"inherit", outline:"none", opacity:.6 }}/>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Nouveau mot de passe</label>
+            <input type="password" value={profileForm.newPw} onChange={e=>setProfileForm(p=>({...p,newPw:e.target.value}))} placeholder="••••••••"
+              style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
+              onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Confirmer le mot de passe</label>
+            <input type="password" value={profileForm.confirmPw} onChange={e=>setProfileForm(p=>({...p,confirmPw:e.target.value}))} placeholder="••••••••"
+              style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
+              onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
+          </div>
+        </div>
+        {profileError && <div style={{ fontSize:12, color:T.red, marginTop:10 }}>{profileError}</div>}
+        <div style={{ display:"flex", gap:10, marginTop:16, justifyContent:"flex-end", alignItems:"center" }}>
+          {profileSaved && <span style={{ fontSize:13, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Mis à jour !</span>}
+          <Btn label="Mettre à jour" variant="primary" onClick={saveUserProfile} icon={Icons.check}/>
+        </div>
+      </Card>
+
+      {/* Notifications */}
+      <Card style={{ marginTop:20 }}>
+        <div style={{ fontSize:13, fontWeight:700, color:T.gold, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
+          {Icons.bell||"🔔"} Notifications emails
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          {[
+            ["notif_rental",    "Email à chaque nouvelle location",      "Envoyé automatiquement au client lors de la création d'une location"],
+            ["notif_payment",   "Rappel de paiement en retard",          "Envoyé au client lorsqu'un paiement est en retard"],
+            ["notif_signature", "Confirmation de signature",             "Envoyé au client après signature du contrat"],
+          ].map(([key, label, desc])=>(
+            <div key={key} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 14px", background:T.card2, borderRadius:10, border:`1px solid ${T.border}` }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{label}</div>
+                <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>{desc}</div>
+              </div>
+              <div onClick={()=>toggleNotif(key)} style={{ width:42, height:24, borderRadius:12, background:notifs[key]?T.gold:T.border2, cursor:"pointer", transition:"background .2s", position:"relative", flexShrink:0 }}>
+                <div style={{ width:18, height:18, borderRadius:"50%", background:"#fff", position:"absolute", top:3, left:notifs[key]?21:3, transition:"left .2s" }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Danger zone */}
+      <Card style={{ marginTop:20, border:`1px solid ${T.red}30` }}>
+        <div style={{ fontSize:13, fontWeight:700, color:T.red, letterSpacing:".06em", textTransform:"uppercase", marginBottom:18 }}>
+          Zone dangereuse
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:T.card2, borderRadius:10, border:`1px solid ${T.border}` }}>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:T.text }}>Se déconnecter de tous les appareils</div>
+              <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>Invalide toutes les sessions actives</div>
+            </div>
+            <Btn label="Déconnecter" variant="danger" onClick={handleSignOutAll}/>
+          </div>
+          <div style={{ padding:"14px", background:T.card2, borderRadius:10, border:`1px solid ${T.red}40` }}>
+            <div style={{ fontSize:13, fontWeight:600, color:T.red, marginBottom:4 }}>Supprimer mon compte</div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:12 }}>Cette action est irréversible. Toutes vos données seront supprimées définitivement.</div>
+            <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+              <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder='Tapez "SUPPRIMER" pour confirmer'
+                style={{ flex:1, background:T.bg, border:`1px solid ${T.red}60`, borderRadius:8, padding:"8px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none" }}/>
+              <Btn label={deleteLoading?"...":"Supprimer le compte"} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput==="SUPPRIMER"?1:.4, pointerEvents:deleteInput==="SUPPRIMER"?"auto":"none" }}/>
+            </div>
+          </div>
+        </div>
+      </Card>
     </Page>
   );
 }
@@ -3198,7 +3333,7 @@ export default function App() {
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
     pricing:   <Pricing/>,
-    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan}/>,
+    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan} user={user}/>,
   };
 
   return (
