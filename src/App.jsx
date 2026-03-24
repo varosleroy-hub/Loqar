@@ -1330,9 +1330,9 @@ function SuccessPage({ onContinue }) {
   }, []);
 
   const planInfo = {
-    starter:    { name:"Starter",    price:"49€/mois",  color:T.blue,  features:["5 véhicules","50 locations/mois","Documents PDF"] },
-    pro:        { name:"Pro",        price:"129€/mois", color:T.gold,  features:["Véhicules illimités","Locations illimitées","Emails automatiques"] },
-    enterprise: { name:"Enterprise", price:"249€/mois", color:T.amber, features:["Multi-agences","API accès","Onboarding dédié"] },
+    starter:    { name:"Starter",    price:"29€/mois",  color:T.blue,  features:["5 véhicules","50 locations/mois","Documents PDF"] },
+    pro:        { name:"Pro",        price:"79€/mois",  color:T.gold,  features:["Véhicules illimités","Locations illimitées","Emails automatiques"] },
+    enterprise: { name:"Enterprise", price:"199€/mois", color:T.amber, features:["Multi-agences","API accès","Onboarding dédié"] },
   };
   const p = planInfo[plan] || planInfo.pro;
 
