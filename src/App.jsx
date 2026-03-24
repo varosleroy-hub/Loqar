@@ -1693,6 +1693,23 @@ function AuthScreen() {
     </div>
   );
 }
+// ─── STAT CARD ────────────────────────────────────────────────────────────────
+function StatCard({ label, value, color, icon, sub, money = false }) {
+  const c = useCounter(value, 900);
+  return (
+    <Card>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+        <div>
+          <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{label}</div>
+          <div style={{ fontSize:money?26:32, fontWeight:700, color:color, letterSpacing:"-0.03em", lineHeight:1 }}>{money?fmt(c)+" €":c}</div>
+          {sub && <div style={{ fontSize:11, color:T.muted, marginTop:5 }}>{sub}</div>}
+        </div>
+        <div style={{ width:38, height:38, borderRadius:10, background:color+"15", display:"flex", alignItems:"center", justifyContent:"center", color:color, flexShrink:0 }}>{icon}</div>
+      </div>
+    </Card>
+  );
+}
+
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
 function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
@@ -1776,26 +1793,10 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 
       {/* ── Stats row ── */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:14, marginBottom:18 }}>
-        {[
-          { label:lang==="en"?"Active rentals":"Locations actives",      value:activeRentals.length,      color:T.gold,    icon:Icons.calendar, sub:lang==="en"?"In progress":"En cours" },
-          { label:lang==="en"?"Available vehicles":"Véhicules disponibles",  value:availableVehicles.length,  color:T.success, icon:Icons.car,      sub:lang==="en"?`Out of ${(vehicles||[]).length} total`:`Sur ${(vehicles||[]).length} total` },
-          { label:lang==="en"?"Clients":"Clients",                value:(clients||[]).length,       color:T.blue,    icon:Icons.users,    sub:lang==="en"?"Registered":"Enregistrés" },
-          { label:lang==="en"?"Pending payments":"Paiements en attente",   value:pendingPayments.length,    color:T.amber,   icon:Icons.dollar,   sub:`${pendingPayments.reduce((a,p)=>a+(p.amount||0),0)} €` },
-        ].map(s=>{
-          const c = useCounter(s.value, 900);
-          return (
-            <Card key={s.label}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                <div>
-                  <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{s.label}</div>
-                  <div style={{ fontSize:32, fontWeight:700, color:s.color, letterSpacing:"-0.03em", lineHeight:1 }}>{c}</div>
-                  {s.sub && <div style={{ fontSize:11, color:T.muted, marginTop:5 }}>{s.sub}</div>}
-                </div>
-                <div style={{ width:38, height:38, borderRadius:10, background:s.color+"15", display:"flex", alignItems:"center", justifyContent:"center", color:s.color, flexShrink:0 }}>{s.icon}</div>
-              </div>
-            </Card>
-          );
-        })}
+        <StatCard label={lang==="en"?"Active rentals":"Locations actives"} value={activeRentals.length} color={T.gold} icon={Icons.calendar} sub={lang==="en"?"In progress":"En cours"}/>
+        <StatCard label={lang==="en"?"Available vehicles":"Véhicules disponibles"} value={availableVehicles.length} color={T.success} icon={Icons.car} sub={lang==="en"?`Out of ${(vehicles||[]).length} total`:`Sur ${(vehicles||[]).length} total`}/>
+        <StatCard label={lang==="en"?"Clients":"Clients"} value={(clients||[]).length} color={T.blue} icon={Icons.users} sub={lang==="en"?"Registered":"Enregistrés"}/>
+        <StatCard label={lang==="en"?"Pending payments":"Paiements en attente"} value={pendingPayments.length} color={T.amber} icon={Icons.dollar} sub={`${pendingPayments.reduce((a,p)=>a+(p.amount||0),0)} €`}/>
       </div>
 
       {/* ── Main grid ── */}
@@ -2432,17 +2433,9 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
       </div>}>
       
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
-        {stats.map(s=>{ const c=useCounter(s.value,900); return (
-          <Card key={s.label}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-              <div>
-                <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>{s.label}</div>
-                <div style={{ fontSize:26, fontWeight:700, color:s.color, letterSpacing:"-0.03em" }}>{fmt(c)} €</div>
-              </div>
-              <div style={{ width:38, height:38, borderRadius:9, background:s.color+"15", display:"flex", alignItems:"center", justifyContent:"center", color:s.color }}>{s.icon}</div>
-            </div>
-          </Card>
-        );})}
+        {stats.map(s=>(
+          <StatCard key={s.label} label={s.label} value={s.value} color={s.color} icon={s.icon} money/>
+        ))}
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
@@ -2706,8 +2699,8 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
   const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
   const total = (parseInt(p.price)||0)*(days>0?days:0);
-  const tva   = Math.round(total * 0.20);
-  const totalHT = total - tva;
+  const totalHT = Math.round(total / 1.20);
+  const tva     = total - totalHT;
   const selectedClient  = clients.find(c=>c.id===p.clientId)||null;
   const selectedVehicle = vehicles.find(v=>v.id===p.vehicleId)||null;
   const agencyName = agencyProfile?.agency_name || "Mon Agence";
