@@ -936,6 +936,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       km_start: parseInt(form.km)||0,
       notes: form.notes,
       status: "réservée",
+      portal_token: crypto.randomUUID(),
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
     if (error) { toast("Erreur : " + error.message, "error"); return; }
@@ -3344,6 +3345,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
       km_start: parseInt(form.km)||0,
       notes: form.notes,
       status: "réservée",
+      portal_token: crypto.randomUUID(),
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
     if (data) {
@@ -3358,6 +3360,29 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
     }
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
+  };
+
+  const sendPortalLink = async (rental) => {
+    const client = clients.find(c=>String(c.id)===String(rental.client_id));
+    if (!client?.email) { toast("Ce client n'a pas d'adresse email", "error"); return; }
+    let token = rental.portal_token;
+    if (!token) {
+      token = crypto.randomUUID();
+      const { error } = await supabase.from("rentals").update({ portal_token: token }).eq("id", rental.id);
+      if (error) { toast("Erreur lors de la génération du lien", "error"); return; }
+      setRentals(prev=>prev.map(r=>r.id===rental.id?{...r,portal_token:token}:r));
+      if (sel?.id===rental.id) setSel(prev=>({...prev,portal_token:token}));
+    }
+    const portalUrl = `${window.location.origin}/portal/${token}`;
+    await sendEmail("portal", client.email, {
+      clientName: `${client.first_name} ${client.last_name}`,
+      vehicle: rental.vehicle_name,
+      startDate: rental.start_date,
+      endDate: rental.end_date,
+      total: rental.total,
+      portalUrl,
+    });
+    toast(`Lien portail envoyé à ${client.email}`);
   };
 
   const handleDelete = (id) => {
@@ -3592,6 +3617,10 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                   <div style={{ fontSize:12, color:T.sub }}>{sel.notes}</div>
                 </div>
               )}
+              <button onClick={()=>sendPortalLink(sel)}
+                style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:10, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                {Icons.mail} Envoyer le lien portail
+              </button>
             </Card>
           </div>
         )}
@@ -3664,10 +3693,172 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
   );
 }
 
+// ─── CLIENT PORTAL ────────────────────────────────────────────────────────────
+function ClientPortal({ token }) {
+  const [rental,   setRental]   = useState(null);
+  const [history,  setHistory]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [err,      setErr]      = useState(null);
+  const [signing,  setSigning]  = useState(false);
+  const [done,     setDone]     = useState(false);
+  const [drawing,  setDrawing]  = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`/api/portal?token=${token}`)
+      .then(r => r.json())
+      .then(d => { if (d.error) setErr(d.error); else { setRental(d.rental); setHistory(d.history); } setLoading(false); })
+      .catch(() => { setErr("Erreur de connexion"); setLoading(false); });
+  }, [token]);
+
+  const getXY = e => { const t=e.touches?.[0]??e; return {x:t.clientX,y:t.clientY}; };
+  const startDraw = e => { e.preventDefault?.(); setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(x-r.left,y-r.top); };
+  const draw = e => { e.preventDefault?.(); if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2.5; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineTo(x-r.left,y-r.top); ctx.stroke(); };
+  const endDraw = () => setDrawing(false);
+  const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
+
+  const confirmSign = async () => {
+    const res = await fetch(`/api/portal?token=${token}`, { method:"POST", headers:{"Content-Type":"application/json"}, body:"{}" });
+    const d = await res.json();
+    if (d.success) { setDone(true); setSigning(false); setRental(r=>({...r,status:"en cours"})); }
+  };
+
+  const SC = { "réservée":"#C9A55A","en cours":"#6AAF7A","terminée":"#8A8075","annulée":"#E8746A" };
+  const fd = s => s ? new Date(s).toLocaleDateString("fr-FR") : "—";
+
+  if (loading) return (
+    <div style={{minHeight:"100vh",background:"#0F0D0B",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+      <div style={{color:"#C9A55A",fontSize:14}}>Chargement…</div>
+    </div>
+  );
+
+  if (err) return (
+    <div style={{minHeight:"100vh",background:"#0F0D0B",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+      <div style={{textAlign:"center",padding:32}}>
+        <div style={{fontSize:48,marginBottom:16}}>🔒</div>
+        <div style={{color:"#E8E4DF",fontSize:18,fontWeight:700}}>Lien invalide ou expiré</div>
+        <div style={{color:"#8A8075",fontSize:13,marginTop:8}}>Ce lien ne correspond à aucun contrat actif.</div>
+      </div>
+    </div>
+  );
+
+  const canSign = rental.status === "réservée" && !done;
+
+  return (
+    <div style={{minHeight:"100vh",background:"#0F0D0B",fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:60}}>
+      {/* Header */}
+      <div style={{background:"#141210",borderBottom:"1px solid #2E2B27",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{fontSize:20,fontWeight:700,color:"#C9A55A",letterSpacing:"-0.03em"}}>Loqar</div>
+        <div style={{fontSize:12,color:"#8A8075"}}>Espace locataire</div>
+      </div>
+
+      <div style={{maxWidth:620,margin:"0 auto",padding:"28px 16px"}}>
+        {/* Bienvenue */}
+        <div style={{marginBottom:24}}>
+          <div style={{fontSize:22,fontWeight:700,color:"#E8E4DF",letterSpacing:"-0.02em"}}>Bonjour {rental.client_name?.split(" ")[0]} 👋</div>
+          <div style={{fontSize:13,color:"#8A8075",marginTop:4}}>Voici votre espace locataire Loqar</div>
+        </div>
+
+        {/* Contrat */}
+        <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24,marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF"}}>Contrat de location</div>
+            <div style={{padding:"4px 12px",borderRadius:20,background:(SC[rental.status]||"#8A8075")+"20",color:SC[rental.status]||"#8A8075",fontSize:11,fontWeight:700}}>{rental.status}</div>
+          </div>
+          {[["Véhicule",rental.vehicle_name],["Début",fd(rental.start_date)],["Fin",fd(rental.end_date)],["Prix/jour",(rental.prix_per_day||"—")+" €"],["Caution",(rental.deposit||"—")+" €"],["Total TTC",(rental.total||"—")+" €"]].map(([k,v])=>(
+            <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E1C18"}}>
+              <span style={{fontSize:12,color:"#8A8075"}}>{k}</span>
+              <span style={{fontSize:12,fontWeight:600,color:k==="Total TTC"?"#C9A55A":"#E8E4DF"}}>{v}</span>
+            </div>
+          ))}
+          {rental.notes && (
+            <div style={{marginTop:16,padding:"10px 14px",background:"#1A1814",borderRadius:8,borderLeft:"3px solid #C9A55A"}}>
+              <div style={{fontSize:10,color:"#8A8075",marginBottom:4,letterSpacing:".08em",textTransform:"uppercase"}}>Notes</div>
+              <div style={{fontSize:12,color:"#B0A898"}}>{rental.notes}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Signé */}
+        {done && (
+          <div style={{background:"#0D1F13",border:"1px solid #2A4A30",borderRadius:16,padding:20,marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:"#6AAF7A20",display:"flex",alignItems:"center",justifyContent:"center",color:"#6AAF7A",fontSize:20}}>✓</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#6AAF7A"}}>Contrat signé</div>
+              <div style={{fontSize:11,color:"#4A7A52"}}>Votre signature a bien été enregistrée</div>
+            </div>
+          </div>
+        )}
+
+        {/* Bloc signature */}
+        {canSign && (
+          <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24,marginBottom:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF",marginBottom:8}}>Signer le contrat</div>
+            <div style={{fontSize:12,color:"#8A8075",marginBottom:20,lineHeight:1.6}}>
+              En signant ci-dessous, vous acceptez les conditions générales de location et confirmez avoir pris connaissance du contrat.
+            </div>
+            {!signing ? (
+              <button onClick={()=>setSigning(true)}
+                style={{width:"100%",padding:"13px",background:"#C9A55A",border:"none",borderRadius:10,color:"#0F0D0B",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                Signer le contrat →
+              </button>
+            ) : (
+              <>
+                <div style={{position:"relative",background:"#FDFBF7",borderRadius:10,border:`2px dashed ${hasDrawn?"#C9A55A":"#ccc"}`,overflow:"hidden",marginBottom:10}}>
+                  <canvas ref={canvasRef} width={560} height={130}
+                    onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+                    onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
+                    style={{display:"block",cursor:"crosshair",width:"100%",height:130,touchAction:"none"}}/>
+                  {!hasDrawn && <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",color:"#aaa",fontSize:12}}>Dessinez votre signature ici</div>}
+                </div>
+                {hasDrawn && <button onClick={clearCanvas} style={{fontSize:11,color:"#8A8075",background:"none",border:"none",cursor:"pointer",marginBottom:12,fontFamily:"inherit"}}>Effacer</button>}
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>{setSigning(false);setHasDrawn(false);clearCanvas();}}
+                    style={{flex:1,padding:"11px",background:"#1A1814",border:"1px solid #2E2B27",borderRadius:10,color:"#B0A898",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+                    Annuler
+                  </button>
+                  <button onClick={hasDrawn?confirmSign:undefined}
+                    style={{flex:2,padding:"11px",background:hasDrawn?"#C9A55A":"#2E2B27",border:"none",borderRadius:10,color:hasDrawn?"#0F0D0B":"#8A8075",fontSize:13,fontWeight:700,cursor:hasDrawn?"pointer":"default",fontFamily:"inherit"}}>
+                    {hasDrawn?"Confirmer la signature ✓":"Signez d'abord…"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Historique */}
+        {history.length > 1 && (
+          <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF",marginBottom:16}}>Historique de locations</div>
+            {history.map(r=>(
+              <div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #1E1C18"}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:600,color:"#E8E4DF"}}>{r.vehicle_name}</div>
+                  <div style={{fontSize:11,color:"#8A8075"}}>{fd(r.start_date)} → {fd(r.end_date)}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#C9A55A"}}>{r.total} €</div>
+                  <div style={{fontSize:10,color:SC[r.status]||"#8A8075",marginTop:2}}>{r.status}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{textAlign:"center",marginTop:32,fontSize:11,color:"#3A3530"}}>
+          Propulsé par <span style={{color:"#C9A55A"}}>Loqar</span> · Logiciel de gestion de location de véhicules
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
-export default function App() {
+function App() {
   const isMobile = useIsMobile();
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
@@ -3820,3 +4011,9 @@ export default function App() {
   );
 }
 
+
+export default function PortalWrapper() {
+  const portalToken = window.location.pathname.match(/^\/portal\/(.+)/)?.[1];
+  if (portalToken) return <ClientPortal token={portalToken}/>;
+  return <App/>;
+}
