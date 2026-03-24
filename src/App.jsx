@@ -1716,7 +1716,7 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
       const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
       const label = d.toLocaleDateString('fr-FR', { month:'short' });
       const total = (payments||[])
-        .filter(p => p.status==="encaissé" && p.date && p.date.startsWith(key))
+        .filter(p => p.status==="encaissé" && p.paid_at && p.paid_at.startsWith(key))
         .reduce((a,p) => a+(p.amount||0), 0);
       months.push({ label, total, key });
     }
@@ -2143,18 +2143,37 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
   const toast = useToast();
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
+  const [filterC, setFilterC] = useState("all");
   const [modal, setModal]  = useState(false);
   const [form, setForm]    = useState({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:""});
   const [confirm, setConfirm] = useState(null);
-  const filtered = clients.filter(c=>!search||`${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = clients.filter(c=>{
+    if (search && !`${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterC === "expired") return isExpired(c.license_expiry||c.licenseExpiry);
+    if (filterC === "entreprise") return c.type === "entreprise";
+    if (filterC === "particulier") return c.type !== "entreprise";
+    return true;
+  });
 
   return (
     <Page title={t.clients||lang==="en"?"Clients":"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
       actions={<Btn label={t.newClient||"Nouveau client"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
-      <div style={{ position:"relative", marginBottom:16 }}>
-        <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={"Rechercher un client…"}
-          style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px 10px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
+      <div style={{ display:"flex", gap:8, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
+        <div style={{ flex:1, minWidth:180, position:"relative" }}>
+          <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={"Rechercher un client…"}
+            style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
+        </div>
+        {[["all","Tous"],["particulier","Particuliers"],["entreprise","Entreprises"],["expired","Permis expirés"]].map(([k,l])=>{
+          const cnt = k==="all"?clients.length:k==="expired"?clients.filter(c=>isExpired(c.license_expiry||c.licenseExpiry)).length:clients.filter(c=>k==="entreprise"?c.type==="entreprise":c.type!=="entreprise").length;
+          const active = filterC===k;
+          return (
+            <button key={k} onClick={()=>setFilterC(k)}
+              style={{ padding:"8px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:active?T.goldDim:T.card, border:`1px solid ${active?T.gold:T.border}`, color:active?(k==="expired"?T.red:T.gold):T.sub, transition:"all .15s", fontFamily:"inherit" }}>
+              {l} ({cnt})
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ display:"flex", gap:20 }}>
@@ -3253,7 +3272,7 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
+function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -3261,10 +3280,18 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [sel, setSel]     = useState(null);
   const [viewMode, setViewMode] = useState("list");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchR, setSearchR] = useState("");
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   const [formErrors, setFormErrors] = useState({});
   const [confirm, setConfirm] = useState(null);
   const up = (k,v) => { setForm(prev=>({...prev,[k]:v})); setFormErrors(prev=>({...prev,[k]:""})); };
+
+  const filteredRentals = rentals.filter(r => {
+    if (filterStatus !== "all" && r.status !== filterStatus) return false;
+    if (searchR && !r.client_name?.toLowerCase().includes(searchR.toLowerCase()) && !r.vehicle_name?.toLowerCase().includes(searchR.toLowerCase())) return false;
+    return true;
+  });
 
   const days  = Math.ceil((new Date(form.endDate)-new Date(form.startDate))/86400000);
   const total = (parseInt(form.pricePerDay)||0)*(days>0?days:0);
@@ -3368,6 +3395,16 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
         await supabase.from("rentals").update({ status:newStatus }).eq("id", id);
         setRentals(rentals.map(r=>r.id===id?{...r,status:newStatus}:r));
         if (sel?.id===id) setSel({...sel,status:newStatus});
+        // Sync statut véhicule
+        if (rental.vehicle_id && setVehicles) {
+          let vStatus = null;
+          if (newStatus === "en cours") vStatus = "en location";
+          else if (newStatus === "terminée" || newStatus === "annulée") vStatus = "disponible";
+          if (vStatus) {
+            await supabase.from("vehicles").update({ status: vStatus }).eq("id", rental.vehicle_id);
+            setVehicles(prev => prev.map(v => String(v.id)===String(rental.vehicle_id) ? {...v, status: vStatus} : v));
+          }
+        }
         toast("Statut mis à jour");
       }
     });
@@ -3467,7 +3504,26 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
       })()}
 
       {/* Table */}
-      {viewMode==="list" && <div style={{ display:"flex", gap:20 }}>
+      {viewMode==="list" && <>
+        {/* Filtres locations */}
+        <div style={{ display:"flex", gap:8, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
+          <div style={{ flex:1, minWidth:180, position:"relative" }}>
+            <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
+            <input value={searchR} onChange={e=>setSearchR(e.target.value)} placeholder={lang==="en"?"Search client or vehicle…":"Rechercher client ou véhicule…"}
+              style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
+          </div>
+          {[["all",lang==="en"?"All":"Tous"],["en cours",lang==="en"?"In progress":"En cours"],["réservée",lang==="en"?"Reserved":"Réservées"],["terminée",lang==="en"?"Completed":"Terminées"],["annulée",lang==="en"?"Cancelled":"Annulées"]].map(([k,l])=>{
+            const cnt = k==="all" ? rentals.length : rentals.filter(r=>r.status===k).length;
+            const active = filterStatus===k;
+            return (
+              <button key={k} onClick={()=>setFilterStatus(k)}
+                style={{ padding:"8px 14px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:active?T.goldDim:T.card, border:`1px solid ${active?T.gold:T.border}`, color:active?T.gold:T.sub, transition:"all .15s", fontFamily:"inherit" }}>
+                {l} ({cnt})
+              </button>
+            );
+          })}
+        </div>
+      <div style={{ display:"flex", gap:20 }}>
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
@@ -3485,7 +3541,10 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
                   <Btn label="Nouvelle location" variant="primary" icon={Icons.plus} onClick={()=>{ setModal(true); setFormErrors({}); }}/>
                 </td></tr>
               )}
-              {!dataLoading && rentals.map(r=>(
+              {!dataLoading && filteredRentals.length===0 && rentals.length>0 && (
+                <tr><td colSpan={6} style={{ textAlign:"center", padding:40, fontSize:13, color:T.muted }}>Aucun résultat pour ce filtre</td></tr>
+              )}
+              {!dataLoading && filteredRentals.map(r=>(
                 <tr key={r.id} onClick={()=>setSel(sel?.id===r.id?null:r)}
                   style={{ cursor:"pointer", background:sel?.id===r.id?T.goldDim:"transparent", transition:"background .1s" }}
                   onMouseEnter={e=>{ if(sel?.id!==r.id) e.currentTarget.style.background=T.card2; }}
@@ -3539,7 +3598,8 @@ function Rentals({ rentals, setRentals, vehicles, clients, setClients, user, use
             </Card>
           </div>
         )}
-      </div>}
+      </div>
+      </>}
 
       {/* Modal nouvelle location */}
       {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
@@ -3735,7 +3795,7 @@ export default function App() {
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} setVehicles={setVehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
