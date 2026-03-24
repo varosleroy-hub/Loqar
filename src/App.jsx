@@ -158,14 +158,17 @@ const initials = name => name?.split(" ").map(n=>n[0]).slice(0,2).join("").toUpp
 function useCounter(target, duration=1100) {
   const [val, setVal] = useState(0);
   useEffect(() => {
+    let cancelled = false;
     const s = Date.now();
     const tick = () => {
+      if (cancelled) return;
       const p = Math.min(1,(Date.now()-s)/duration);
       const e = 1-Math.pow(1-p,3);
       setVal(Math.round(e*target));
       if(p<1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
+    return () => { cancelled = true; };
   }, [target]);
   return val;
 }
@@ -218,11 +221,12 @@ const Ic = ({ paths, d, size=16, color="currentColor", sw=1.5 }) => (
 // ─── SEND EMAIL ───────────────────────────────────────────────────────────────
 const sendEmail = async (type, to, data) => {
   try {
-    await fetch("/api/send-email", {
+    const res = await fetch("/api/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type, to, data }),
     });
+    if (!res.ok) console.error("Email error:", res.status, await res.text());
   } catch (e) {
     console.error("Email error:", e);
   }
@@ -298,6 +302,7 @@ const Icons = {
   pen:      <Ic size={15} paths={["M12 20h9","M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"]}/>,
   building: <Ic size={15} paths={["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z","M9 22V12h6v10"]}/>,
   upload:   <Ic size={15} paths={["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4","M17 8l-5-5-5 5","M12 3v12"]}/>,
+  user:     <Ic size={15} paths={["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2","M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"]}/>,
 };
 
 // ─── BASE COMPONENTS ─────────────────────────────────────────────────────────
@@ -470,7 +475,6 @@ function CommandBar({ onClose, onNav }) {
   useEffect(()=>ref.current?.focus(),[]);
   const filtered = CMD.map(c=>({...c, items:c.items.filter(i=>!q||i.l.toLowerCase().includes(q.toLowerCase()))})).filter(c=>c.items.length);
   const all = filtered.flatMap(c=>c.items);
-  let gi=0;
   return (
     <div style={{ position:"fixed", inset:0, zIndex:900, background:"#00000090", backdropFilter:"blur(10px)", display:"flex", alignItems:"flex-start", justifyContent:"center", paddingTop:"14vh" }}
       onClick={onClose}>
@@ -489,7 +493,7 @@ function CommandBar({ onClose, onNav }) {
             <div key={cat.cat}>
               <div style={{ padding:"6px 12px 4px", fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase" }}>{cat.cat}</div>
               {cat.items.map(item=>{
-                const active=gi===idx; const li=gi++;
+                const li=all.indexOf(item); const active=li===idx;
                 return (
                   <div key={item.l} onMouseEnter={()=>setIdx(li)} onClick={()=>{onNav(item.page);onClose();}}
                     style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 12px", borderRadius:9, cursor:"pointer", background:active?T.card2:"transparent", color:active?T.text:T.sub, transition:"background .1s" }}>
@@ -2961,7 +2965,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
                     <td style={{ padding:"8px 12px", fontSize:12 }}>{lang==="en"?"Rental":"Location"} {selectedVehicle?.name||""}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{days>0?days+"j":"—"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price?Math.round(parseInt(p.price)/1.2)+" €":"—"}</td>
-                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price?Math.round(parseInt(p.price)*days*0.2/days)+" €":"—"}</td>
+                    <td style={{ padding:"8px 12px", fontSize:12, textAlign:"right" }}>{p.price&&days>0?Math.round(parseInt(p.price)*days/6)+" €":"—"}</td>
                     <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, textAlign:"right" }}>{total>0?total+" €":"—"}</td>
                   </tr>
                   <tr style={{ background:"#FAF7F0" }}>
