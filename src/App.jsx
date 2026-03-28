@@ -629,6 +629,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
   const t = TR[lang]||TR.fr;
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState(false);
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
   const save = () => { setAgencyProfile(form); setSaved(true); setTimeout(()=>setSaved(false),2500); };
 
@@ -726,10 +727,16 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
                 <span style={{ fontSize:12, color:T.muted }}>{form.brandColor||"#C8A96E"}</span>
               </div>
             ) : (
-              <div style={{ display:"flex", gap:6, opacity:.4, pointerEvents:"none" }}>
-                {["#C8A96E","#5B8DB8","#6AAF7A","#D4854A","#9B8AB5","#E05555"].map(c=>(
-                  <div key={c} style={{ width:28, height:28, borderRadius:"50%", background:c }}/>
-                ))}
+              <div style={{ position:"relative", display:"inline-block" }} onClick={()=>setUpgradeModal(true)}>
+                <div style={{ display:"flex", gap:6, opacity:.35, pointerEvents:"none", filter:"blur(1px)" }}>
+                  {["#C8A96E","#5B8DB8","#6AAF7A","#D4854A","#9B8AB5","#E05555"].map(c=>(
+                    <div key={c} style={{ width:28, height:28, borderRadius:"50%", background:c }}/>
+                  ))}
+                </div>
+                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", gap:6, cursor:"pointer" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={T.amber} strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  <span style={{ fontSize:11, fontWeight:700, color:T.amber }}>{lang==="en"?"Enterprise only — Upgrade":"Enterprise uniquement — Passer au plan"}</span>
+                </div>
               </div>
             )}
           </div>
@@ -888,14 +895,23 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
           <div style={{ padding:"14px", background:T.card2, borderRadius:10, border:`1px solid ${T.red}40` }}>
             <div style={{ fontSize:13, fontWeight:600, color:T.red, marginBottom:4 }}>{t.deleteAccount}</div>
             <div style={{ fontSize:11, color:T.muted, marginBottom:12 }}>{t.deleteAccountDesc}</div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:8 }}>
+              {lang==="en" ? <>Type <strong style={{color:T.text,letterSpacing:".05em"}}>DELETE</strong> in the field below to confirm</> : <>Tapez <strong style={{color:T.text,letterSpacing:".05em"}}>SUPPRIMER</strong> dans le champ ci-dessous pour confirmer</>}
+            </div>
             <div style={{ display:"flex", gap:10, alignItems:"center" }}>
               <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder={t.deleteConfirmPlaceholder}
-                style={{ flex:1, background:T.bg, border:`1px solid ${T.red}60`, borderRadius:8, padding:"8px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none" }}/>
-              <Btn label={deleteLoading?"...":t.deleteBtn} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput===t.deleteConfirmWord?1:.4, pointerEvents:deleteInput===t.deleteConfirmWord?"auto":"none" }}/>
+                style={{ flex:1, background:T.bg, border:`1px solid ${deleteInput.length>0&&deleteInput!==t.deleteConfirmWord?T.red:T.red+"60"}`, borderRadius:8, padding:"8px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none", transition:"border-color .2s" }}/>
+              <Btn label={deleteLoading?"...":t.deleteBtn} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput===t.deleteConfirmWord?1:.35, pointerEvents:deleteInput===t.deleteConfirmWord?"auto":"none", transition:"opacity .2s" }}/>
             </div>
+            {deleteInput.length>0 && deleteInput!==t.deleteConfirmWord && (
+              <div style={{ fontSize:11, color:T.red, marginTop:6 }}>
+                {lang==="en"?"Incorrect — type DELETE exactly":"Incorrect — tapez SUPPRIMER exactement"}
+              </div>
+            )}
           </div>
         </div>
       </Card>
+      {upgradeModal && <UpgradeModal reason={lang==="en"?"Brand color customization requires the Enterprise plan. Upgrade to unlock white-label features.":"La personnalisation de la couleur de marque nécessite le plan Enterprise. Passez au plan supérieur pour débloquer les fonctionnalités marque blanche."} onClose={()=>setUpgradeModal(false)}/>}
     </Page>
   );
 }
@@ -1004,19 +1020,28 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
 
             <div style={{ marginBottom:16 }}>
               <div style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>Signature du locataire</div>
-              <div style={{ position:"relative", background:"#FDFBF7", borderRadius:10, border:`2px dashed ${hasDrawn?T.gold:T.border2}`, overflow:"hidden", transition:"border-color .2s" }}>
+              <div style={{ position:"relative", background:"#FDFBF7", borderRadius:10, border:`2px dashed ${hasDrawn?T.gold:"#C8C0B0"}`, overflow:"hidden", transition:"border-color .2s" }}>
                 <canvas ref={canvasRef} width={436} height={120}
                   onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
                   onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
                   style={{ display:"block", cursor:"crosshair", width:"100%", height:120, touchAction:"none" }}/>
-                {!hasDrawn && <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none", color:T.muted, fontSize:12 }}>Dessinez votre signature ici</div>}
+                {!hasDrawn && (
+                  <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", pointerEvents:"none", gap:8 }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B0A898" strokeWidth="1.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span style={{ color:"#A09888", fontSize:12 }}>Dessinez votre signature ici</span>
+                    <span style={{ color:"#C0B8A8", fontSize:10 }}>Utilisez la souris ou votre doigt</span>
+                  </div>
+                )}
               </div>
-              {hasDrawn && <button onClick={clearCanvas} style={{ fontSize:11, color:T.muted, background:"none", border:"none", cursor:"pointer", marginTop:6, fontFamily:"inherit" }}>Effacer</button>}
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:6 }}>
+                <span style={{ fontSize:11, color:hasDrawn?T.success:T.muted }}>{hasDrawn?"✓ Signature dessinée":"Aucune signature"}</span>
+                {hasDrawn && <button onClick={clearCanvas} style={{ fontSize:11, color:T.muted, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit" }}>Effacer et recommencer</button>}
+              </div>
             </div>
 
             <div style={{ display:"flex", gap:10 }}>
               <Btn label={t.cancel||"Annuler"} variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
-              <Btn label={hasDrawn?"Confirmer la signature":"Signer d'abord…"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.5 }}/>
+              <Btn label={hasDrawn?"Confirmer la signature":"Dessinez d'abord votre signature"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.4, cursor:hasDrawn?"pointer":"not-allowed" }}/>
             </div>
           </div>
         </div>
@@ -2630,7 +2655,19 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
       </div>
 
       {loading ? (
-        <div style={{ color:T.muted, textAlign:"center", padding:40 }}>Chargement…</div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:16 }}>
+          {Array.from({length:4}).map((_,i)=>(
+            <div key={i} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"14px 16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:T.border2, animation:"pulse 1.4s ease-in-out infinite" }}/>
+                <div style={{ width:50, height:20, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite" }}/>
+              </div>
+              <div style={{ height:13, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"70%", marginBottom:8 }}/>
+              <div style={{ height:11, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"50%", marginBottom:6 }}/>
+              <div style={{ height:11, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"40%" }}/>
+            </div>
+          ))}
+        </div>
       ) : agencies.length === 0 ? (
         <Card>
           <div style={{ textAlign:"center", padding:"40px 0", color:T.muted }}>
@@ -3470,7 +3507,12 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
           return s<=days[days.length-1] && e>=days[0];
         });
         return (
-          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"auto" }}>
+          <div>
+            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8, color:T.muted, fontSize:11 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M15 8l4 4-4 4"/></svg>
+              <span style={{ fontStyle:"italic" }}>{lang==="en"?"Scroll horizontally to see all days":"Faites défiler pour voir tous les jours"}</span>
+            </div>
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
             <div style={{ minWidth:700 }}>
               {/* Header jours */}
               <div style={{ display:"grid", gridTemplateColumns:`180px repeat(${daysInMonth},1fr)`, borderBottom:`1px solid ${T.border}` }}>
@@ -3521,6 +3563,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                 );
               })}
             </div>
+          </div>
           </div>
         );
       })()}
@@ -3729,7 +3772,10 @@ function ClientPortal({ token }) {
 
   if (loading) return (
     <div style={{minHeight:"100vh",background:"#0F0D0B",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-      <div style={{color:"#C9A55A",fontSize:14}}>Chargement…</div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
+        <div style={{width:40,height:40,borderRadius:"50%",border:"3px solid #2A2520",borderTopColor:"#C9A55A",animation:"spin 0.8s linear infinite"}}/>
+        <div style={{color:"#8A8075",fontSize:13}}>Chargement du contrat…</div>
+      </div>
     </div>
   );
 
@@ -3805,22 +3851,31 @@ function ClientPortal({ token }) {
               </button>
             ) : (
               <>
-                <div style={{position:"relative",background:"#FDFBF7",borderRadius:10,border:`2px dashed ${hasDrawn?"#C9A55A":"#ccc"}`,overflow:"hidden",marginBottom:10}}>
+                <div style={{position:"relative",background:"#FDFBF7",borderRadius:10,border:`2px dashed ${hasDrawn?"#C9A55A":"#C8C0B0"}`,overflow:"hidden",transition:"border-color .2s"}}>
                   <canvas ref={canvasRef} width={560} height={130}
                     onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
                     onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
                     style={{display:"block",cursor:"crosshair",width:"100%",height:130,touchAction:"none"}}/>
-                  {!hasDrawn && <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",color:"#aaa",fontSize:12}}>Dessinez votre signature ici</div>}
+                  {!hasDrawn && (
+                    <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",pointerEvents:"none",gap:8}}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B0A898" strokeWidth="1.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      <span style={{color:"#A09888",fontSize:12}}>Dessinez votre signature ici</span>
+                      <span style={{color:"#C0B8A8",fontSize:10}}>Utilisez la souris ou votre doigt</span>
+                    </div>
+                  )}
                 </div>
-                {hasDrawn && <button onClick={clearCanvas} style={{fontSize:11,color:"#8A8075",background:"none",border:"none",cursor:"pointer",marginBottom:12,fontFamily:"inherit"}}>Effacer</button>}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,marginTop:6}}>
+                  <span style={{fontSize:11,color:hasDrawn?"#6AAF7A":"#8A8075"}}>{hasDrawn?"✓ Signature dessinée":"Aucune signature"}</span>
+                  {hasDrawn && <button onClick={clearCanvas} style={{fontSize:11,color:"#8A8075",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Effacer et recommencer</button>}
+                </div>
                 <div style={{display:"flex",gap:10}}>
                   <button onClick={()=>{setSigning(false);setHasDrawn(false);clearCanvas();}}
                     style={{flex:1,padding:"11px",background:"#1A1814",border:"1px solid #2E2B27",borderRadius:10,color:"#B0A898",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
                     Annuler
                   </button>
                   <button onClick={hasDrawn?confirmSign:undefined}
-                    style={{flex:2,padding:"11px",background:hasDrawn?"#C9A55A":"#2E2B27",border:"none",borderRadius:10,color:hasDrawn?"#0F0D0B":"#8A8075",fontSize:13,fontWeight:700,cursor:hasDrawn?"pointer":"default",fontFamily:"inherit"}}>
-                    {hasDrawn?"Confirmer la signature ✓":"Signez d'abord…"}
+                    style={{flex:2,padding:"11px",background:hasDrawn?"#C9A55A":"#2E2B27",border:"none",borderRadius:10,color:hasDrawn?"#0F0D0B":"#8A8075",fontSize:13,fontWeight:700,cursor:hasDrawn?"pointer":"not-allowed",fontFamily:"inherit",transition:"background .2s, color .2s"}}>
+                    {hasDrawn?"Confirmer la signature ✓":"Dessinez d'abord votre signature"}
                   </button>
                 </div>
               </>
@@ -3963,6 +4018,7 @@ function App() {
       @keyframes slideIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
       @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+      @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
       ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#3A3733;border-radius:99px}
       input::placeholder{color:#5A5650}
     `;
@@ -3972,8 +4028,9 @@ function App() {
 
   if (loading) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", background:T.bg }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ fontSize:14, color:T.muted, marginTop:16 }}>Chargement…</div>
+      <div style={{ textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
+        <div style={{ width:44, height:44, borderRadius:"50%", border:`3px solid ${T.border2}`, borderTopColor:T.gold, animation:"spin 0.8s linear infinite" }}/>
+        <div style={{ fontSize:13, color:T.muted, letterSpacing:".04em" }}>Loqar</div>
       </div>
     </div>
   );
