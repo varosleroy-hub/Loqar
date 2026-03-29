@@ -269,6 +269,67 @@ function UpgradeModal({ onClose, reason }) {
   );
 }
 
+function TrialExpiredScreen({ onLogout }) {
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:20, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+      <div style={{ maxWidth:480, width:"100%", textAlign:"center" }}>
+        {/* Glow */}
+        <div style={{ position:"relative", display:"inline-block", marginBottom:32 }}>
+          <div style={{ position:"absolute", inset:-40, background:`radial-gradient(ellipse, ${T.gold}20 0%, transparent 70%)`, pointerEvents:"none" }}/>
+          <div style={{ width:72, height:72, borderRadius:20, background:T.goldDim, border:`1px solid ${T.gold}40`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, position:"relative" }}>🔒</div>
+        </div>
+
+        <div style={{ fontSize:26, fontWeight:900, color:T.text, marginBottom:12, lineHeight:1.2 }}>
+          Votre essai gratuit<br/>est terminé
+        </div>
+        <div style={{ fontSize:14, color:T.muted, lineHeight:1.7, marginBottom:36, maxWidth:360, margin:"0 auto 36px" }}>
+          Vous avez utilisé Loqar pendant <strong style={{color:T.text}}>14 jours</strong>. Pour continuer à gérer vos locations, choisissez un plan.
+        </div>
+
+        {/* Plans */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:28 }}>
+          {/* Pro */}
+          <div style={{ background:T.card, border:`2px solid ${T.gold}`, borderRadius:16, padding:"20px 16px", position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.gold}, #E8C87A)`, borderRadius:"16px 16px 0 0" }}/>
+            <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:6 }}>Pro</div>
+            <div style={{ fontSize:24, fontWeight:900, color:T.text, marginBottom:4 }}>49<span style={{fontSize:13,fontWeight:500,color:T.muted}}>€/mois</span></div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:14 }}>Véhicules illimités</div>
+            {["Locations illimitées","Emails automatiques","Export CSV","Documents PDF"].map(f=>(
+              <div key={f} style={{ fontSize:11, color:T.sub, display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                <span style={{color:T.success,fontSize:10}}>✓</span> {f}
+              </div>
+            ))}
+            <a href="mailto:contact@loqar.fr?subject=Abonnement Pro" style={{ display:"block", marginTop:14, padding:"10px", background:T.gold, borderRadius:9, color:"#0F0D0B", fontSize:12, fontWeight:800, textDecoration:"none", textAlign:"center" }}>
+              Choisir Pro →
+            </a>
+          </div>
+
+          {/* Enterprise */}
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 16px" }}>
+            <div style={{ fontSize:11, fontWeight:700, color:T.amber, letterSpacing:".08em", textTransform:"uppercase", marginBottom:6 }}>Enterprise</div>
+            <div style={{ fontSize:24, fontWeight:900, color:T.text, marginBottom:4 }}>249<span style={{fontSize:13,fontWeight:500,color:T.muted}}>€/mois</span></div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:14 }}>Multi-agences</div>
+            {["Tout Pro inclus","Multi-agences","Marque blanche","Support prioritaire"].map(f=>(
+              <div key={f} style={{ fontSize:11, color:T.sub, display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                <span style={{color:T.amber,fontSize:10}}>✓</span> {f}
+              </div>
+            ))}
+            <a href="mailto:contact@loqar.fr?subject=Abonnement Enterprise" style={{ display:"block", marginTop:14, padding:"10px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, color:T.text, fontSize:12, fontWeight:700, textDecoration:"none", textAlign:"center" }}>
+              Contacter →
+            </a>
+          </div>
+        </div>
+
+        <div style={{ fontSize:12, color:T.muted }}>
+          Questions ? <a href="mailto:contact@loqar.fr" style={{color:T.gold, textDecoration:"none"}}>contact@loqar.fr</a>
+          <span style={{margin:"0 10px",color:T.border2}}>·</span>
+          <button onClick={onLogout} style={{background:"none",border:"none",color:T.muted,fontSize:12,cursor:"pointer",fontFamily:"inherit",textDecoration:"underline"}}>Se déconnecter</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const Icons = {
   dash:     <Ic size={15} paths={["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z","M9 22V12h6v10"]}/>,
   car:      <Ic size={15} paths={["M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3","M18 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0","M7 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0"]}/>,
@@ -1189,7 +1250,7 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange, activeAgency = null, onSwitchAgency }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange, activeAgency = null, onSwitchAgency, trialDaysLeft = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const lateP = payments.filter(p=>p.status==="en retard").length;
@@ -1294,6 +1355,18 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
       {/* Upgrade - only for starter */}
       {userPlan === "starter" && (
       <div style={{ background:`linear-gradient(135deg,${T.gold}18,${T.gold}08)`, border:`1px solid ${T.gold}30`, borderRadius:12, padding:14, marginBottom:12 }}>
+        {trialDaysLeft !== null && trialDaysLeft <= 14 && (
+          <div style={{ marginBottom:10 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+              <span style={{ fontSize:11, fontWeight:700, color:trialDaysLeft<=3?T.red:T.gold }}>
+                {trialDaysLeft === 0 ? "⚠️ Dernier jour !" : `⏳ ${trialDaysLeft}j d'essai restants`}
+              </span>
+            </div>
+            <div style={{ height:4, borderRadius:99, background:T.border2, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${(trialDaysLeft/14)*100}%`, borderRadius:99, background:trialDaysLeft<=3?T.red:T.gold, transition:"width .3s" }}/>
+            </div>
+          </div>
+        )}
         <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
           <span style={{ color:T.gold }}>{Icons.zap}</span>
           <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Passer au Pro</span>
@@ -4038,6 +4111,16 @@ function App() {
   if (showSuccess) return <SuccessPage onContinue={()=>{ setShowSuccess(false); if (user) fetchProfile(user.id, user); }}/>;
   if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
 
+  // ── Essai 14 jours ──────────────────────────────────────────────────────────
+  const TRIAL_DAYS = 14;
+  const trialDaysUsed = user?.created_at
+    ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000)
+    : 0;
+  const trialDaysLeft = Math.max(0, TRIAL_DAYS - trialDaysUsed);
+  const trialExpired = trialDaysUsed >= TRIAL_DAYS && userPlan === "starter";
+
+  if (trialExpired) return <TrialExpiredScreen onLogout={async()=>{ await supabase.auth.signOut(); setUser(null); }}/>;
+
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} setVehicles={setVehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
@@ -4058,7 +4141,7 @@ function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency} trialDaysLeft={trialDaysLeft}/>
       <main style={{ flex:1, marginLeft:isMobile?0:220, minHeight:"100vh", paddingTop:isMobile?56:0 }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
