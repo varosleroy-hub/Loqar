@@ -3765,7 +3765,7 @@ const getFAQS = (lang="fr") => [
   {q:lang==="en"?"Is my data secure?":"Mes données sont-elles sécurisées ?", a:lang==="en"?"France hosting, AES-256 encryption, full GDPR compliance.":"Hébergement France, chiffrement AES-256, conformité RGPD complète."},
 ];
 
-function PlanCard({ plan, annual }) {
+function PlanCard({ plan, annual, isCurrent = false }) {
   const lang = useLang();
   const [hov, setHov] = useState(false);
   const price = annual ? plan.annualPrice : plan.monthlyPrice;
@@ -3773,8 +3773,13 @@ function PlanCard({ plan, annual }) {
   const annualTotal = plan.annualTotal || plan.annualPrice * 12;
   return (
     <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-      style={{ position:"relative", background:plan.highlight?T.card2:T.card, border:`1.5px solid ${plan.highlight?plan.color:hov?T.border2:T.border}`, borderRadius:16, padding:"26px 22px", display:"flex", flexDirection:"column", transform:plan.highlight?"scale(1.03)":hov?"translateY(-3px)":"none", boxShadow:plan.highlight?`0 20px 60px ${plan.color}15`:hov?"0 8px 32px #00000040":"none", transition:"all .2s", zIndex:plan.highlight?2:1 }}>
-      {plan.badge && (
+      style={{ position:"relative", background:plan.highlight?T.card2:T.card, border:`1.5px solid ${isCurrent?T.success:plan.highlight?plan.color:hov?T.border2:T.border}`, borderRadius:16, padding:"26px 22px", display:"flex", flexDirection:"column", transform:plan.highlight?"scale(1.03)":hov?"translateY(-3px)":"none", boxShadow:plan.highlight?`0 20px 60px ${plan.color}15`:hov?"0 8px 32px #00000040":"none", transition:"all .2s", zIndex:plan.highlight?2:1 }}>
+      {isCurrent && (
+        <div style={{ position:"absolute", top:-13, left:"50%", transform:"translateX(-50%)", background:T.success, color:"#fff", fontSize:11, fontWeight:700, padding:"3px 14px", borderRadius:99, whiteSpace:"nowrap", letterSpacing:".04em" }}>
+          ✓ {lang==="en"?"Current plan":"Plan actuel"}
+        </div>
+      )}
+      {!isCurrent && plan.badge && (
         <div style={{ position:"absolute", top:-13, left:"50%", transform:"translateX(-50%)", background:plan.color, color:T.bg, fontSize:11, fontWeight:700, padding:"3px 14px", borderRadius:99, whiteSpace:"nowrap", letterSpacing:".04em" }}>
           ⭐ {plan.badge}
         </div>
@@ -3809,7 +3814,9 @@ function PlanCard({ plan, annual }) {
         ))}
       </div>
       <button
+        disabled={isCurrent}
         onClick={()=>{
+          if (isCurrent) return;
           const links = {
             starter:    "https://buy.stripe.com/28E8wPalNdhB9iw2z97kc06",
             pro:        "https://buy.stripe.com/dRmeVdctV7XhgKY2z97kc07",
@@ -3817,10 +3824,10 @@ function PlanCard({ plan, annual }) {
           };
           window.location.href = links[plan.id] || "mailto:contact@loqar.fr";
         }}
-        style={{ width:"100%", padding:"11px 16px", borderRadius:9, fontWeight:600, fontSize:13, fontFamily:"inherit", cursor:"pointer", transition:"all .15s", background:plan.highlight?plan.color:plan.colorDim, color:plan.highlight?T.bg:plan.color, border:`1px solid ${plan.color}40` }}
-        onMouseEnter={e=>{e.currentTarget.style.background=plan.color; e.currentTarget.style.color=T.bg;}}
-        onMouseLeave={e=>{e.currentTarget.style.background=plan.highlight?plan.color:plan.colorDim; e.currentTarget.style.color=plan.highlight?T.bg:plan.color;}}>
-        {plan.cta} →
+        style={{ width:"100%", padding:"11px 16px", borderRadius:9, fontWeight:600, fontSize:13, fontFamily:"inherit", cursor:isCurrent?"default":"pointer", transition:"all .15s", background:isCurrent?T.successDim:plan.highlight?plan.color:plan.colorDim, color:isCurrent?T.success:plan.highlight?T.bg:plan.color, border:`1px solid ${isCurrent?T.success:plan.color}40`, opacity:isCurrent?1:1 }}
+        onMouseEnter={e=>{ if(!isCurrent){e.currentTarget.style.background=plan.color; e.currentTarget.style.color=T.bg;}}}
+        onMouseLeave={e=>{ if(!isCurrent){e.currentTarget.style.background=plan.highlight?plan.color:plan.colorDim; e.currentTarget.style.color=plan.highlight?T.bg:plan.color;}}}>
+        {isCurrent ? (lang==="en"?"✓ Active plan":"✓ Plan actif") : `${plan.cta} →`}
       </button>
       <div style={{ textAlign:"center", marginTop:8, fontSize:11, color:T.muted }}>{plan.note}</div>
     </div>
@@ -3845,7 +3852,7 @@ function FaqItem({ q, a }) {
   );
 }
 
-function Pricing() {
+function Pricing({ userPlan = "starter" }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const [annual, setAnnual] = useState(false);
@@ -3868,7 +3875,7 @@ function Pricing() {
 
       {/* Cartes plans */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, marginBottom:48, alignItems:"start" }}>
-        {getPlans(lang).map(plan=><PlanCard key={plan.id} plan={plan} annual={annual}/>)}
+        {getPlans(lang).map(plan=><PlanCard key={plan.id} plan={plan} annual={annual} isCurrent={plan.id===userPlan}/>)}
       </div>
 
       {/* Locataire gratuit */}
@@ -4668,7 +4675,7 @@ function App() {
 
   const fetchProfile = async (uid, currentUser) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", tva: data.tva||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); const ownerEmail = "kenson.lry@gmail.com"; setUserPlan((currentUser||user)?.email===ownerEmail ? "enterprise" : (data.plan||"starter")); }
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", tva: data.tva||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); setUserPlan(data.plan||"starter"); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
@@ -4752,7 +4759,7 @@ function App() {
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} prefill={docPrefill} onClearPrefill={()=>setDocPrefill(null)}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
-    pricing:   <Pricing/>,
+    pricing:   <Pricing userPlan={userPlan}/>,
     settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan} user={user}/>,
   };
 
