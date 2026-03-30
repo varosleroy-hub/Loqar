@@ -2044,7 +2044,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
   const [search, setSearch] = useState("");
   const [modal, setModal]   = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
-  const [form, setForm]     = useState({name:"",plate:"",fuel:"Essence",trans:"Manuelle",km:"",price:"",year:"",cat:"Citadine",photo:""});
+  const [form, setForm]     = useState({name:"",plate:"",fuel:"Essence",trans:"Manuelle",km:"",price:"",year:"",cat:"Citadine",photo:"",vin:"",color:"",ctDate:""});
   const [uploading, setUploading] = useState(false);
   const [confirm, setConfirm] = useState(null);
 
@@ -2207,6 +2207,9 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
             <Input label="Année" type="number" value={form.year} onChange={v=>setForm({...form,year:v})} placeholder="2023"/>
             <Input label={t.km||"Kilométrage"} type="number" value={form.km} onChange={v=>setForm({...form,km:v})} placeholder="15000"/>
             <Input label="Prix / jour (€)" type="number" value={form.price} onChange={v=>setForm({...form,price:v})} placeholder="65"/>
+            <Input label="VIN (N° de châssis)" value={form.vin} onChange={v=>setForm({...form,vin:v})} placeholder="VF1XXXXXX12345678"/>
+            <Input label={lang==="en"?"Color":"Couleur"} value={form.color} onChange={v=>setForm({...form,color:v})} placeholder={lang==="en"?"White":"Blanc"}/>
+            <Input label={lang==="en"?"Next technical inspection":"Prochain contrôle technique"} type="date" value={form.ctDate} onChange={v=>setForm({...form,ctDate:v})}/>
             {[["Carburant","fuel",["Essence","Diesel","Hybride","Électrique"]],["Transmission","trans",["Manuelle","Automatique"]],["Catégorie","cat",["Citadine","Compacte","Berline","Premium","SUV"]]].map(([lbl,key,opts])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
@@ -2222,7 +2225,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
             <Btn label={modal==="edit"?"Enregistrer":(t.add||"Ajouter")} onClick={async ()=>{
               if (!form.name.trim()) { toast("Le nom du véhicule est requis", "error"); return; }
               if (!form.plate.trim()) { toast("L'immatriculation est requise", "error"); return; }
-              const payload = { name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, photo_url: form.photo };
+              const payload = { name: form.name, plate: form.plate, fuel: form.fuel, transmission: form.trans, km: parseInt(form.km)||0, price_per_day: parseInt(form.price)||0, year: parseInt(form.year)||2023, category: form.cat, photo_url: form.photo, vin: form.vin||null, color: form.color||null, ct_date: form.ctDate||null };
               if (modal==="edit") {
                 await supabase.from("vehicles").update(payload).eq("id", sel.id);
                 setVehicles(vehicles.map(v=>v.id===sel.id?{...v,...payload,trans:payload.transmission,price:payload.price_per_day,cat:payload.category}:v));
@@ -2249,7 +2252,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
   const [search, setSearch]= useState("");
   const [filterC, setFilterC] = useState("all");
   const [modal, setModal]  = useState(false);
-  const [form, setForm]    = useState({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:""});
+  const [form, setForm]    = useState({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:"",licenseNumber:"",licenseCategory:"B",birthDate:"",address:"",companyName:"",companySiret:""});
   const [confirm, setConfirm] = useState(null);
   const filtered = clients.filter(c=>{
     if (search && !`${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(search.toLowerCase())) return false;
@@ -2379,7 +2382,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
                 ) : null;
               })()}
               <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ firstName:sel.first_name||sel.firstName||"", lastName:sel.last_name||sel.lastName||"", email:sel.email||"", phone:sel.phone||"", type:sel.type||"particulier", licenseExpiry:sel.license_expiry||sel.licenseExpiry||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
+                <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ firstName:sel.first_name||sel.firstName||"", lastName:sel.last_name||sel.lastName||"", email:sel.email||"", phone:sel.phone||"", type:sel.type||"particulier", licenseExpiry:sel.license_expiry||sel.licenseExpiry||"", licenseNumber:sel.license_number||"", licenseCategory:sel.license_category||"B", birthDate:sel.birth_date||"", address:sel.address||"", companyName:sel.company_name||"", companySiret:sel.company_siret||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
                 <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={()=>setConfirm({ message:`Supprimer le client "${sel.first_name||sel.firstName} ${sel.last_name||sel.lastName}" ? Cette action est irréversible.`, onConfirm: async ()=>{ await supabase.from("clients").delete().eq("id", sel.id); setClients(clients.filter(c=>c.id!==sel.id)); setSel(null); toast("Client supprimé"); } })}/>
               </div>
             </Card>
@@ -2391,18 +2394,32 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
       {modal && (
         <Modal title={modal==="edit"?"Modifier le client":(t.newClient||"Nouveau client")} onClose={()=>setModal(false)}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
-            <Input label="Prénom" value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
-            <Input label="Nom" value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
+            <Input label={lang==="en"?"First name":"Prénom"} value={form.firstName} onChange={v=>setForm({...form,firstName:v})} placeholder="Marie"/>
+            <Input label={lang==="en"?"Last name":"Nom"} value={form.lastName} onChange={v=>setForm({...form,lastName:v})} placeholder="Dupont"/>
             <div style={{ gridColumn:"1/-1" }}><Input label="Email" type="email" value={form.email} onChange={v=>setForm({...form,email:v})} placeholder="marie@email.fr"/></div>
             <Input label={lang==="en"?"Phone":"Téléphone"} value={form.phone} onChange={v=>setForm({...form,phone:v})} placeholder="+33 6 …"/>
-            <Input label="Expiration du permis" type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
+            <Input label={lang==="en"?"Date of birth":"Date de naissance"} type="date" value={form.birthDate} onChange={v=>setForm({...form,birthDate:v})}/>
+            <div style={{ gridColumn:"1/-1" }}><Input label={lang==="en"?"Address":"Adresse"} value={form.address} onChange={v=>setForm({...form,address:v})} placeholder="12 rue de la Paix, 75001 Paris"/></div>
+            <Input label={lang==="en"?"License N°":"N° de permis"} value={form.licenseNumber} onChange={v=>setForm({...form,licenseNumber:v})} placeholder="12AA12345"/>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lang==="en"?"License category":"Catégorie permis"}</label>
+              <select value={form.licenseCategory} onChange={e=>setForm({...form,licenseCategory:e.target.value})}
+                style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                {["B","A","A1","A2","B1","BE","C","CE","D","DE","AM"].map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <Input label={lang==="en"?"License expiry":"Expiration du permis"} type="date" value={form.licenseExpiry} onChange={v=>setForm({...form,licenseExpiry:v})}/>
+            {form.type==="entreprise" && <>
+              <Input label={lang==="en"?"Company name":"Nom de l'entreprise"} value={form.companyName} onChange={v=>setForm({...form,companyName:v})} placeholder="SARL Dupont"/>
+              <Input label="SIRET entreprise" value={form.companySiret} onChange={v=>setForm({...form,companySiret:v})} placeholder="123 456 789 00012"/>
+            </>}
           </div>
           <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
             <Btn label={t.cancel||"Annuler"} onClick={()=>setModal(false)} variant="secondary"/>
             <Btn label={modal==="edit"?"Enregistrer":(t.save||"Créer le client")} onClick={async ()=>{
               if (!form.firstName.trim() || !form.lastName.trim()) { toast("Prénom et nom requis", "error"); return; }
               if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast("Email invalide", "error"); return; }
-              const payload = { first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry };
+              const payload = { first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, type: form.type, license_expiry: form.licenseExpiry, license_number: form.licenseNumber||null, license_category: form.licenseCategory||"B", birth_date: form.birthDate||null, address: form.address||null, company_name: form.companyName||null, company_siret: form.companySiret||null };
               if (modal==="edit") {
                 await supabase.from("clients").update(payload).eq("id", sel.id);
                 const updated = { ...sel, ...payload, firstName: payload.first_name, lastName: payload.last_name, licenseExpiry: payload.license_expiry };
@@ -2412,7 +2429,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
                 const { data } = await supabase.from("clients").insert({ ...payload, user_id: user.id, agency_id: activeAgencyId||null, locations_count: 0, total_spent: 0 }).select().single();
                 if (data) {
                   setClients([...clients, { ...data, firstName: data.first_name, lastName: data.last_name, licenseExpiry: data.license_expiry, totalSpent: data.total_spent, locations: data.locations_count }]);
-                  setForm({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:""});
+                  setForm({firstName:"",lastName:"",email:"",phone:"",type:"particulier",licenseExpiry:"",licenseNumber:"",licenseCategory:"B",birthDate:"",address:"",companyName:"",companySiret:""});
                 }
               }
               setModal(false);
@@ -3004,13 +3021,15 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Tenant":"Locataire"}</div>
                 {selectedClient ? <>
                   <div style={{ fontWeight:700, fontSize:13 }}>{selectedClient.first_name||selectedClient.firstName} {selectedClient.last_name||selectedClient.lastName}</div>
-                  {p.clientAddress && <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{p.clientAddress}</div>}
-                  <div style={{ fontSize:11, color:"#555", marginTop:p.clientAddress?0:2 }}>{selectedClient.email}</div>
+                  {(selectedClient.address||p.clientAddress) && <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{selectedClient.address||p.clientAddress}</div>}
+                  {(selectedClient.birth_date||selectedClient.birthDate) && <div style={{ fontSize:11, color:"#555" }}>{lang==="en"?"Born":"Né(e) le"} : {fmtDate(selectedClient.birth_date||selectedClient.birthDate)}</div>}
+                  <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{selectedClient.email}</div>
                   <div style={{ fontSize:11, color:"#555" }}>{selectedClient.phone}</div>
                   <div style={{ fontSize:11, color:"#555" }}>
-                    {lang==="en"?"License exp.":"Permis exp."} : {fmtDate(selectedClient.license_expiry||selectedClient.licenseExpiry)}
-                    {p.clientLicense && <span style={{ marginLeft:10 }}>N° {p.clientLicense}</span>}
+                    {lang==="en"?"License":"Permis"} {selectedClient.license_category||"B"} — {lang==="en"?"exp.":"exp."} {fmtDate(selectedClient.license_expiry||selectedClient.licenseExpiry)}
+                    {(selectedClient.license_number||p.clientLicense) && <span style={{ marginLeft:10 }}>N° {selectedClient.license_number||p.clientLicense}</span>}
                   </div>
+                  {selectedClient.type==="entreprise" && selectedClient.company_name && <div style={{ fontSize:11, color:"#555", marginTop:2, fontWeight:600 }}>{selectedClient.company_name}{selectedClient.company_siret?` — SIRET ${selectedClient.company_siret}`:""}</div>}
                 </> : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>{lang==="en"?"Select a client":"Sélectionnez un client"}</div>}
               </div>
             </div>
@@ -3019,8 +3038,11 @@ function Documents({ agencyProfile, vehicles, clients }) {
             <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8, marginBottom:20 }}>
               <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Vehicle":"Véhicule"}</div>
               {selectedVehicle ? (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:8 }}>
-                  {lang==="en"?[["Model",selectedVehicle.name],["Plate",selectedVehicle.plate],["Fuel",selectedVehicle.fuel],["Gearbox",selectedVehicle.trans]]:[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans]].map(([k,v])=>(
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:8 }}>
+                  {(lang==="en"
+                    ?[["Model",selectedVehicle.name],["Plate",selectedVehicle.plate],["Year",selectedVehicle.year||"—"],["Color",selectedVehicle.color||"—"],["Fuel",selectedVehicle.fuel],["Gearbox",selectedVehicle.trans],["VIN",selectedVehicle.vin||"—"]]
+                    :[["Désignation",selectedVehicle.name],["Immatriculation",selectedVehicle.plate],["Année",selectedVehicle.year||"—"],["Couleur",selectedVehicle.color||"—"],["Carburant",selectedVehicle.fuel],["Transmission",selectedVehicle.trans],["N° de châssis (VIN)",selectedVehicle.vin||"—"]]
+                  ).map(([k,v])=>(
                     <div key={k}>
                       <div style={{ fontSize:9, color:"#888" }}>{k}</div>
                       <div style={{ fontWeight:700, fontSize:11 }}>{v||"—"}</div>
@@ -3123,7 +3145,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
               <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, marginBottom:16, fontSize:11, color:"#555", display:"flex", gap:24 }}>
                 <div><span style={{ fontWeight:700 }}>{lang==="en"?"Payment terms":"Conditions de règlement"} :</span> {lang==="en"?"Payable upon receipt":"Paiement à réception de facture"}</div>
                 {p.paymentDue && <div><span style={{ fontWeight:700 }}>{lang==="en"?"Due date":"Échéance"} :</span> {fmtDate(p.paymentDue)}</div>}
-                <div style={{ fontSize:10, color:"#888" }}>{lang==="en"?"Late payment penalty: 3× legal rate + €40 recovery fee":"Pénalités de retard : 3× le taux légal + indemnité forfaitaire de recouvrement 40 €"}</div>
+                <div style={{ fontSize:10, color:"#888" }}>{lang==="en"?"Late payment penalty: 3× legal rate + €40 flat recovery fee · No early payment discount":"Pénalités de retard : 3× le taux légal en vigueur + indemnité forfaitaire de recouvrement 40 € (art. L.441-10 C.com.) · Pas d'escompte pour règlement anticipé"}</div>
               </div>
             )}
 
@@ -3148,11 +3170,15 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <div style={{ fontSize:9, color:"#555", lineHeight:1.6 }}>
                   <p style={{ margin:"0 0 6px" }}>1. <strong>Responsabilité</strong> — Le locataire est responsable de tous les dommages causés au véhicule pendant la durée de la location, y compris en cas de vol.</p>
                   <p style={{ margin:"0 0 6px" }}>2. <strong>Carburant</strong> — Le véhicule doit être restitué avec le même niveau de carburant qu'au départ. Tout déficit sera facturé.</p>
-                  <p style={{ margin:"0 0 6px" }}>3. <strong>Kilométrage</strong> — Tout dépassement du kilométrage convenu sera facturé selon le tarif en vigueur.</p>
-                  <p style={{ margin:"0 0 6px" }}>4. <strong>Caution</strong> — La caution sera restituée dans un délai de 7 jours après la restitution du véhicule, sous réserve d'absence de dommages.</p>
-                  <p style={{ margin:"0 0 6px" }}>5. <strong>Assurance</strong> — Le locataire doit être titulaire d'un permis de conduire valide en cours de validité. Le véhicule est couvert par l'assurance du loueur (RC + dommages tous accidents) avec une franchise opposable au locataire de <strong>{agencyFranchise}</strong>.</p>
-                  <p style={{ margin:"0 0 6px" }}>6. <strong>Restitution</strong> — Le véhicule doit être restitué aux date, heure et lieu convenus. Tout retard non signalé pourra faire l'objet d'une facturation supplémentaire.</p>
-                  <p style={{ margin:"0 0 0" }}>7. <strong>Protection des données</strong> — Les données personnelles collectées sont traitées conformément au RGPD (UE 2016/679). Elles sont utilisées uniquement pour la gestion de la location et ne sont pas cédées à des tiers. Droit d'accès et de rectification sur demande à {agencyEmail||agencyName}.</p>
+                  <p style={{ margin:"0 0 6px" }}>3. <strong>Kilométrage</strong> — Tout dépassement du kilométrage convenu sera facturé selon le tarif en vigueur. Toute manipulation du compteur kilométrique entraîne la résiliation immédiate du contrat aux frais du locataire.</p>
+                  <p style={{ margin:"0 0 6px" }}>4. <strong>Caution</strong> — La caution sera restituée dans un délai de 7 jours après la restitution du véhicule, sous réserve d'absence de dommages. En cas de sinistre, la caution peut être conservée à titre provisionnel jusqu'au chiffrage définitif des réparations.</p>
+                  <p style={{ margin:"0 0 6px" }}>5. <strong>Assurance</strong> — Le locataire doit être titulaire d'un permis de conduire valide en cours de validité. Le véhicule est couvert par l'assurance du loueur (RC + dommages tous accidents) avec une franchise opposable au locataire de <strong>{agencyFranchise}</strong>. Toute fausse déclaration entraîne la déchéance de garantie.</p>
+                  <p style={{ margin:"0 0 6px" }}>6. <strong>Accidents et sinistres</strong> — En cas d'accident, le locataire doit : (a) prévenir les autorités si nécessaire, (b) établir un constat amiable même sans tiers impliqué, (c) informer le loueur dans les 24 heures. Le locataire s'interdit de reconnaître toute responsabilité sans accord préalable du loueur.</p>
+                  <p style={{ margin:"0 0 6px" }}>7. <strong>Infractions et amendes</strong> — Toute contravention au Code de la route commise durant la location est à la charge exclusive du locataire. Le loueur se réserve le droit de communiquer l'identité du locataire aux autorités compétentes et de facturer des frais de gestion de 30 € par dossier.</p>
+                  <p style={{ margin:"0 0 6px" }}>8. <strong>Utilisation du véhicule</strong> — La sous-location et la cession du présent contrat sont strictement interdites. Le véhicule ne peut être conduit que par le locataire signataire (sauf conducteur additionnel déclaré). L'utilisation du véhicule est limitée au territoire métropolitain français et aux pays de l'Espace Économique Européen, sauf accord écrit préalable.</p>
+                  <p style={{ margin:"0 0 6px" }}>9. <strong>Restitution</strong> — Le véhicule doit être restitué aux date, heure et lieu convenus, dans l'état constaté à la remise. Tout retard non signalé au moins 2 heures à l'avance sera facturé au tarif journalier en vigueur.</p>
+                  <p style={{ margin:"0 0 6px" }}>10. <strong>Protection des données</strong> — Les données personnelles collectées sont traitées conformément au RGPD (UE 2016/679). Elles sont utilisées uniquement pour la gestion de la location et ne sont pas cédées à des tiers. Droit d'accès et de rectification sur demande à {agencyEmail||agencyName}.</p>
+                  <p style={{ margin:"0 0 0" }}>11. <strong>Juridiction</strong> — En cas de litige, et à défaut de résolution amiable, les tribunaux compétents du ressort du siège social du loueur seront seuls compétents, conformément aux dispositions du Code de procédure civile.</p>
                 </div>
               </div>
             )}
