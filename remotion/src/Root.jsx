@@ -1,5 +1,6 @@
 import { Composition } from 'remotion';
 import { AdLoqar } from './AdLoqar.jsx';
+import { PromoLoqar } from './PromoLoqar.jsx';
 
 export const Root = () => {
   return (
@@ -17,6 +18,14 @@ export const Root = () => {
           primaryColor: '#1a1a2e',
           accentColor: '#e94560',
         }}
+      />
+      <Composition
+        id="PromoLoqar"
+        component={PromoLoqar}
+        durationInFrames={900}
+        fps={30}
+        width={1080}
+        height={1080}
       />
     </>
   );
