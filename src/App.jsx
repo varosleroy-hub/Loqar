@@ -2826,7 +2826,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const t = TR[lang]||TR.fr;
   const toast = useToast();
   const [docType, setDocType] = useState("contrat");
-  const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:"",clientLicense:"",clientAddress:"",paymentDue:"",quoteValidity:"30 jours"});
+  const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:"",clientLicense:"",clientAddress:"",paymentDue:"",quoteValidity:"30 jours",pickupLocation:"",returnLocation:"",additionalDriver:"",kmIncluded:"",kmOverRate:"0.20",paymentMethod:""});
 
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
   const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
@@ -2842,7 +2842,15 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const agencyEmail   = agencyProfile?.email   || "";
   const agencyFranchise = agencyProfile?.franchise || "800 €";
   const agencyTva       = agencyProfile?.tva       || "";
-  const docNumRef = useRef(`LQ-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,"0")}-${Date.now().toString(36).toUpperCase().slice(-4)}`);
+  // Sequential doc numbering stored in localStorage per year-month
+  const docNumRef = useRef(null);
+  if (!docNumRef.current) {
+    const ym = `${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,"0")}`;
+    const key = `loqar_docnum_${ym}`;
+    const next = (parseInt(localStorage.getItem(key)||"0") + 1);
+    localStorage.setItem(key, String(next));
+    docNumRef.current = `LQ-${ym}-${String(next).padStart(4,"0")}`;
+  }
   const docNum = docNumRef.current;
 
   const printDoc = () => {
@@ -2939,12 +2947,29 @@ function Documents({ agencyProfile, vehicles, clients }) {
               <Input label={t.end||"Fin"} type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
 
               {/* Champs spécifiques par type */}
-              {docType==="facture" && (
+              {docType==="facture" && (<>
                 <Input label={lang==="en"?"Payment due date":"Date d'échéance"} value={p.paymentDue} onChange={v=>up("paymentDue",v)} type="date"/>
-              )}
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lang==="en"?"Payment method":"Mode de paiement"}</label>
+                  <select value={p.paymentMethod} onChange={e=>up("paymentMethod",e.target.value)}
+                    style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
+                    <option value="">{lang==="en"?"— Select —":"— Sélectionner —"}</option>
+                    {(lang==="en"?["Cash","Bank transfer","Cheque","Credit card","PayPal"]:["Espèces","Virement bancaire","Chèque","Carte bancaire","PayPal"]).map(o=><option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              </>)}
               {docType==="devis" && (
                 <Input label={lang==="en"?"Quote validity":"Validité du devis"} value={p.quoteValidity} onChange={v=>up("quoteValidity",v)} placeholder="30 jours"/>
               )}
+
+              {/* Champs spécifiques contrat */}
+              {docType==="contrat" && (<>
+                <Input label={lang==="en"?"Pickup location":"Lieu de prise en charge"} value={p.pickupLocation} onChange={v=>up("pickupLocation",v)} placeholder="15 rue de la Paix, Paris"/>
+                <Input label={lang==="en"?"Return location":"Lieu de restitution"} value={p.returnLocation} onChange={v=>up("returnLocation",v)} placeholder={lang==="en"?"Same location":"Même lieu"}/>
+                <Input label={lang==="en"?"Additional driver":"Conducteur additionnel"} value={p.additionalDriver} onChange={v=>up("additionalDriver",v)} placeholder={lang==="en"?"First Last":"Prénom Nom"}/>
+                <Input label={lang==="en"?"Km included (blank = unlimited)":"Km inclus (vide = illimité)"} value={p.kmIncluded} onChange={v=>up("kmIncluded",v)} type="number" placeholder="ex: 500"/>
+                <Input label={lang==="en"?"Extra km rate (€/km)":"Tarif km suppl. (€/km)"} value={p.kmOverRate} onChange={v=>up("kmOverRate",v)} type="number" placeholder="0.20"/>
+              </>)}
 
               {/* Fuel level */}
               {(docType==="etat"||docType==="contrat") && (
@@ -3054,13 +3079,40 @@ function Documents({ agencyProfile, vehicles, clients }) {
 
             {/* Location details */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10, marginBottom:20 }}>
-              {lang==="en"?[["Start",fmtDate(p.startDate)||"—"],["End",fmtDate(p.endDate)||"—"],["Duration",days>0?`${days} day(s)`:"—"],["Start km",p.km?fmt(parseInt(p.km))+" km":"—"]]:[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]].map(([k,v])=>(
+              {(lang==="en"
+                ?[["Start",fmtDate(p.startDate)||"—"],["End",fmtDate(p.endDate)||"—"],["Duration",days>0?`${days} day(s)`:"—"],["Start km",p.km?fmt(parseInt(p.km))+" km":"—"]]
+                :[["Début",fmtDate(p.startDate)||"—"],["Fin",fmtDate(p.endDate)||"—"],["Durée",days>0?`${days} jour(s)`:"—"],["Km départ",p.km?fmt(parseInt(p.km))+" km":"—"]]
+              ).map(([k,v])=>(
                 <div key={k} style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
                   <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{k}</div>
                   <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{v}</div>
                 </div>
               ))}
             </div>
+
+            {/* Lieux de prise en charge / restitution + conducteur additionnel (contrat) */}
+            {docType==="contrat" && (p.pickupLocation||p.returnLocation||p.additionalDriver) && (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:10, marginBottom:20 }}>
+                {p.pickupLocation && (
+                  <div style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{lang==="en"?"Pickup location":"Lieu de prise en charge"}</div>
+                    <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{p.pickupLocation}</div>
+                  </div>
+                )}
+                {p.returnLocation && (
+                  <div style={{ padding:"10px 12px", background:"#F5F0E8", borderRadius:6 }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{lang==="en"?"Return location":"Lieu de restitution"}</div>
+                    <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{p.returnLocation}</div>
+                  </div>
+                )}
+                {p.additionalDriver && (
+                  <div style={{ padding:"10px 12px", background:"#FFF8E8", border:"1px solid #E8C870", borderRadius:6 }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:"#7A6030", textTransform:"uppercase", letterSpacing:".08em", marginBottom:3 }}>{lang==="en"?"Additional driver":"Conducteur additionnel"}</div>
+                    <div style={{ fontWeight:700, color:"#1A1510", fontSize:12 }}>{p.additionalDriver}</div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Carburant */}
             {(docType==="etat"||docType==="contrat") && (
@@ -3078,13 +3130,47 @@ function Documents({ agencyProfile, vehicles, clients }) {
             {docType==="etat" && (
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontSize:11, fontWeight:700, color:"#1A1510", marginBottom:10, textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"Vehicle Condition Check":"Contrôle de l'état du véhicule"}</div>
-                <table style={{ width:"100%", borderCollapse:"collapse" }}>
+
+                {/* Schéma véhicule top-down */}
+                <div style={{ marginBottom:16, textAlign:"center" }}>
+                  <div style={{ fontSize:9, color:"#888", marginBottom:6, textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"Mark any damage on the diagram below":"Annotez les dommages sur le schéma ci-dessous"}</div>
+                  <svg viewBox="0 0 320 180" style={{ width:"100%", maxWidth:380, border:"1px solid #DDD", borderRadius:8, background:"#FDFAF5" }} xmlns="http://www.w3.org/2000/svg">
+                    {/* Carrosserie principale */}
+                    <rect x="80" y="20" width="160" height="140" rx="30" fill="#E8E0D0" stroke="#AAA" strokeWidth="1.5"/>
+                    {/* Capot avant */}
+                    <rect x="95" y="20" width="130" height="40" rx="10" fill="#D8CFC0" stroke="#AAA" strokeWidth="1"/>
+                    {/* Coffre arrière */}
+                    <rect x="95" y="120" width="130" height="40" rx="10" fill="#D8CFC0" stroke="#AAA" strokeWidth="1"/>
+                    {/* Habitacle */}
+                    <rect x="100" y="62" width="120" height="56" rx="6" fill="#B8B0A0" stroke="#999" strokeWidth="1"/>
+                    {/* Roues AV G */}
+                    <rect x="56" y="30" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
+                    {/* Roues AV D */}
+                    <rect x="236" y="30" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
+                    {/* Roues AR G */}
+                    <rect x="56" y="106" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
+                    {/* Roues AR D */}
+                    <rect x="236" y="106" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
+                    {/* Etiquettes */}
+                    <text x="160" y="46" textAnchor="middle" fontSize="8" fill="#666">{lang==="en"?"FRONT":"AVANT"}</text>
+                    <text x="160" y="148" textAnchor="middle" fontSize="8" fill="#666">{lang==="en"?"REAR":"ARRIÈRE"}</text>
+                    <text x="26" y="95" textAnchor="middle" fontSize="7" fill="#666" transform="rotate(-90,26,95)">{lang==="en"?"LEFT":"GAUCHE"}</text>
+                    <text x="295" y="95" textAnchor="middle" fontSize="7" fill="#666" transform="rotate(90,295,95)">{lang==="en"?"RIGHT":"DROITE"}</text>
+                    {/* Pare-brise */}
+                    <rect x="105" y="55" width="110" height="18" rx="4" fill="#C8E0F0" stroke="#AAA" strokeWidth="0.8" opacity="0.7"/>
+                    {/* Lunette AR */}
+                    <rect x="105" y="107" width="110" height="16" rx="4" fill="#C8E0F0" stroke="#AAA" strokeWidth="0.8" opacity="0.7"/>
+                  </svg>
+                </div>
+
+                {/* Checklist carrosserie / mécanique */}
+                <table style={{ width:"100%", borderCollapse:"collapse", marginBottom:12 }}>
                   <thead>
                     <tr style={{ background:"#1A1510" }}>
-                      <th style={{ padding:"6px 10px", textAlign:"left", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Élément</th>
-                      <th style={{ padding:"6px 10px", textAlign:"center", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Bon état</th>
-                      <th style={{ padding:"6px 10px", textAlign:"center", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Dommage</th>
-                      <th style={{ padding:"6px 10px", textAlign:"left", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>Observations</th>
+                      <th style={{ padding:"6px 10px", textAlign:"left", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>{lang==="en"?"Element":"Élément"}</th>
+                      <th style={{ padding:"6px 10px", textAlign:"center", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>{lang==="en"?"OK":"Bon état"}</th>
+                      <th style={{ padding:"6px 10px", textAlign:"center", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>{lang==="en"?"Damage":"Dommage"}</th>
+                      <th style={{ padding:"6px 10px", textAlign:"left", fontSize:10, color:"#EDE5D4", fontWeight:700 }}>{lang==="en"?"Notes":"Observations"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3104,6 +3190,19 @@ function Documents({ agencyProfile, vehicles, clients }) {
                     ))}
                   </tbody>
                 </table>
+
+                {/* Checklist équipements obligatoires */}
+                <div style={{ marginBottom:8, fontSize:10, fontWeight:700, color:"#1A1510", textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"Mandatory equipment":"Équipements obligatoires"}</div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:6 }}>
+                  {(lang==="en"
+                    ?["Warning triangle","Reflective vest","Registration document","CT / Technical inspection","Spare key(s)","First-aid kit"]
+                    :["Triangle de signalisation","Gilet réfléchissant","Carte grise","CT / Contrôle technique","Clé(s) de secours","Kit de premiers secours"]
+                  ).map(eq=>(
+                    <label key={eq} style={{ display:"flex", alignItems:"center", gap:7, padding:"6px 8px", background:"#F5F0E8", borderRadius:6, fontSize:10, cursor:"pointer" }}>
+                      <input type="checkbox" style={{ accentColor:"#C9A55A" }}/> {eq}
+                    </label>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -3142,19 +3241,41 @@ function Documents({ agencyProfile, vehicles, clients }) {
 
             {/* Conditions de paiement — facture uniquement */}
             {docType==="facture" && (
-              <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, marginBottom:16, fontSize:11, color:"#555", display:"flex", gap:24 }}>
-                <div><span style={{ fontWeight:700 }}>{lang==="en"?"Payment terms":"Conditions de règlement"} :</span> {lang==="en"?"Payable upon receipt":"Paiement à réception de facture"}</div>
-                {p.paymentDue && <div><span style={{ fontWeight:700 }}>{lang==="en"?"Due date":"Échéance"} :</span> {fmtDate(p.paymentDue)}</div>}
+              <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, marginBottom:16, fontSize:11, color:"#555" }}>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:24, marginBottom:6 }}>
+                  <div><span style={{ fontWeight:700 }}>{lang==="en"?"Payment terms":"Conditions de règlement"} :</span> {lang==="en"?"Payable upon receipt":"Paiement à réception de facture"}</div>
+                  {p.paymentMethod && <div><span style={{ fontWeight:700 }}>{lang==="en"?"Payment method":"Mode de paiement"} :</span> {p.paymentMethod}</div>}
+                  {p.paymentDue && <div><span style={{ fontWeight:700 }}>{lang==="en"?"Due date":"Échéance"} :</span> {fmtDate(p.paymentDue)}</div>}
+                </div>
                 <div style={{ fontSize:10, color:"#888" }}>{lang==="en"?"Late payment penalty: 3× legal rate + €40 flat recovery fee · No early payment discount":"Pénalités de retard : 3× le taux légal en vigueur + indemnité forfaitaire de recouvrement 40 € (art. L.441-10 C.com.) · Pas d'escompte pour règlement anticipé"}</div>
               </div>
             )}
 
             {/* Validité — devis uniquement */}
-            {docType==="devis" && (
+            {docType==="devis" && (<>
               <div style={{ padding:"10px 14px", background:"#FFF8E8", border:"1px solid #E8C870", borderRadius:6, marginBottom:16, fontSize:11, color:"#7A6030" }}>
                 ⏳ <strong>{lang==="en"?"Quote validity":"Validité du devis"} :</strong> {p.quoteValidity||"30 jours"} {lang==="en"?"from the date of issue":"à compter de la date d'émission"}
               </div>
-            )}
+              {/* Bon pour accord */}
+              <div style={{ border:"1px solid #C8B89A", borderRadius:8, padding:"16px 18px", marginBottom:16, background:"#FDFBF7" }}>
+                <div style={{ fontSize:10, fontWeight:700, color:"#1A1510", textTransform:"uppercase", letterSpacing:".08em", marginBottom:10 }}>{lang==="en"?"Customer approval":"Bon pour accord"}</div>
+                <div style={{ fontSize:10, color:"#555", marginBottom:14, lineHeight:1.6 }}>
+                  {lang==="en"
+                    ? `I, the undersigned, ${selectedClient?(selectedClient.first_name||selectedClient.firstName)+" "+(selectedClient.last_name||selectedClient.lastName):"…………………………………"}, accept the above quote in full and authorize ${agencyName} to proceed with the reservation.`
+                    : `Je soussigné(e), ${selectedClient?(selectedClient.first_name||selectedClient.firstName)+" "+(selectedClient.last_name||selectedClient.lastName):"…………………………………"}, reconnais avoir pris connaissance du présent devis et accepte les conditions ci-dessus. J'autorise ${agencyName} à procéder à la réservation.`}
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:40 }}>
+                  <div>
+                    <div style={{ fontSize:9, color:"#888", marginBottom:4 }}>{lang==="en"?"Date":"Date"} :</div>
+                    <div style={{ height:24, borderBottom:"1px solid #C8B89A", marginBottom:4 }}/>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:9, color:"#888", marginBottom:4 }}>{lang==="en"?"Signature (preceded by \"Read and approved\")":"Signature (précédée de la mention « Bon pour accord »)"} :</div>
+                    <div style={{ height:40, borderBottom:"1px solid #C8B89A", marginBottom:4 }}/>
+                  </div>
+                </div>
+              </div>
+            </>)}
 
             {p.notes && (
               <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, borderLeft:"3px solid #C9A55A", marginBottom:20 }}>
@@ -3170,12 +3291,12 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <div style={{ fontSize:9, color:"#555", lineHeight:1.6 }}>
                   <p style={{ margin:"0 0 6px" }}>1. <strong>Responsabilité</strong> — Le locataire est responsable de tous les dommages causés au véhicule pendant la durée de la location, y compris en cas de vol.</p>
                   <p style={{ margin:"0 0 6px" }}>2. <strong>Carburant</strong> — Le véhicule doit être restitué avec le même niveau de carburant qu'au départ. Tout déficit sera facturé.</p>
-                  <p style={{ margin:"0 0 6px" }}>3. <strong>Kilométrage</strong> — Tout dépassement du kilométrage convenu sera facturé selon le tarif en vigueur. Toute manipulation du compteur kilométrique entraîne la résiliation immédiate du contrat aux frais du locataire.</p>
+                  <p style={{ margin:"0 0 6px" }}>3. <strong>Kilométrage</strong> — {p.kmIncluded ? `Le kilométrage inclus est de ${fmt(parseInt(p.kmIncluded))} km. Tout kilomètre supplémentaire sera facturé ${p.kmOverRate||"0.20"} €/km.` : "Le kilométrage est illimité sur le territoire autorisé."} Toute manipulation du compteur kilométrique entraîne la résiliation immédiate du contrat aux frais du locataire.</p>
                   <p style={{ margin:"0 0 6px" }}>4. <strong>Caution</strong> — La caution sera restituée dans un délai de 7 jours après la restitution du véhicule, sous réserve d'absence de dommages. En cas de sinistre, la caution peut être conservée à titre provisionnel jusqu'au chiffrage définitif des réparations.</p>
                   <p style={{ margin:"0 0 6px" }}>5. <strong>Assurance</strong> — Le locataire doit être titulaire d'un permis de conduire valide en cours de validité. Le véhicule est couvert par l'assurance du loueur (RC + dommages tous accidents) avec une franchise opposable au locataire de <strong>{agencyFranchise}</strong>. Toute fausse déclaration entraîne la déchéance de garantie.</p>
                   <p style={{ margin:"0 0 6px" }}>6. <strong>Accidents et sinistres</strong> — En cas d'accident, le locataire doit : (a) prévenir les autorités si nécessaire, (b) établir un constat amiable même sans tiers impliqué, (c) informer le loueur dans les 24 heures. Le locataire s'interdit de reconnaître toute responsabilité sans accord préalable du loueur.</p>
                   <p style={{ margin:"0 0 6px" }}>7. <strong>Infractions et amendes</strong> — Toute contravention au Code de la route commise durant la location est à la charge exclusive du locataire. Le loueur se réserve le droit de communiquer l'identité du locataire aux autorités compétentes et de facturer des frais de gestion de 30 € par dossier.</p>
-                  <p style={{ margin:"0 0 6px" }}>8. <strong>Utilisation du véhicule</strong> — La sous-location et la cession du présent contrat sont strictement interdites. Le véhicule ne peut être conduit que par le locataire signataire (sauf conducteur additionnel déclaré). L'utilisation du véhicule est limitée au territoire métropolitain français et aux pays de l'Espace Économique Européen, sauf accord écrit préalable.</p>
+                  <p style={{ margin:"0 0 6px" }}>8. <strong>Utilisation du véhicule</strong> — La sous-location et la cession du présent contrat sont strictement interdites. Le véhicule ne peut être conduit que par le locataire signataire{p.additionalDriver ? ` et le conducteur additionnel déclaré : ${p.additionalDriver}` : " (aucun conducteur additionnel déclaré)"}. L'utilisation du véhicule est limitée au territoire métropolitain français et aux pays de l'Espace Économique Européen, sauf accord écrit préalable.</p>
                   <p style={{ margin:"0 0 6px" }}>9. <strong>Restitution</strong> — Le véhicule doit être restitué aux date, heure et lieu convenus, dans l'état constaté à la remise. Tout retard non signalé au moins 2 heures à l'avance sera facturé au tarif journalier en vigueur.</p>
                   <p style={{ margin:"0 0 6px" }}>10. <strong>Protection des données</strong> — Les données personnelles collectées sont traitées conformément au RGPD (UE 2016/679). Elles sont utilisées uniquement pour la gestion de la location et ne sont pas cédées à des tiers. Droit d'accès et de rectification sur demande à {agencyEmail||agencyName}.</p>
                   <p style={{ margin:"0 0 0" }}>11. <strong>Juridiction</strong> — En cas de litige, et à défaut de résolution amiable, les tribunaux compétents du ressort du siège social du loueur seront seuls compétents, conformément aux dispositions du Code de procédure civile.</p>
