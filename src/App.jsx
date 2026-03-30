@@ -864,7 +864,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
                   <div style={{ fontSize:10, color:"#888" }}>{form.address||t.address||"Adresse"}</div>
                 </div>
                 <div style={{ marginLeft:"auto", textAlign:"right" }}>
-                  <div style={{ fontSize:10, color:"#888" }}>{form.phone||lang==="en"?"Phone":"Téléphone"}</div>
+                  <div style={{ fontSize:10, color:"#888" }}>{form.phone||(lang==="en"?"Phone":"Téléphone")}</div>
                   <div style={{ fontSize:10, color:"#888" }}>{form.email||"Email"}</div>
                 </div>
               </div>
@@ -1333,7 +1333,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
       {/* Fleet health */}
       <div style={{ fontSize:10, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", padding:"12px 10px 8px" }}>Flotte</div>
       <div style={{ padding:"12px 14px", background:T.card, border:`1px solid ${T.border}`, borderRadius:12, margin:"0 0 4px" }}>
-        {[{l:t.available||lang==="en"?"Available":"Disponible",s:"disponible",c:T.success},{l:t.rented||lang==="en"?"Rented":"En location",s:"en location",c:T.gold},{l:t.maintenance||lang==="en"?"Maintenance":"Entretien",s:"entretien",c:T.red}].map(g=>{
+        {[{l:lang==="en"?"Available":"Disponible",s:"disponible",c:T.success},{l:lang==="en"?"Rented":"En location",s:"en location",c:T.gold},{l:lang==="en"?"Maintenance":"Entretien",s:"entretien",c:T.red}].map(g=>{
           const count = vehicles.filter(v=>v.status===g.s).length;
           return (
             <div key={g.s} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
@@ -2089,7 +2089,7 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher un véhicule ou immatriculation…"
             style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
         </div>
-        {[["all",lang==="en"?"All":"Tous"],["disponible",t.available||lang==="en"?"Available":"Disponible"],["en location",t.rented||lang==="en"?"Rented":"En location"],["entretien",t.maintenance||lang==="en"?"Maintenance":"Entretien"]].map(([k,l])=>{
+        {[["all",lang==="en"?"All":"Tous"],["disponible",lang==="en"?"Available":"Disponible"],["en location",lang==="en"?"Rented":"En location"],["entretien",lang==="en"?"Maintenance":"Entretien"]].map(([k,l])=>{
           const cnt=k==="all"?vehicles.length:vehicles.filter(v=>v.status===k).length;
           const active=filter===k;
           return (
@@ -2260,7 +2260,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
   });
 
   return (
-    <Page title={t.clients||lang==="en"?"Clients":"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
+    <Page title={t.clients||"Clients"} sub={`${clients.length} ${t.clients||"clients"}`}
       actions={<Btn label={t.newClient||"Nouveau client"} variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>}>
       <div style={{ display:"flex", gap:8, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
         <div style={{ flex:1, minWidth:180, position:"relative" }}>
@@ -3325,7 +3325,7 @@ function Pricing() {
             <tbody>
               {[
                 [t.vehicles||"Véhicules","3","15","Illimité"],
-                [t.clients||lang==="en"?"Clients":"Clients","Illimité","Illimité","Illimité"],
+                [t.clients||"Clients","Illimité","Illimité","Illimité"],
                 [lang==="en"?"PDF Contracts":"Contrats PDF","✓","✓","✓"],
                 [t.payments||"Paiements","✓","✓","✓"],
                 [lang==="en"?"Gantt view":"Vue Gantt","✓","✓","✓"],
@@ -3556,9 +3556,9 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
         {[
-          [t.inProgress||lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
-          [t.reserved||lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
-          [t.completed||lang==="en"?"Completed":"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
+          [lang==="en"?"In progress":"En cours",   rentals.filter(r=>r.status==="en cours").length,   T.success],
+          [lang==="en"?"Reserved":"Réservées",  rentals.filter(r=>r.status==="réservée").length,   T.amber],
+          [lang==="en"?"Completed":"Terminées",  rentals.filter(r=>r.status==="terminée").length,   T.muted],
           [lang==="en"?"Revenue":"Chiffre d'affaires", rentals.reduce((a,r)=>a+(r.total||0),0)+"€", T.gold],
         ].map(([label,value,color])=>(
           <Card key={label}>
