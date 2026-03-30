@@ -38,57 +38,102 @@ const fi = (frame, from, to, start, end) =>
 const spr = (frame, fps, delay = 0, cfg = {}) =>
   spring({ frame: frame - delay, fps, from: 0, to: 1, durationInFrames: 28, config: { damping: 13, ...cfg } });
 
-// --- Scène 1 : Logo reveal avec glow (0→90f / 0→3s) ---
+// --- Scène 1 : Impact cinématique (0→90f / 0→3s) ---
 const SceneLogo = ({ frame, fps }) => {
-  const sc = spring({ frame, fps, from: 0.5, to: 1, durationInFrames: 35, config: { damping: 10 } });
-  const op = fi(frame, 0, 1, 0, 18);
-  const glowR = fi(frame, 0, 320, 10, 70);
-  const lineW = fi(frame, 0, 180, 35, 65);
-  const subOp = fi(frame, 0, 1, 50, 75);
-  const subY = fi(frame, 12, 0, 50, 75);
-  // Particules dorées
-  const particles = [
-    { x: -200, y: -120, delay: 5 },
-    { x: 180, y: -90, delay: 12 },
-    { x: -150, y: 110, delay: 8 },
-    { x: 220, y: 80, delay: 18 },
-    { x: -60, y: -160, delay: 15 },
-    { x: 100, y: 140, delay: 10 },
+  // Flash blanc au frame 0 qui disparaît vite
+  const flashOp = fi(frame, 1, 0, 0, 8);
+
+  // Lignes qui convergent vers le centre depuis les bords
+  const lineScale = spring({ frame, fps, from: 6, to: 1, durationInFrames: 22, config: { damping: 18, stiffness: 200 } });
+
+  // Logo zoom depuis énorme vers normal avec overshoot
+  const logoSc = spring({ frame: frame - 4, fps, from: 3.5, to: 1, durationInFrames: 30, config: { damping: 14, stiffness: 160 } });
+  const logoOp = fi(frame, 0, 1, 2, 10);
+
+  // Flou cinétique simulé via opacité sur layers décalés
+  const blur1Op = fi(frame, 0.5, 0, 0, 18);
+  const blur1Sc = spring({ frame, fps, from: 4, to: 1, durationInFrames: 18, config: { damping: 20 } });
+
+  // Glow explose puis se stabilise
+  const glowR = spring({ frame: frame - 2, fps, from: 0, to: 480, durationInFrames: 35, config: { damping: 16 } });
+  const glowOp = fi(frame, 0, 1, 0, 12) * fi(frame, 1, 0.4, 35, 90);
+
+  // Ligne dorée sous le logo
+  const lineW = spring({ frame: frame - 18, fps, from: 0, to: 200, durationInFrames: 22, config: { damping: 12 } });
+
+  // Sous-titre
+  const subOp = fi(frame, 0, 1, 48, 68);
+  const subY = fi(frame, 14, 0, 48, 68);
+
+  // Particules qui explosent depuis le centre
+  const PARTS = [
+    { angle: 0,   dist: 300, delay: 3  },
+    { angle: 45,  dist: 260, delay: 5  },
+    { angle: 90,  dist: 320, delay: 2  },
+    { angle: 135, dist: 280, delay: 7  },
+    { angle: 180, dist: 300, delay: 4  },
+    { angle: 225, dist: 260, delay: 6  },
+    { angle: 270, dist: 310, delay: 3  },
+    { angle: 315, dist: 270, delay: 5  },
   ];
 
   return (
-    <AbsoluteFill style={{ background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', fontFamily: FONT }}>
-      {/* Glow radial */}
+    <AbsoluteFill style={{ background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', fontFamily: FONT, overflow: 'hidden' }}>
+
+      {/* Glow explosif */}
       <div style={{
         position: 'absolute',
-        width: glowR * 2,
-        height: glowR * 2,
+        width: glowR * 2, height: glowR * 2,
         borderRadius: '50%',
-        background: `radial-gradient(ellipse, ${T.gold}22 0%, transparent 70%)`,
+        background: `radial-gradient(ellipse, ${T.gold}30 0%, ${T.gold}08 40%, transparent 70%)`,
+        opacity: glowOp,
         pointerEvents: 'none',
       }} />
 
-      {/* Particules */}
-      {particles.map((p, i) => {
-        const pOp = fi(frame, 0, 1, p.delay, p.delay + 15) * fi(frame, 1, 0, 70, 90);
-        const pSc = spring({ frame: frame - p.delay, fps, from: 0, to: 1, durationInFrames: 20 });
+      {/* Particules explosion */}
+      {PARTS.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180;
+        const progress = spring({ frame: frame - p.delay, fps, from: 0, to: 1, durationInFrames: 32, config: { damping: 20 } });
+        const dist = progress * p.dist;
+        const px = Math.cos(rad) * dist;
+        const py = Math.sin(rad) * dist;
+        const pOp = fi(frame, 0, 1, p.delay, p.delay + 8) * fi(frame, 1, 0, 50, 88);
         return (
           <div key={i} style={{
             position: 'absolute',
-            left: `calc(50% + ${p.x}px)`,
-            top: `calc(50% + ${p.y}px)`,
-            width: 6, height: 6,
+            left: '50%', top: '50%',
+            width: 4, height: 4,
             borderRadius: '50%',
             background: T.gold,
-            opacity: pOp * 0.7,
-            transform: `scale(${pSc}) translate(-50%, -50%)`,
-            boxShadow: `0 0 12px ${T.gold}`,
+            opacity: pOp,
+            transform: `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`,
+            boxShadow: `0 0 8px ${T.gold}`,
           }} />
         );
       })}
 
-      {/* Logo */}
-      <div style={{ opacity: op, transform: `scale(${sc})`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+      {/* Logo shadow/blur décalé pour effet cinétique */}
+      <div style={{
+        position: 'absolute',
+        opacity: blur1Op * 0.3,
+        transform: `scale(${blur1Sc})`,
+        fontSize: 108,
+        fontWeight: 900,
+        color: T.gold,
+        letterSpacing: 10,
+        textTransform: 'uppercase',
+        filter: 'blur(8px)',
+        lineHeight: 1,
+      }}>
+        Loqar
+      </div>
+
+      {/* Logo principal */}
+      <div style={{
+        opacity: logoOp,
+        transform: `scale(${logoSc})`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+      }}>
         <div style={{
           fontSize: 108,
           fontWeight: 900,
@@ -96,22 +141,23 @@ const SceneLogo = ({ frame, fps }) => {
           letterSpacing: 10,
           textTransform: 'uppercase',
           lineHeight: 1,
+          textShadow: `0 0 60px ${T.gold}40`,
         }}>
           Loqar
         </div>
-        <div style={{ width: lineW, height: 3, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)`, borderRadius: 2 }} />
+        <div style={{ width: lineW, height: 3, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)` }} />
         <div style={{
           opacity: subOp,
           transform: `translateY(${subY}px)`,
-          fontSize: 20,
-          color: T.sub,
-          letterSpacing: 4,
-          textTransform: 'uppercase',
-          fontWeight: 500,
+          fontSize: 20, color: T.sub,
+          letterSpacing: 4, textTransform: 'uppercase', fontWeight: 500,
         }}>
           Location de voitures
         </div>
       </div>
+
+      {/* Flash blanc */}
+      <AbsoluteFill style={{ background: '#ffffff', opacity: flashOp, pointerEvents: 'none' }} />
     </AbsoluteFill>
   );
 };
