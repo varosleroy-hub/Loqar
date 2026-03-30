@@ -803,7 +803,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],[lang==="en"?"Phone":"Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],[lang==="en"?"Website":"Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
+            {[[t.agencyName||"Nom de l'agence","name","Loqar Auto"],["SIRET","siret","123 456 789 00012"],["N° TVA intracommunautaire","tva","FR12 123456789"],[t.address||"Adresse","address","12 rue de la Paix, 75001 Paris"],[lang==="en"?"Phone":"Téléphone","phone","+33 1 23 45 67 89"],["Email","email","contact@loqar.fr"],[lang==="en"?"Website":"Site web","website","www.loqar.fr"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                 <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
@@ -2824,6 +2824,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const agencyPhone   = agencyProfile?.phone   || "";
   const agencyEmail   = agencyProfile?.email   || "";
   const agencyFranchise = agencyProfile?.franchise || "800 €";
+  const agencyTva       = agencyProfile?.tva       || "";
   const docNumRef = useRef(`LQ-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,"0")}-${Date.now().toString(36).toUpperCase().slice(-4)}`);
   const docNum = docNumRef.current;
 
@@ -2977,6 +2978,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <div style={{ fontSize:22, fontWeight:700, letterSpacing:"-0.03em", color:"#1A1510" }}>{agencyName}</div>
                 <div style={{ fontSize:10, color:"#666", marginTop:2 }}>{agencyAddress}</div>
                 <div style={{ fontSize:10, color:"#666" }}>{agencySiret}</div>
+                {agencyTva && <div style={{ fontSize:10, color:"#666" }}>TVA : {agencyTva}</div>}
               </div>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontSize:16, fontWeight:700, textTransform:"uppercase", color:"#1A1510", letterSpacing:"0.05em" }}>
@@ -2996,6 +2998,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 {agencyPhone && <div style={{ fontSize:11, color:"#555" }}>{agencyPhone}</div>}
                 {agencyEmail && <div style={{ fontSize:11, color:"#555" }}>{agencyEmail}</div>}
                 <div style={{ fontSize:11, color:"#555" }}>{agencySiret}</div>
+                {agencyTva && <div style={{ fontSize:11, color:"#555" }}>TVA : {agencyTva}</div>}
               </div>
               <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
                 <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Tenant":"Locataire"}</div>
@@ -4028,7 +4031,7 @@ function ClientPortal({ token }) {
 }
 
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
-const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
+const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", tva:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
 function App() {
   const isMobile = useIsMobile();
@@ -4090,13 +4093,13 @@ function App() {
 
   const fetchProfile = async (uid, currentUser) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); const ownerEmail = "kenson.lry@gmail.com"; setUserPlan((currentUser||user)?.email===ownerEmail ? "enterprise" : (data.plan||"starter")); }
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", tva: data.tva||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); const ownerEmail = "kenson.lry@gmail.com"; setUserPlan((currentUser||user)?.email===ownerEmail ? "enterprise" : (data.plan||"starter")); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
   const handleSaveProfile = async (profile) => {
     setAgencyProfile(profile);
-    await supabase.from("profiles").update({ agency_name: profile.name, logo: profile.logo, address: profile.address, phone: profile.phone, email: profile.email, website: profile.website, siret: profile.siret, iban: profile.iban, bic: profile.bic, bank_holder: profile.bankHolder, terms: profile.terms, franchise: profile.franchise, brand_color: profile.brandColor||null }).eq("id", user.id);
+    await supabase.from("profiles").update({ agency_name: profile.name, logo: profile.logo, address: profile.address, phone: profile.phone, email: profile.email, website: profile.website, siret: profile.siret, tva: profile.tva||null, iban: profile.iban, bic: profile.bic, bank_holder: profile.bankHolder, terms: profile.terms, franchise: profile.franchise, brand_color: profile.brandColor||null }).eq("id", user.id);
   };
 
   const handleLogout = async () => {
