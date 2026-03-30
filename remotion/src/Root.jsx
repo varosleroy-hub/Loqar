@@ -1,6 +1,7 @@
 import { Composition } from 'remotion';
 import { AdLoqar } from './AdLoqar.jsx';
 import { PromoLoqar } from './PromoLoqar.jsx';
+import { ShortLoqar } from './ShortLoqar.jsx';
 
 export const Root = () => {
   return (
@@ -23,6 +24,14 @@ export const Root = () => {
         id="PromoLoqar"
         component={PromoLoqar}
         durationInFrames={900}
+        fps={30}
+        width={1080}
+        height={1080}
+      />
+      <Composition
+        id="ShortLoqar"
+        component={ShortLoqar}
+        durationInFrames={300}
         fps={30}
         width={1080}
         height={1080}
