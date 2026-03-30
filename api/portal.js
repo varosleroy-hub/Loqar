@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (!token) return res.status(400).json({ error: "Token manquant" });
 
   const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
+    process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
   );
 

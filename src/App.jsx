@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { supabase } from "./supabase.js";
 
 const TR = {
@@ -579,11 +579,8 @@ function CommandBar({ onClose, onNav }) {
 }
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
-const NOTIFS = [];
-
-function NotifPanel({ onClose }) {
-  const [notifs, setNotifs] = useState(NOTIFS);
-  const markAll = () => setNotifs(n=>n.map(x=>({...x,read:true})));
+function NotifPanel({ onClose, notifs = [], onMarkAll, onMarkRead }) {
+  const markAll = () => { if (onMarkAll) onMarkAll(); };
   const typeColor = t => t==="danger"?T.red:t==="warning"?T.amber:t==="success"?T.success:T.blue;
   return (
     <div style={{ position:"fixed", top:0, right:0, bottom:0, width:360, background:T.surface, borderLeft:`1px solid ${T.border}`, zIndex:300, display:"flex", flexDirection:"column", boxShadow:"-8px 0 40px #00000040", animation:"slideIn .22s" }}>
@@ -598,8 +595,9 @@ function NotifPanel({ onClose }) {
         </div>
       </div>
       <div style={{ flex:1, overflowY:"auto" }}>
+        {notifs.length === 0 && <div style={{ padding:"32px 20px", textAlign:"center", color:T.muted, fontSize:13 }}>Aucune notification</div>}
         {notifs.map(n=>(
-          <div key={n.id} onClick={()=>setNotifs(prev=>prev.map(x=>x.id===n.id?{...x,read:true}:x))}
+          <div key={n.id} onClick={()=>{ if (onMarkRead) onMarkRead(n.id); }}
             style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, cursor:"pointer", background:n.read?"transparent":typeColor(n.type)+"08", transition:"background .15s", display:"flex", gap:12, alignItems:"flex-start" }}
             onMouseEnter={e=>e.currentTarget.style.background=T.card}
             onMouseLeave={e=>e.currentTarget.style.background=n.read?"transparent":typeColor(n.type)+"08"}>
@@ -1007,7 +1005,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
       start_date: form.startDate,
       end_date: form.endDate,
-      prix_per_day: parseInt(form.pricePerDay)||0,
+      price_per_day: parseInt(form.pricePerDay)||0,
       deposit: parseInt(form.deposit)||0,
       total,
       km_start: parseInt(form.km)||0,
@@ -1201,7 +1199,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Véhicule</label>
-              <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>String(x.id)===e.target.value); if(v) up("pricePerDay",v.price||""); }}
+              <select value={form.vehicleId} onChange={e=>{ up("vehicleId",e.target.value); const v=vehicles.find(x=>String(x.id)===e.target.value); if(v) up("pricePerDay",v.price_per_day||""); }}
                 style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}>
                 <option value="">— Sélectionner —</option>
                 {vehicles.map(v=><option key={v.id} value={v.id}>{v.name} — {v.plate}</option>)}
@@ -1723,6 +1721,10 @@ function AuthScreen() {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
       if (error) setError("Email ou mot de passe incorrect");
+    } else if (mode === "reset") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+      if (error) setError(error.message);
+      else setSuccess("Email envoyé ! Vérifiez votre boîte mail pour réinitialiser votre mot de passe.");
     } else {
       const { error } = await supabase.auth.signUp({ email, password: pw, options: { data: { name } } });
       if (error) setError(error.message);
@@ -1764,13 +1766,13 @@ function AuthScreen() {
       <div style={{ width:460, display:"flex", alignItems:"center", justifyContent:"center", padding:48 }}>
         <div style={{ width:"100%", animation:"fadeUp .35s" }}>
           <div style={{ marginBottom:30 }}>
-            <h2 style={{ fontSize:24, fontWeight:700, letterSpacing:"-0.03em", marginBottom:8, color:T.text }}>{mode==="login"?"Bon retour":"Créer un compte"}</h2>
-            <p style={{ fontSize:13, color:T.sub }}>{mode==="login"?"Accédez à votre espace":"Rejoignez des centaines de loueurs"}</p>
+            <h2 style={{ fontSize:24, fontWeight:700, letterSpacing:"-0.03em", marginBottom:8, color:T.text }}>{mode==="login"?"Bon retour":mode==="reset"?"Réinitialiser":"Créer un compte"}</h2>
+            <p style={{ fontSize:13, color:T.sub }}>{mode==="login"?"Accédez à votre espace":mode==="reset"?"Entrez votre email pour recevoir un lien":"Rejoignez des centaines de loueurs"}</p>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
             {mode==="register" && <Input label="Nom complet" value={name} onChange={setName} placeholder="Alexandre Dubois"/>}
             <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="vous@exemple.fr"/>
-            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {mode !== "reset" && <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>Mot de passe</label>
               <div style={{ position:"relative" }}>
                 <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handle()} placeholder="••••••••"
@@ -1779,16 +1781,24 @@ function AuthScreen() {
                   {showPw?Icons.eyeOff:Icons.eye}
                 </button>
               </div>
-            </div>
+            </div>}
           </div>
           {error && <div style={{ marginTop:12, padding:"10px 14px", background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:9, fontSize:12, color:T.red }}>{error}</div>}
           {success && <div style={{ marginTop:12, padding:"10px 14px", background:T.successDim, border:`1px solid ${T.success}30`, borderRadius:9, fontSize:12, color:T.success }}>{success}</div>}
-          <Btn label={loading?"...":(mode==="login"?"Se connecter":"Créer mon compte")} onClick={handle} variant="primary" size="lg" full style={{ marginTop:22 }}/>
+          {mode==="login" && (
+            <div style={{ textAlign:"right", marginTop:8 }}>
+              <button onClick={()=>{ setMode("reset"); setError(""); setSuccess(""); }}
+                style={{ background:"none", border:"none", color:T.muted, fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
+                Mot de passe oublié ?
+              </button>
+            </div>
+          )}
+          <Btn label={loading?"...":(mode==="login"?"Se connecter":mode==="reset"?"Envoyer le lien":"Créer mon compte")} onClick={handle} variant="primary" size="lg" full style={{ marginTop:16 }}/>
           <div style={{ textAlign:"center", marginTop:18, fontSize:13, color:T.sub }}>
-            {mode==="login"?"Pas encore de compte ? ":"Déjà un compte ? "}
-            <button onClick={()=>{ setMode(mode==="login"?"register":"login"); setError(""); setSuccess(""); }}
+            {mode==="reset" ? "Retour à la " : (mode==="login"?"Pas encore de compte ? ":"Déjà un compte ? ")}
+            <button onClick={()=>{ setMode(mode==="login"?"register":mode==="reset"?"login":"login"); setError(""); setSuccess(""); }}
               style={{ background:"none", border:"none", color:T.gold, fontWeight:600, cursor:"pointer", fontSize:13, fontFamily:"inherit" }}>
-              {mode==="login"?"S'inscrire":"Se connecter"}
+              {mode==="login"?"S'inscrire":mode==="reset"?"connexion":"Se connecter"}
             </button>
           </div>
         </div>
@@ -2524,8 +2534,8 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
                 <Btn variant="ghost" icon={Icons.x} onClick={()=>setSel(null)} style={{ padding:5 }}/>
               </div>
               <div style={{ textAlign:"center", marginBottom:18 }}>
-                <Avatar name={`${sel.firstName} ${sel.lastName}`} size={52}/>
-                <div style={{ marginTop:12, fontSize:17, fontWeight:700, letterSpacing:"-0.02em", color:T.text }}>{sel.firstName} {sel.lastName}</div>
+                <Avatar name={`${sel.first_name||sel.firstName} ${sel.last_name||sel.lastName}`} size={52}/>
+                <div style={{ marginTop:12, fontSize:17, fontWeight:700, letterSpacing:"-0.02em", color:T.text }}>{sel.first_name||sel.firstName} {sel.last_name||sel.lastName}</div>
                 {sel.company && <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>{sel.company}</div>}
                 {sel.blacklist && <div style={{ marginTop:8 }}><Badge label="Liste noire" color={T.red}/></div>}
               </div>
@@ -3162,7 +3172,7 @@ function Documents({ agencyProfile, vehicles, clients, prefill = null, onClearPr
       vehicleId: prefill.vehicle_id || "",
       startDate: prefill.start_date || "",
       endDate:   prefill.end_date   || "",
-      price:     String(prefill.prix_per_day || prefill.price_per_day || ""),
+      price:     String(prefill.price_per_day || ""),
       deposit:   String(prefill.deposit || ""),
       km:        String(prefill.km_start || ""),
       notes:     prefill.notes || "",
@@ -4017,7 +4027,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
       vehicle_name: `${vehicle.name} — ${vehicle.plate}`,
       start_date: form.startDate,
       end_date: form.endDate,
-      prix_per_day: parseInt(form.pricePerDay)||0,
+      price_per_day: parseInt(form.pricePerDay)||0,
       deposit: parseInt(form.deposit)||0,
       total: total,
       km_start: parseInt(form.km)||0,
@@ -4297,7 +4307,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                 <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Détail location</div>
                 <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
               </div>
-              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.prix_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
+              {[["Client",sel.client_name],[lang==="en"?"Vehicle":"Véhicule",sel.vehicle_name],[lang==="en"?"Start":"Début",fmtDate(sel.start_date)],[lang==="en"?"End":"Fin",fmtDate(sel.end_date)],["Prix/jour",sel.price_per_day+" €"],[t.deposit||"Caution",sel.deposit+" €"],[t.total||"Total",sel.total+" €"],["Km départ",sel.km_start?" "+fmt(sel.km_start)+" km":"—"]].map(([k,v])=>(
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                   <span style={{ fontSize:12, color:T.muted }}>{k}</span>
                   <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
@@ -4467,7 +4477,7 @@ function ClientPortal({ token }) {
             <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF"}}>Contrat de location</div>
             <div style={{padding:"4px 12px",borderRadius:20,background:(SC[rental.status]||"#8A8075")+"20",color:SC[rental.status]||"#8A8075",fontSize:11,fontWeight:700}}>{rental.status}</div>
           </div>
-          {[["Véhicule",rental.vehicle_name],["Début",fd(rental.start_date)],["Fin",fd(rental.end_date)],["Prix/jour",(rental.prix_per_day||"—")+" €"],["Caution",(rental.deposit||"—")+" €"],["Total TTC",(rental.total||"—")+" €"]].map(([k,v])=>(
+          {[["Véhicule",rental.vehicle_name],["Début",fd(rental.start_date)],["Fin",fd(rental.end_date)],["Prix/jour",(rental.price_per_day||"—")+" €"],["Caution",(rental.deposit||"—")+" €"],["Total TTC",(rental.total||"—")+" €"]].map(([k,v])=>(
             <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E1C18"}}>
               <span style={{fontSize:12,color:"#8A8075"}}>{k}</span>
               <span style={{fontSize:12,fontWeight:600,color:k==="Total TTC"?"#C9A55A":"#E8E4DF"}}>{v}</span>
@@ -4589,7 +4599,36 @@ function App() {
   const [userPlan,       setUserPlan]       = useState("starter");
   const [activeAgency,   setActiveAgency]   = useState(null); // null = agence principale
   const [docPrefill,     setDocPrefill]     = useState(null);
-  const unread = NOTIFS.filter(n=>!n.read).length;
+  const [readNotifIds, setReadNotifIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("loqar_read_notifs")||"[]")); } catch { return new Set(); }
+  });
+  const computedNotifs = useMemo(() => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const in2days = new Date(today); in2days.setDate(in2days.getDate()+2);
+    const notifs = [];
+    payments.forEach(p => {
+      if (p.status === "en retard") notifs.push({ id:`pay-late-${p.id}`, type:"danger", title:"Paiement en retard", body:`${p.client_name||"Client"} — ${p.amount||0} €`, time: p.paid_at ? new Date(p.paid_at).toLocaleDateString("fr") : "" });
+    });
+    clients.forEach(c => {
+      if (c.license_expiry) { const exp = new Date(c.license_expiry); if (exp < today) notifs.push({ id:`lic-exp-${c.id}`, type:"danger", title:"Permis expiré", body:`${c.first_name||""} ${c.last_name||""}`, time: exp.toLocaleDateString("fr") }); }
+    });
+    rentals.forEach(r => {
+      if (r.status === "en cours" && r.end_date) { const end = new Date(r.end_date); if (end >= today && end <= in2days) notifs.push({ id:`rent-end-${r.id}`, type:"warning", title:"Location se termine bientôt", body:`${r.client_name||""} — ${r.vehicle_name||""}`, time: end.toLocaleDateString("fr") }); }
+    });
+    return notifs.map(n => ({ ...n, read: readNotifIds.has(n.id) }));
+  }, [payments, clients, rentals, readNotifIds]);
+  const handleMarkAllRead = () => {
+    const ids = computedNotifs.map(n => n.id);
+    const next = new Set([...readNotifIds, ...ids]);
+    setReadNotifIds(next);
+    localStorage.setItem("loqar_read_notifs", JSON.stringify([...next]));
+  };
+  const handleMarkRead = (id) => {
+    const next = new Set([...readNotifIds, id]);
+    setReadNotifIds(next);
+    localStorage.setItem("loqar_read_notifs", JSON.stringify([...next]));
+  };
+  const unread = computedNotifs.filter(n=>!n.read).length;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -4723,7 +4762,7 @@ function App() {
     <div style={{ display:"flex", minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
-      {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
+      {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)} notifs={computedNotifs} onMarkAll={handleMarkAllRead} onMarkRead={handleMarkRead}/>}
       <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency} trialDaysLeft={trialDaysLeft}/>
       <main style={{ flex:1, marginLeft:isMobile?0:220, minHeight:"100vh", paddingTop:isMobile?56:0 }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
