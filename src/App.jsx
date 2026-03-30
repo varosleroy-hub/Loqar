@@ -269,6 +269,67 @@ function UpgradeModal({ onClose, reason }) {
   );
 }
 
+function TrialExpiredScreen({ onLogout }) {
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:20, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+      <div style={{ maxWidth:480, width:"100%", textAlign:"center" }}>
+        {/* Glow */}
+        <div style={{ position:"relative", display:"inline-block", marginBottom:32 }}>
+          <div style={{ position:"absolute", inset:-40, background:`radial-gradient(ellipse, ${T.gold}20 0%, transparent 70%)`, pointerEvents:"none" }}/>
+          <div style={{ width:72, height:72, borderRadius:20, background:T.goldDim, border:`1px solid ${T.gold}40`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, position:"relative" }}>🔒</div>
+        </div>
+
+        <div style={{ fontSize:26, fontWeight:900, color:T.text, marginBottom:12, lineHeight:1.2 }}>
+          Votre essai gratuit<br/>est terminé
+        </div>
+        <div style={{ fontSize:14, color:T.muted, lineHeight:1.7, marginBottom:36, maxWidth:360, margin:"0 auto 36px" }}>
+          Vous avez utilisé Loqar pendant <strong style={{color:T.text}}>14 jours</strong>. Pour continuer à gérer vos locations, choisissez un plan.
+        </div>
+
+        {/* Plans */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:28 }}>
+          {/* Pro */}
+          <div style={{ background:T.card, border:`2px solid ${T.gold}`, borderRadius:16, padding:"20px 16px", position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.gold}, #E8C87A)`, borderRadius:"16px 16px 0 0" }}/>
+            <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:6 }}>Pro</div>
+            <div style={{ fontSize:24, fontWeight:900, color:T.text, marginBottom:4 }}>49<span style={{fontSize:13,fontWeight:500,color:T.muted}}>€/mois</span></div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:14 }}>Véhicules illimités</div>
+            {["Locations illimitées","Emails automatiques","Export CSV","Documents PDF"].map(f=>(
+              <div key={f} style={{ fontSize:11, color:T.sub, display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                <span style={{color:T.success,fontSize:10}}>✓</span> {f}
+              </div>
+            ))}
+            <a href="mailto:contact@loqar.fr?subject=Abonnement Pro" style={{ display:"block", marginTop:14, padding:"10px", background:T.gold, borderRadius:9, color:"#0F0D0B", fontSize:12, fontWeight:800, textDecoration:"none", textAlign:"center" }}>
+              Choisir Pro →
+            </a>
+          </div>
+
+          {/* Enterprise */}
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 16px" }}>
+            <div style={{ fontSize:11, fontWeight:700, color:T.amber, letterSpacing:".08em", textTransform:"uppercase", marginBottom:6 }}>Enterprise</div>
+            <div style={{ fontSize:24, fontWeight:900, color:T.text, marginBottom:4 }}>249<span style={{fontSize:13,fontWeight:500,color:T.muted}}>€/mois</span></div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:14 }}>Multi-agences</div>
+            {["Tout Pro inclus","Multi-agences","Marque blanche","Support prioritaire"].map(f=>(
+              <div key={f} style={{ fontSize:11, color:T.sub, display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                <span style={{color:T.amber,fontSize:10}}>✓</span> {f}
+              </div>
+            ))}
+            <a href="mailto:contact@loqar.fr?subject=Abonnement Enterprise" style={{ display:"block", marginTop:14, padding:"10px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, color:T.text, fontSize:12, fontWeight:700, textDecoration:"none", textAlign:"center" }}>
+              Contacter →
+            </a>
+          </div>
+        </div>
+
+        <div style={{ fontSize:12, color:T.muted }}>
+          Questions ? <a href="mailto:contact@loqar.fr" style={{color:T.gold, textDecoration:"none"}}>contact@loqar.fr</a>
+          <span style={{margin:"0 10px",color:T.border2}}>·</span>
+          <button onClick={onLogout} style={{background:"none",border:"none",color:T.muted,fontSize:12,cursor:"pointer",fontFamily:"inherit",textDecoration:"underline"}}>Se déconnecter</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const Icons = {
   dash:     <Ic size={15} paths={["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z","M9 22V12h6v10"]}/>,
   car:      <Ic size={15} paths={["M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3","M18 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0","M7 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0"]}/>,
@@ -629,6 +690,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
   const t = TR[lang]||TR.fr;
   const [form, setForm] = useState(agencyProfile);
   const [saved, setSaved] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState(false);
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
   const save = () => { setAgencyProfile(form); setSaved(true); setTimeout(()=>setSaved(false),2500); };
 
@@ -726,10 +788,16 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
                 <span style={{ fontSize:12, color:T.muted }}>{form.brandColor||"#C8A96E"}</span>
               </div>
             ) : (
-              <div style={{ display:"flex", gap:6, opacity:.4, pointerEvents:"none" }}>
-                {["#C8A96E","#5B8DB8","#6AAF7A","#D4854A","#9B8AB5","#E05555"].map(c=>(
-                  <div key={c} style={{ width:28, height:28, borderRadius:"50%", background:c }}/>
-                ))}
+              <div style={{ position:"relative", display:"inline-block" }} onClick={()=>setUpgradeModal(true)}>
+                <div style={{ display:"flex", gap:6, opacity:.35, pointerEvents:"none", filter:"blur(1px)" }}>
+                  {["#C8A96E","#5B8DB8","#6AAF7A","#D4854A","#9B8AB5","#E05555"].map(c=>(
+                    <div key={c} style={{ width:28, height:28, borderRadius:"50%", background:c }}/>
+                  ))}
+                </div>
+                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", gap:6, cursor:"pointer" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={T.amber} strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  <span style={{ fontSize:11, fontWeight:700, color:T.amber }}>{lang==="en"?"Enterprise only — Upgrade":"Enterprise uniquement — Passer au plan"}</span>
+                </div>
               </div>
             )}
           </div>
@@ -888,14 +956,23 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
           <div style={{ padding:"14px", background:T.card2, borderRadius:10, border:`1px solid ${T.red}40` }}>
             <div style={{ fontSize:13, fontWeight:600, color:T.red, marginBottom:4 }}>{t.deleteAccount}</div>
             <div style={{ fontSize:11, color:T.muted, marginBottom:12 }}>{t.deleteAccountDesc}</div>
+            <div style={{ fontSize:11, color:T.muted, marginBottom:8 }}>
+              {lang==="en" ? <>Type <strong style={{color:T.text,letterSpacing:".05em"}}>DELETE</strong> in the field below to confirm</> : <>Tapez <strong style={{color:T.text,letterSpacing:".05em"}}>SUPPRIMER</strong> dans le champ ci-dessous pour confirmer</>}
+            </div>
             <div style={{ display:"flex", gap:10, alignItems:"center" }}>
               <input value={deleteInput} onChange={e=>setDeleteInput(e.target.value)} placeholder={t.deleteConfirmPlaceholder}
-                style={{ flex:1, background:T.bg, border:`1px solid ${T.red}60`, borderRadius:8, padding:"8px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none" }}/>
-              <Btn label={deleteLoading?"...":t.deleteBtn} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput===t.deleteConfirmWord?1:.4, pointerEvents:deleteInput===t.deleteConfirmWord?"auto":"none" }}/>
+                style={{ flex:1, background:T.bg, border:`1px solid ${deleteInput.length>0&&deleteInput!==t.deleteConfirmWord?T.red:T.red+"60"}`, borderRadius:8, padding:"8px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none", transition:"border-color .2s" }}/>
+              <Btn label={deleteLoading?"...":t.deleteBtn} variant="danger" onClick={handleDeleteAccount} style={{ opacity:deleteInput===t.deleteConfirmWord?1:.35, pointerEvents:deleteInput===t.deleteConfirmWord?"auto":"none", transition:"opacity .2s" }}/>
             </div>
+            {deleteInput.length>0 && deleteInput!==t.deleteConfirmWord && (
+              <div style={{ fontSize:11, color:T.red, marginTop:6 }}>
+                {lang==="en"?"Incorrect — type DELETE exactly":"Incorrect — tapez SUPPRIMER exactement"}
+              </div>
+            )}
           </div>
         </div>
       </Card>
+      {upgradeModal && <UpgradeModal reason={lang==="en"?"Brand color customization requires the Enterprise plan. Upgrade to unlock white-label features.":"La personnalisation de la couleur de marque nécessite le plan Enterprise. Passez au plan supérieur pour débloquer les fonctionnalités marque blanche."} onClose={()=>setUpgradeModal(false)}/>}
     </Page>
   );
 }
@@ -936,6 +1013,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       km_start: parseInt(form.km)||0,
       notes: form.notes,
       status: "réservée",
+      portal_token: crypto.randomUUID(),
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
     if (error) { toast("Erreur : " + error.message, "error"); return; }
@@ -1003,19 +1081,28 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
 
             <div style={{ marginBottom:16 }}>
               <div style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase", marginBottom:8 }}>Signature du locataire</div>
-              <div style={{ position:"relative", background:"#FDFBF7", borderRadius:10, border:`2px dashed ${hasDrawn?T.gold:T.border2}`, overflow:"hidden", transition:"border-color .2s" }}>
+              <div style={{ position:"relative", background:"#FDFBF7", borderRadius:10, border:`2px dashed ${hasDrawn?T.gold:"#C8C0B0"}`, overflow:"hidden", transition:"border-color .2s" }}>
                 <canvas ref={canvasRef} width={436} height={120}
                   onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
                   onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
                   style={{ display:"block", cursor:"crosshair", width:"100%", height:120, touchAction:"none" }}/>
-                {!hasDrawn && <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none", color:T.muted, fontSize:12 }}>Dessinez votre signature ici</div>}
+                {!hasDrawn && (
+                  <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", pointerEvents:"none", gap:8 }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B0A898" strokeWidth="1.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span style={{ color:"#A09888", fontSize:12 }}>Dessinez votre signature ici</span>
+                    <span style={{ color:"#C0B8A8", fontSize:10 }}>Utilisez la souris ou votre doigt</span>
+                  </div>
+                )}
               </div>
-              {hasDrawn && <button onClick={clearCanvas} style={{ fontSize:11, color:T.muted, background:"none", border:"none", cursor:"pointer", marginTop:6, fontFamily:"inherit" }}>Effacer</button>}
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:6 }}>
+                <span style={{ fontSize:11, color:hasDrawn?T.success:T.muted }}>{hasDrawn?"✓ Signature dessinée":"Aucune signature"}</span>
+                {hasDrawn && <button onClick={clearCanvas} style={{ fontSize:11, color:T.muted, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit" }}>Effacer et recommencer</button>}
+              </div>
             </div>
 
             <div style={{ display:"flex", gap:10 }}>
               <Btn label={t.cancel||"Annuler"} variant="secondary" onClick={()=>setSigStep(null)} style={{ flex:1, justifyContent:"center" }}/>
-              <Btn label={hasDrawn?"Confirmer la signature":"Signer d'abord…"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.5 }}/>
+              <Btn label={hasDrawn?"Confirmer la signature":"Dessinez d'abord votre signature"} variant="primary" onClick={hasDrawn?confirmSign:undefined} style={{ flex:1, justifyContent:"center", opacity:hasDrawn?1:.4, cursor:hasDrawn?"pointer":"not-allowed" }}/>
             </div>
           </div>
         </div>
@@ -1163,7 +1250,7 @@ const NAV_KEYS = [
 ];
 const NAV = NAV_KEYS; // backward compat
 
-function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange, activeAgency = null, onSwitchAgency }) {
+function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unreadCount, userPlan = "starter", payments = [], onLangChange, activeAgency = null, onSwitchAgency, trialDaysLeft = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const lateP = payments.filter(p=>p.status==="en retard").length;
@@ -1268,6 +1355,18 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
       {/* Upgrade - only for starter */}
       {userPlan === "starter" && (
       <div style={{ background:`linear-gradient(135deg,${T.gold}18,${T.gold}08)`, border:`1px solid ${T.gold}30`, borderRadius:12, padding:14, marginBottom:12 }}>
+        {trialDaysLeft !== null && trialDaysLeft <= 14 && (
+          <div style={{ marginBottom:10 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+              <span style={{ fontSize:11, fontWeight:700, color:trialDaysLeft<=3?T.red:T.gold }}>
+                {trialDaysLeft === 0 ? "⚠️ Dernier jour !" : `⏳ ${trialDaysLeft}j d'essai restants`}
+              </span>
+            </div>
+            <div style={{ height:4, borderRadius:99, background:T.border2, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${(trialDaysLeft/14)*100}%`, borderRadius:99, background:trialDaysLeft<=3?T.red:T.gold, transition:"width .3s" }}/>
+            </div>
+          </div>
+        )}
         <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
           <span style={{ color:T.gold }}>{Icons.zap}</span>
           <span style={{ fontSize:12, fontWeight:700, color:T.gold }}>Passer au Pro</span>
@@ -2629,7 +2728,19 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
       </div>
 
       {loading ? (
-        <div style={{ color:T.muted, textAlign:"center", padding:40 }}>Chargement…</div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:16 }}>
+          {Array.from({length:4}).map((_,i)=>(
+            <div key={i} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"14px 16px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:T.border2, animation:"pulse 1.4s ease-in-out infinite" }}/>
+                <div style={{ width:50, height:20, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite" }}/>
+              </div>
+              <div style={{ height:13, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"70%", marginBottom:8 }}/>
+              <div style={{ height:11, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"50%", marginBottom:6 }}/>
+              <div style={{ height:11, borderRadius:6, background:T.border2, animation:"pulse 1.4s ease-in-out infinite", width:"40%" }}/>
+            </div>
+          ))}
+        </div>
       ) : agencies.length === 0 ? (
         <Card>
           <div style={{ textAlign:"center", padding:"40px 0", color:T.muted }}>
@@ -3344,6 +3455,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
       km_start: parseInt(form.km)||0,
       notes: form.notes,
       status: "réservée",
+      portal_token: crypto.randomUUID(),
     };
     const { data, error } = await supabase.from("rentals").insert(newR).select().single();
     if (data) {
@@ -3358,6 +3470,29 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
     }
     setModal(false);
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
+  };
+
+  const sendPortalLink = async (rental) => {
+    const client = clients.find(c=>String(c.id)===String(rental.client_id));
+    if (!client?.email) { toast("Ce client n'a pas d'adresse email", "error"); return; }
+    let token = rental.portal_token;
+    if (!token) {
+      token = crypto.randomUUID();
+      const { error } = await supabase.from("rentals").update({ portal_token: token }).eq("id", rental.id);
+      if (error) { toast("Erreur lors de la génération du lien", "error"); return; }
+      setRentals(prev=>prev.map(r=>r.id===rental.id?{...r,portal_token:token}:r));
+      if (sel?.id===rental.id) setSel(prev=>({...prev,portal_token:token}));
+    }
+    const portalUrl = `${window.location.origin}/portal/${token}`;
+    await sendEmail("portal", client.email, {
+      clientName: `${client.first_name} ${client.last_name}`,
+      vehicle: rental.vehicle_name,
+      startDate: rental.start_date,
+      endDate: rental.end_date,
+      total: rental.total,
+      portalUrl,
+    });
+    toast(`Lien portail envoyé à ${client.email}`);
   };
 
   const handleDelete = (id) => {
@@ -3445,7 +3580,12 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
           return s<=days[days.length-1] && e>=days[0];
         });
         return (
-          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"auto" }}>
+          <div>
+            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8, color:T.muted, fontSize:11 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M15 8l4 4-4 4"/></svg>
+              <span style={{ fontStyle:"italic" }}>{lang==="en"?"Scroll horizontally to see all days":"Faites défiler pour voir tous les jours"}</span>
+            </div>
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
             <div style={{ minWidth:700 }}>
               {/* Header jours */}
               <div style={{ display:"grid", gridTemplateColumns:`180px repeat(${daysInMonth},1fr)`, borderBottom:`1px solid ${T.border}` }}>
@@ -3496,6 +3636,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                 );
               })}
             </div>
+          </div>
           </div>
         );
       })()}
@@ -3592,6 +3733,10 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                   <div style={{ fontSize:12, color:T.sub }}>{sel.notes}</div>
                 </div>
               )}
+              <button onClick={()=>sendPortalLink(sel)}
+                style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:10, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                {Icons.mail} Envoyer le lien portail
+              </button>
             </Card>
           </div>
         )}
@@ -3664,10 +3809,184 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
   );
 }
 
+// ─── CLIENT PORTAL ────────────────────────────────────────────────────────────
+function ClientPortal({ token }) {
+  const [rental,   setRental]   = useState(null);
+  const [history,  setHistory]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [err,      setErr]      = useState(null);
+  const [signing,  setSigning]  = useState(false);
+  const [done,     setDone]     = useState(false);
+  const [drawing,  setDrawing]  = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`/api/portal?token=${token}`)
+      .then(r => r.json())
+      .then(d => { if (d.error) setErr(d.error); else { setRental(d.rental); setHistory(d.history); } setLoading(false); })
+      .catch(() => { setErr("Erreur de connexion"); setLoading(false); });
+  }, [token]);
+
+  const getXY = e => { const t=e.touches?.[0]??e; return {x:t.clientX,y:t.clientY}; };
+  const startDraw = e => { e.preventDefault?.(); setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(x-r.left,y-r.top); };
+  const draw = e => { e.preventDefault?.(); if(!drawing)return; setHasDrawn(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.strokeStyle="#1A1510"; ctx.lineWidth=2.5; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineTo(x-r.left,y-r.top); ctx.stroke(); };
+  const endDraw = () => setDrawing(false);
+  const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
+
+  const confirmSign = async () => {
+    const res = await fetch(`/api/portal?token=${token}`, { method:"POST", headers:{"Content-Type":"application/json"}, body:"{}" });
+    const d = await res.json();
+    if (d.success) { setDone(true); setSigning(false); setRental(r=>({...r,status:"en cours"})); }
+  };
+
+  const SC = { "réservée":"#C9A55A","en cours":"#6AAF7A","terminée":"#8A8075","annulée":"#E8746A" };
+  const fd = s => s ? new Date(s).toLocaleDateString("fr-FR") : "—";
+
+  if (loading) return (
+    <div style={{minHeight:"100vh",background:"#0F0D0B",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
+        <div style={{width:40,height:40,borderRadius:"50%",border:"3px solid #2A2520",borderTopColor:"#C9A55A",animation:"spin 0.8s linear infinite"}}/>
+        <div style={{color:"#8A8075",fontSize:13}}>Chargement du contrat…</div>
+      </div>
+    </div>
+  );
+
+  if (err) return (
+    <div style={{minHeight:"100vh",background:"#0F0D0B",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+      <div style={{textAlign:"center",padding:32}}>
+        <div style={{fontSize:48,marginBottom:16}}>🔒</div>
+        <div style={{color:"#E8E4DF",fontSize:18,fontWeight:700}}>Lien invalide ou expiré</div>
+        <div style={{color:"#8A8075",fontSize:13,marginTop:8}}>Ce lien ne correspond à aucun contrat actif.</div>
+      </div>
+    </div>
+  );
+
+  const canSign = rental.status === "réservée" && !done;
+
+  return (
+    <div style={{minHeight:"100vh",background:"#0F0D0B",fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:60}}>
+      {/* Header */}
+      <div style={{background:"#141210",borderBottom:"1px solid #2E2B27",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{fontSize:20,fontWeight:700,color:"#C9A55A",letterSpacing:"-0.03em"}}>Loqar</div>
+        <div style={{fontSize:12,color:"#8A8075"}}>Espace locataire</div>
+      </div>
+
+      <div style={{maxWidth:620,margin:"0 auto",padding:"28px 16px"}}>
+        {/* Bienvenue */}
+        <div style={{marginBottom:24}}>
+          <div style={{fontSize:22,fontWeight:700,color:"#E8E4DF",letterSpacing:"-0.02em"}}>Bonjour {rental.client_name?.split(" ")[0]} 👋</div>
+          <div style={{fontSize:13,color:"#8A8075",marginTop:4}}>Voici votre espace locataire Loqar</div>
+        </div>
+
+        {/* Contrat */}
+        <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24,marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF"}}>Contrat de location</div>
+            <div style={{padding:"4px 12px",borderRadius:20,background:(SC[rental.status]||"#8A8075")+"20",color:SC[rental.status]||"#8A8075",fontSize:11,fontWeight:700}}>{rental.status}</div>
+          </div>
+          {[["Véhicule",rental.vehicle_name],["Début",fd(rental.start_date)],["Fin",fd(rental.end_date)],["Prix/jour",(rental.prix_per_day||"—")+" €"],["Caution",(rental.deposit||"—")+" €"],["Total TTC",(rental.total||"—")+" €"]].map(([k,v])=>(
+            <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #1E1C18"}}>
+              <span style={{fontSize:12,color:"#8A8075"}}>{k}</span>
+              <span style={{fontSize:12,fontWeight:600,color:k==="Total TTC"?"#C9A55A":"#E8E4DF"}}>{v}</span>
+            </div>
+          ))}
+          {rental.notes && (
+            <div style={{marginTop:16,padding:"10px 14px",background:"#1A1814",borderRadius:8,borderLeft:"3px solid #C9A55A"}}>
+              <div style={{fontSize:10,color:"#8A8075",marginBottom:4,letterSpacing:".08em",textTransform:"uppercase"}}>Notes</div>
+              <div style={{fontSize:12,color:"#B0A898"}}>{rental.notes}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Signé */}
+        {done && (
+          <div style={{background:"#0D1F13",border:"1px solid #2A4A30",borderRadius:16,padding:20,marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:"#6AAF7A20",display:"flex",alignItems:"center",justifyContent:"center",color:"#6AAF7A",fontSize:20}}>✓</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#6AAF7A"}}>Contrat signé</div>
+              <div style={{fontSize:11,color:"#4A7A52"}}>Votre signature a bien été enregistrée</div>
+            </div>
+          </div>
+        )}
+
+        {/* Bloc signature */}
+        {canSign && (
+          <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24,marginBottom:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF",marginBottom:8}}>Signer le contrat</div>
+            <div style={{fontSize:12,color:"#8A8075",marginBottom:20,lineHeight:1.6}}>
+              En signant ci-dessous, vous acceptez les conditions générales de location et confirmez avoir pris connaissance du contrat.
+            </div>
+            {!signing ? (
+              <button onClick={()=>setSigning(true)}
+                style={{width:"100%",padding:"13px",background:"#C9A55A",border:"none",borderRadius:10,color:"#0F0D0B",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                Signer le contrat →
+              </button>
+            ) : (
+              <>
+                <div style={{position:"relative",background:"#FDFBF7",borderRadius:10,border:`2px dashed ${hasDrawn?"#C9A55A":"#C8C0B0"}`,overflow:"hidden",transition:"border-color .2s"}}>
+                  <canvas ref={canvasRef} width={560} height={130}
+                    onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+                    onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
+                    style={{display:"block",cursor:"crosshair",width:"100%",height:130,touchAction:"none"}}/>
+                  {!hasDrawn && (
+                    <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",pointerEvents:"none",gap:8}}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B0A898" strokeWidth="1.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      <span style={{color:"#A09888",fontSize:12}}>Dessinez votre signature ici</span>
+                      <span style={{color:"#C0B8A8",fontSize:10}}>Utilisez la souris ou votre doigt</span>
+                    </div>
+                  )}
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,marginTop:6}}>
+                  <span style={{fontSize:11,color:hasDrawn?"#6AAF7A":"#8A8075"}}>{hasDrawn?"✓ Signature dessinée":"Aucune signature"}</span>
+                  {hasDrawn && <button onClick={clearCanvas} style={{fontSize:11,color:"#8A8075",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Effacer et recommencer</button>}
+                </div>
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>{setSigning(false);setHasDrawn(false);clearCanvas();}}
+                    style={{flex:1,padding:"11px",background:"#1A1814",border:"1px solid #2E2B27",borderRadius:10,color:"#B0A898",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+                    Annuler
+                  </button>
+                  <button onClick={hasDrawn?confirmSign:undefined}
+                    style={{flex:2,padding:"11px",background:hasDrawn?"#C9A55A":"#2E2B27",border:"none",borderRadius:10,color:hasDrawn?"#0F0D0B":"#8A8075",fontSize:13,fontWeight:700,cursor:hasDrawn?"pointer":"not-allowed",fontFamily:"inherit",transition:"background .2s, color .2s"}}>
+                    {hasDrawn?"Confirmer la signature ✓":"Dessinez d'abord votre signature"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Historique */}
+        {history.length > 1 && (
+          <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#E8E4DF",marginBottom:16}}>Historique de locations</div>
+            {history.map(r=>(
+              <div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #1E1C18"}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:600,color:"#E8E4DF"}}>{r.vehicle_name}</div>
+                  <div style={{fontSize:11,color:"#8A8075"}}>{fd(r.start_date)} → {fd(r.end_date)}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#C9A55A"}}>{r.total} €</div>
+                  <div style={{fontSize:10,color:SC[r.status]||"#8A8075",marginTop:2}}>{r.status}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{textAlign:"center",marginTop:32,fontSize:11,color:"#3A3530"}}>
+          Propulsé par <span style={{color:"#C9A55A"}}>Loqar</span> · Logiciel de gestion de location de véhicules
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
 
-export default function App() {
+function App() {
   const isMobile = useIsMobile();
   const [user,           setUser]           = useState(null);
   const [loading,        setLoading]        = useState(true);
@@ -3772,6 +4091,7 @@ export default function App() {
       @keyframes slideIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
       @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+      @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
       ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#3A3733;border-radius:99px}
       input::placeholder{color:#5A5650}
     `;
@@ -3781,14 +4101,25 @@ export default function App() {
 
   if (loading) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", background:T.bg }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ fontSize:14, color:T.muted, marginTop:16 }}>Chargement…</div>
+      <div style={{ textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
+        <div style={{ width:44, height:44, borderRadius:"50%", border:`3px solid ${T.border2}`, borderTopColor:T.gold, animation:"spin 0.8s linear infinite" }}/>
+        <div style={{ fontSize:13, color:T.muted, letterSpacing:".04em" }}>Loqar</div>
       </div>
     </div>
   );
 
   if (showSuccess) return <SuccessPage onContinue={()=>{ setShowSuccess(false); if (user) fetchProfile(user.id, user); }}/>;
   if (!user) return showLanding ? <LandingPage onGetStarted={()=>setShowLanding(false)}/> : <AuthScreen />;
+
+  // ── Essai 14 jours ──────────────────────────────────────────────────────────
+  const TRIAL_DAYS = 14;
+  const trialDaysUsed = user?.created_at
+    ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000)
+    : 0;
+  const trialDaysLeft = Math.max(0, TRIAL_DAYS - trialDaysUsed);
+  const trialExpired = trialDaysUsed >= TRIAL_DAYS && userPlan === "starter";
+
+  if (trialExpired) return <TrialExpiredScreen onLogout={async()=>{ await supabase.auth.signOut(); setUser(null); }}/>;
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
@@ -3810,7 +4141,7 @@ export default function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)}/>}
-      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>
+      <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency} trialDaysLeft={trialDaysLeft}/>
       <main style={{ flex:1, marginLeft:isMobile?0:220, minHeight:"100vh", paddingTop:isMobile?56:0 }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
       </main>
@@ -3820,3 +4151,9 @@ export default function App() {
   );
 }
 
+
+export default function PortalWrapper() {
+  const portalToken = window.location.pathname.match(/^\/portal\/(.+)/)?.[1];
+  if (portalToken) return <ClientPortal token={portalToken}/>;
+  return <App/>;
+}
