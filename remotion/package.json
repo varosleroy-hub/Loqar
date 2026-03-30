@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "remotion studio src/index.jsx",
     "studio": "remotion studio src/index.jsx",
     "render": "remotion render src/index.jsx AdLoqar out/ad.mp4"
   },
