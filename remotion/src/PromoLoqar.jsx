@@ -19,7 +19,6 @@ const T = {
   sub:     '#9A9488',
   muted:   '#5A5650',
   gold:    '#C8A96E',
-  goldDim: '#C8A96E14',
   cream:   '#EDE5D4',
   red:     '#E05555',
   amber:   '#D4854A',
@@ -28,147 +27,183 @@ const T = {
 };
 const FONT = "'Plus Jakarta Sans', 'Arial', sans-serif";
 
-// --- Helpers ---
 const fi = (frame, from, to, start, end) =>
   interpolate(frame, [start, end], [from, to], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-const spr = (frame, fps, delay = 0, cfg = {}) =>
-  spring({ frame: frame - delay, fps, from: 0, to: 1, durationInFrames: 28, config: { damping: 13, ...cfg } });
+// --- Silhouette voiture SVG (berline) ---
+const CarSVG = ({ color = T.gold, width = 320, opacity = 1 }) => (
+  <svg width={width} height={width * 0.42} viewBox="0 0 200 84" fill="none" style={{ opacity }}>
+    <path
+      d="M10 58 L10 46 Q12 38 22 32 L58 20 Q68 14 90 13 L120 13 Q142 13 152 20 L178 32 Q188 38 190 46 L190 58 Q190 64 184 64 L168 64 Q166 72 158 76 Q150 80 142 76 Q134 72 132 64 L68 64 Q66 72 58 76 Q50 80 42 76 Q34 72 32 64 L16 64 Q10 64 10 58 Z"
+      fill={color}
+      fillOpacity="0.15"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    {/* Vitres */}
+    <path
+      d="M62 32 L72 18 Q80 14 92 14 L118 14 Q130 14 138 18 L148 32 Z"
+      fill={color}
+      fillOpacity="0.25"
+      stroke={color}
+      strokeWidth="1"
+    />
+    {/* Roues */}
+    <circle cx="50" cy="70" r="10" fill={color} fillOpacity="0.2" stroke={color} strokeWidth="1.5" />
+    <circle cx="150" cy="70" r="10" fill={color} fillOpacity="0.2" stroke={color} strokeWidth="1.5" />
+    <circle cx="50" cy="70" r="4" fill={color} fillOpacity="0.5" />
+    <circle cx="150" cy="70" r="4" fill={color} fillOpacity="0.5" />
+    {/* Phares */}
+    <rect x="183" y="44" width="8" height="5" rx="2" fill={color} fillOpacity="0.7" />
+    <rect x="9" y="44" width="8" height="5" rx="2" fill={color} fillOpacity="0.4" />
+  </svg>
+);
 
-// --- Scène 1 : Impact cinématique (0→90f / 0→3s) ---
+// --- Contrat SVG mockup ---
+const ContractCard = ({ frame, fps, delay = 0 }) => {
+  const op = fi(frame, 0, 1, delay, delay + 20);
+  const y = fi(frame, 24, 0, delay, delay + 25);
+  const sc = spring({ frame: frame - delay, fps, from: 0.92, to: 1, durationInFrames: 25, config: { damping: 13 } });
+  const signOp = fi(frame, 0, 1, delay + 40, delay + 58);
+  const lineW1 = fi(frame, 0, 1, delay + 25, delay + 38);
+  const lineW2 = fi(frame, 0, 1, delay + 32, delay + 45);
+  const lineW3 = fi(frame, 0, 1, delay + 38, delay + 52);
+
+  return (
+    <div style={{
+      opacity: op,
+      transform: `translateY(${y}px) scale(${sc})`,
+      background: T.card,
+      border: `1px solid ${T.border2}`,
+      borderRadius: 16,
+      padding: '22px 20px',
+      width: 340,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Barre top or */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${T.gold}, transparent)` }} />
+
+      {/* Header contrat */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 10, color: T.sub, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>Contrat de location</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>#LOC-2024-089</div>
+        </div>
+        <div style={{ padding: '3px 10px', borderRadius: 99, background: T.success + '18', color: T.success, fontSize: 10, fontWeight: 700 }}>Signé ✓</div>
+      </div>
+
+      {/* Infos */}
+      {[
+        { label: 'Client', value: 'Martin Dupont' },
+        { label: 'Véhicule', value: 'Peugeot 208 · AB-123-CD' },
+        { label: 'Période', value: '28 mars → 4 avril 2026' },
+        { label: 'Montant', value: '420 €' },
+      ].map((row, i) => (
+        <div key={i} style={{
+          display: 'flex', justifyContent: 'space-between',
+          padding: '7px 0',
+          borderBottom: i < 3 ? `1px solid ${T.border}` : 'none',
+          opacity: fi(frame, 0, 1, delay + 18 + i * 8, delay + 30 + i * 8),
+        }}>
+          <span style={{ fontSize: 12, color: T.sub }}>{row.label}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: i === 3 ? T.gold : T.text }}>{row.value}</span>
+        </div>
+      ))}
+
+      {/* Signature */}
+      <div style={{ marginTop: 14, opacity: signOp }}>
+        <div style={{ fontSize: 10, color: T.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Signature client</div>
+        <svg width="120" height="36" viewBox="0 0 120 36">
+          <path
+            d={`M8 28 Q20 ${28 - 14 * lineW1} 35 22 Q50 ${16 - 8 * lineW2} 65 24 Q80 ${30 - 12 * lineW3} 95 18 Q108 14 115 20`}
+            fill="none"
+            stroke={T.gold}
+            strokeWidth="2"
+            strokeLinecap="round"
+            opacity={signOp}
+          />
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+// --- Scène 1 : Impact cinématique (0→90f) ---
 const SceneLogo = ({ frame, fps }) => {
-  // Flash blanc au frame 0 qui disparaît vite
   const flashOp = fi(frame, 1, 0, 0, 8);
-
-  // Lignes qui convergent vers le centre depuis les bords
-  const lineScale = spring({ frame, fps, from: 6, to: 1, durationInFrames: 22, config: { damping: 18, stiffness: 200 } });
-
-  // Logo zoom depuis énorme vers normal avec overshoot
   const logoSc = spring({ frame: frame - 4, fps, from: 3.5, to: 1, durationInFrames: 30, config: { damping: 14, stiffness: 160 } });
   const logoOp = fi(frame, 0, 1, 2, 10);
-
-  // Flou cinétique simulé via opacité sur layers décalés
   const blur1Op = fi(frame, 0.5, 0, 0, 18);
   const blur1Sc = spring({ frame, fps, from: 4, to: 1, durationInFrames: 18, config: { damping: 20 } });
-
-  // Glow explose puis se stabilise
   const glowR = spring({ frame: frame - 2, fps, from: 0, to: 480, durationInFrames: 35, config: { damping: 16 } });
   const glowOp = fi(frame, 0, 1, 0, 12) * fi(frame, 1, 0.4, 35, 90);
-
-  // Ligne dorée sous le logo
   const lineW = spring({ frame: frame - 18, fps, from: 0, to: 200, durationInFrames: 22, config: { damping: 12 } });
-
-  // Sous-titre
   const subOp = fi(frame, 0, 1, 48, 68);
   const subY = fi(frame, 14, 0, 48, 68);
-
-  // Particules qui explosent depuis le centre
-  const PARTS = [
-    { angle: 0,   dist: 300, delay: 3  },
-    { angle: 45,  dist: 260, delay: 5  },
-    { angle: 90,  dist: 320, delay: 2  },
-    { angle: 135, dist: 280, delay: 7  },
-    { angle: 180, dist: 300, delay: 4  },
-    { angle: 225, dist: 260, delay: 6  },
-    { angle: 270, dist: 310, delay: 3  },
-    { angle: 315, dist: 270, delay: 5  },
-  ];
+  // Voiture qui glisse en dessous du logo
+  const carX = fi(frame, 160, 0, 30, 72);
+  const carOp = fi(frame, 0, 0.35, 30, 60);
 
   return (
     <AbsoluteFill style={{ background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', fontFamily: FONT, overflow: 'hidden' }}>
-
-      {/* Glow explosif */}
       <div style={{
         position: 'absolute',
         width: glowR * 2, height: glowR * 2,
         borderRadius: '50%',
-        background: `radial-gradient(ellipse, ${T.gold}30 0%, ${T.gold}08 40%, transparent 70%)`,
+        background: `radial-gradient(ellipse, ${T.gold}28 0%, ${T.gold}06 40%, transparent 70%)`,
         opacity: glowOp,
-        pointerEvents: 'none',
       }} />
 
-      {/* Particules explosion */}
-      {PARTS.map((p, i) => {
-        const rad = (p.angle * Math.PI) / 180;
-        const progress = spring({ frame: frame - p.delay, fps, from: 0, to: 1, durationInFrames: 32, config: { damping: 20 } });
-        const dist = progress * p.dist;
-        const px = Math.cos(rad) * dist;
-        const py = Math.sin(rad) * dist;
-        const pOp = fi(frame, 0, 1, p.delay, p.delay + 8) * fi(frame, 1, 0, 50, 88);
-        return (
-          <div key={i} style={{
-            position: 'absolute',
-            left: '50%', top: '50%',
-            width: 4, height: 4,
-            borderRadius: '50%',
-            background: T.gold,
-            opacity: pOp,
-            transform: `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`,
-            boxShadow: `0 0 8px ${T.gold}`,
-          }} />
-        );
-      })}
-
-      {/* Logo shadow/blur décalé pour effet cinétique */}
+      {/* Blur layer */}
       <div style={{
         position: 'absolute',
         opacity: blur1Op * 0.3,
         transform: `scale(${blur1Sc})`,
-        fontSize: 108,
-        fontWeight: 900,
-        color: T.gold,
-        letterSpacing: 10,
-        textTransform: 'uppercase',
-        filter: 'blur(8px)',
-        lineHeight: 1,
-      }}>
-        Loqar
-      </div>
+        fontSize: 108, fontWeight: 900, color: T.gold,
+        letterSpacing: 10, textTransform: 'uppercase',
+        filter: 'blur(8px)', lineHeight: 1,
+      }}>Loqar</div>
 
-      {/* Logo principal */}
-      <div style={{
-        opacity: logoOp,
-        transform: `scale(${logoSc})`,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
-      }}>
-        <div style={{
-          fontSize: 108,
-          fontWeight: 900,
-          color: T.text,
-          letterSpacing: 10,
-          textTransform: 'uppercase',
-          lineHeight: 1,
-          textShadow: `0 0 60px ${T.gold}40`,
-        }}>
+      {/* Logo */}
+      <div style={{ opacity: logoOp, transform: `scale(${logoSc})`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <div style={{ fontSize: 108, fontWeight: 900, color: T.text, letterSpacing: 10, textTransform: 'uppercase', lineHeight: 1, textShadow: `0 0 60px ${T.gold}40` }}>
           Loqar
         </div>
         <div style={{ width: lineW, height: 3, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)` }} />
-        <div style={{
-          opacity: subOp,
-          transform: `translateY(${subY}px)`,
-          fontSize: 20, color: T.sub,
-          letterSpacing: 4, textTransform: 'uppercase', fontWeight: 500,
-        }}>
+        <div style={{ opacity: subOp, transform: `translateY(${subY}px)`, fontSize: 20, color: T.sub, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 500 }}>
           Location de voitures
         </div>
       </div>
 
-      {/* Flash blanc */}
+      {/* Voiture fantôme sous le logo */}
+      <div style={{ position: 'absolute', bottom: 160, transform: `translateX(${carX}px)`, opacity: carOp }}>
+        <CarSVG color={T.gold} width={380} />
+      </div>
+
       <AbsoluteFill style={{ background: '#ffffff', opacity: flashOp, pointerEvents: 'none' }} />
     </AbsoluteFill>
   );
 };
 
-// --- Scène 2 : Tagline dynamique (90→240f / 3→8s) ---
+// --- Scène 2 : Tagline (90→240f) ---
 const SceneTagline = ({ frame, fps }) => {
   const words = ['Gérez.', 'Automatisez.', 'Encaissez.'];
   const colors = [T.text, T.gold, T.success];
+  const carOp = fi(frame, 0, 0.12, 60, 100);
+  const carX = fi(frame, -200, 600, 0, 150);
 
   return (
-    <AbsoluteFill style={{ background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 24, fontFamily: FONT }}>
+    <AbsoluteFill style={{ background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 24, fontFamily: FONT, overflow: 'hidden' }}>
+      {/* Voiture qui traverse en fond */}
+      <div style={{ position: 'absolute', bottom: 80, transform: `translateX(${carX}px)`, opacity: carOp }}>
+        <CarSVG color={T.gold} width={500} />
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
         {words.map((word, i) => {
           const start = i * 30;
@@ -176,15 +211,7 @@ const SceneTagline = ({ frame, fps }) => {
           const y = fi(frame, 30, 0, start, start + 22);
           const sc = spring({ frame: frame - start, fps, from: 0.85, to: 1, durationInFrames: 25, config: { damping: 12 } });
           return (
-            <div key={i} style={{
-              opacity: op,
-              transform: `translateY(${y}px) scale(${sc})`,
-              fontSize: 78,
-              fontWeight: 900,
-              color: colors[i],
-              lineHeight: 1.05,
-              letterSpacing: -1,
-            }}>
+            <div key={i} style={{ opacity: op, transform: `translateY(${y}px) scale(${sc})`, fontSize: 78, fontWeight: 900, color: colors[i], lineHeight: 1.05, letterSpacing: -1 }}>
               {word}
             </div>
           );
@@ -193,13 +220,7 @@ const SceneTagline = ({ frame, fps }) => {
       <div style={{
         opacity: fi(frame, 0, 1, 95, 118),
         transform: `translateY(${fi(frame, 16, 0, 95, 118)}px)`,
-        fontSize: 22,
-        color: T.sub,
-        fontWeight: 400,
-        letterSpacing: 0.5,
-        textAlign: 'center',
-        lineHeight: 1.6,
-        maxWidth: 600,
+        fontSize: 22, color: T.sub, fontWeight: 400, letterSpacing: 0.5, textAlign: 'center', maxWidth: 600,
       }}>
         Le logiciel tout-en-un pour les agences de location
       </div>
@@ -207,127 +228,139 @@ const SceneTagline = ({ frame, fps }) => {
   );
 };
 
-// --- Scène 3 : Features cards UI (240→480f / 8→16s) ---
-const FEATURES = [
-  { icon: '🚗', title: 'Flotte centralisée', desc: 'Tous vos véhicules, disponibilités et statuts en un coup d\'œil', color: T.gold },
-  { icon: '📋', title: 'Contrats automatiques', desc: 'Générez et envoyez des contrats signés en 30 secondes', color: T.amber },
-  { icon: '💳', title: 'Paiements & dépôts', desc: 'Suivi des encaissements, dépôts et impayés en temps réel', color: T.success },
-  { icon: '👥', title: 'Gestion clients', desc: 'Historique complet, permis, dépenses par client', color: T.blue },
-];
+// --- Scène 3 : Voiture + Contrat (240→480f / 8→16s) ---
+const SceneCarContract = ({ frame, fps }) => {
+  const titleOp = fi(frame, 0, 1, 0, 22);
+  const titleY = fi(frame, 18, 0, 0, 22);
 
-const SceneFeatures = ({ frame, fps }) => {
-  const titleOp = fi(frame, 0, 1, 0, 20);
-  const titleY = fi(frame, 20, 0, 0, 20);
+  // Voiture slide depuis la gauche
+  const carX = fi(frame, -200, 0, 10, 45);
+  const carOp = fi(frame, 0, 1, 10, 35);
+  // Légère rotation comme si elle roule
+  const carRot = fi(frame, -3, 0, 10, 40);
+
+  // Badges qui apparaissent autour de la voiture
+  const BADGES = [
+    { label: '15 véhicules', sub: 'gérés', color: T.gold, x: -260, y: -40, delay: 50 },
+    { label: 'Disponible', sub: 'en temps réel', color: T.success, x: 220, y: -50, delay: 65 },
+    { label: 'Kilométrage', sub: '12 400 km', color: T.amber, x: -240, y: 80, delay: 78 },
+    { label: 'Catégorie', sub: 'Berline', color: T.blue, x: 210, y: 75, delay: 90 },
+  ];
 
   return (
-    <AbsoluteFill style={{ background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40, fontFamily: FONT, padding: '0 60px' }}>
-      <div style={{ opacity: titleOp, transform: `translateY(${titleY}px)`, fontSize: 28, fontWeight: 700, color: T.sub, letterSpacing: 2, textTransform: 'uppercase' }}>
-        Tout ce dont vous avez besoin
+    <AbsoluteFill style={{ background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 36, fontFamily: FONT, overflow: 'hidden' }}>
+      {/* Titre */}
+      <div style={{ opacity: titleOp, transform: `translateY(${titleY}px)`, fontSize: 26, fontWeight: 700, color: T.sub, letterSpacing: 2, textTransform: 'uppercase' }}>
+        Votre flotte & vos contrats
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, width: '100%', maxWidth: 900 }}>
-        {FEATURES.map((f, i) => {
-          const delay = i * 18;
-          const op = fi(frame, 0, 1, delay + 10, delay + 30);
-          const y = fi(frame, 30, 0, delay + 10, delay + 35);
-          const sc = spring({ frame: frame - delay - 10, fps, from: 0.9, to: 1, durationInFrames: 25 });
-          const glowOp = fi(frame, 0, 0.6, delay + 20, delay + 45);
 
+      {/* Zone voiture + badges */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 220 }}>
+        {/* Glow sous voiture */}
+        <div style={{
+          position: 'absolute',
+          width: 500, height: 80,
+          background: `radial-gradient(ellipse, ${T.gold}20 0%, transparent 70%)`,
+          bottom: -10,
+          opacity: carOp * 0.8,
+        }} />
+
+        <div style={{ opacity: carOp, transform: `translateX(${carX}px) rotate(${carRot}deg)` }}>
+          <CarSVG color={T.gold} width={460} opacity={1} />
+        </div>
+
+        {/* Badges info voiture */}
+        {BADGES.map((b, i) => {
+          const bOp = fi(frame, 0, 1, b.delay, b.delay + 18);
+          const bSc = spring({ frame: frame - b.delay, fps, from: 0.7, to: 1, durationInFrames: 22, config: { damping: 11 } });
           return (
             <div key={i} style={{
-              opacity: op,
-              transform: `translateY(${y}px) scale(${sc})`,
+              position: 'absolute',
+              left: `calc(50% + ${b.x}px)`,
+              top: `calc(50% + ${b.y}px)`,
+              transform: `translate(-50%, -50%) scale(${bSc})`,
+              opacity: bOp,
               background: T.card,
-              border: `1px solid ${T.border2}`,
-              borderRadius: 16,
-              padding: '24px 22px',
-              position: 'relative',
-              overflow: 'hidden',
+              border: `1px solid ${b.color}40`,
+              borderRadius: 10,
+              padding: '8px 14px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              whiteSpace: 'nowrap',
             }}>
-              {/* Accent top bar */}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${f.color}, transparent)`, opacity: glowOp }} />
-              <div style={{ fontSize: 32, marginBottom: 10 }}>{f.icon}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: T.text, marginBottom: 6 }}>{f.title}</div>
-              <div style={{ fontSize: 14, color: T.sub, lineHeight: 1.5 }}>{f.desc}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: b.color }}>{b.label}</div>
+              <div style={{ fontSize: 10, color: T.sub }}>{b.sub}</div>
             </div>
           );
         })}
       </div>
+
+      {/* Contrat card */}
+      <ContractCard frame={frame} fps={fps} delay={100} />
     </AbsoluteFill>
   );
 };
 
-// --- Scène 4 : Dashboard mockup animé (480→690f / 16→23s) ---
+// --- Scène 4 : Dashboard (480→690f / 16→23s) ---
 const RENTALS = [
-  { client: 'Martin Dupont', car: 'Peugeot 208', amount: '420€', status: 'Actif', color: T.success },
-  { client: 'Sophie Bernard', car: 'Renault Clio', amount: '315€', status: 'Actif', color: T.success },
-  { client: 'Lucas Martin', car: 'BMW Série 3', amount: '980€', status: 'Payé', color: T.gold },
-  { client: 'Emma Laurent', car: 'Toyota Yaris', amount: '210€', status: 'Actif', color: T.success },
+  { client: 'Martin Dupont',  car: 'Peugeot 208 · AB-123-CD',  amount: '420€', status: 'Actif',  color: T.success },
+  { client: 'Sophie Bernard', car: 'Renault Clio · GH-456-EF',  amount: '315€', status: 'Actif',  color: T.success },
+  { client: 'Lucas Martin',   car: 'BMW Série 3 · IJ-789-KL',   amount: '980€', status: 'Payé',   color: T.gold },
+  { client: 'Emma Laurent',   car: 'Toyota Yaris · MN-012-OP',  amount: '210€', status: 'Actif',  color: T.success },
 ];
 
 const SceneDashboard = ({ frame, fps }) => {
   const headerOp = fi(frame, 0, 1, 0, 20);
   const statsData = [
     { label: 'Revenus ce mois', value: '8 420€', change: '+18%', color: T.gold },
-    { label: 'Véhicules actifs', value: '12/15', change: '3 dispo', color: T.success },
+    { label: 'Véhicules actifs', value: '12 / 15', change: '3 disponibles', color: T.success },
     { label: 'Locations en cours', value: '9', change: 'dont 2 ce soir', color: T.amber },
   ];
 
   return (
-    <AbsoluteFill style={{ background: T.bg, display: 'flex', flexDirection: 'column', gap: 20, fontFamily: FONT, padding: '50px 50px' }}>
-      {/* Header */}
+    <AbsoluteFill style={{ background: T.bg, display: 'flex', flexDirection: 'column', gap: 18, fontFamily: FONT, padding: '44px 48px' }}>
       <div style={{ opacity: headerOp, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ fontSize: 13, color: T.sub, marginBottom: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Tableau de bord</div>
-          <div style={{ fontSize: 34, fontWeight: 800, color: T.text, letterSpacing: -0.5 }}>Loqar</div>
+          <div style={{ fontSize: 12, color: T.sub, marginBottom: 4, letterSpacing: 1.5, textTransform: 'uppercase' }}>Tableau de bord</div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: T.text, letterSpacing: -0.5 }}>Loqar</div>
         </div>
-        <div style={{ background: T.card, border: `1px solid ${T.border2}`, borderRadius: 10, padding: '8px 18px', fontSize: 13, color: T.gold, fontWeight: 600 }}>
-          Mars 2026
-        </div>
+        <div style={{ background: T.card, border: `1px solid ${T.border2}`, borderRadius: 10, padding: '8px 18px', fontSize: 13, color: T.gold, fontWeight: 600 }}>Mars 2026</div>
       </div>
 
-      {/* Stats cards */}
       <div style={{ display: 'flex', gap: 14 }}>
         {statsData.map((s, i) => {
           const op = fi(frame, 0, 1, 15 + i * 12, 35 + i * 12);
           const sc = spring({ frame: frame - 15 - i * 12, fps, from: 0.88, to: 1, durationInFrames: 25 });
           return (
-            <div key={i} style={{
-              opacity: op, transform: `scale(${sc})`,
-              flex: 1, background: T.card, border: `1px solid ${T.border2}`,
-              borderRadius: 14, padding: '18px 16px', position: 'relative', overflow: 'hidden',
-            }}>
+            <div key={i} style={{ opacity: op, transform: `scale(${sc})`, flex: 1, background: T.card, border: `1px solid ${T.border2}`, borderRadius: 14, padding: '16px 14px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: s.color, opacity: 0.7 }} />
-              <div style={{ fontSize: 11, color: T.sub, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{s.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: T.text, marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: T.sub, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{s.label}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: T.text, marginBottom: 4 }}>{s.value}</div>
               <div style={{ fontSize: 12, color: s.color, fontWeight: 600 }}>{s.change}</div>
             </div>
           );
         })}
       </div>
 
-      {/* Table locations */}
-      <div style={{ background: T.card, border: `1px solid ${T.border2}`, borderRadius: 14, overflow: 'hidden', opacity: fi(frame, 0, 1, 50, 68) }}>
-        <div style={{ padding: '14px 18px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: T.card, border: `1px solid ${T.border2}`, borderRadius: 14, overflow: 'hidden', opacity: fi(frame, 0, 1, 48, 65) }}>
+        <div style={{ padding: '13px 18px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>Locations en cours</div>
           <div style={{ fontSize: 11, color: T.gold, fontWeight: 600 }}>Voir tout →</div>
         </div>
         {RENTALS.map((r, i) => {
-          const op = fi(frame, 0, 1, 60 + i * 10, 78 + i * 10);
-          const x = fi(frame, -20, 0, 60 + i * 10, 78 + i * 10);
+          const op = fi(frame, 0, 1, 58 + i * 10, 75 + i * 10);
+          const x = fi(frame, -18, 0, 58 + i * 10, 75 + i * 10);
           return (
-            <div key={i} style={{
-              opacity: op, transform: `translateX(${x}px)`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 18px', borderBottom: i < 3 ? `1px solid ${T.border}` : 'none',
-            }}>
+            <div key={i} style={{ opacity: op, transform: `translateX(${x}px)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderBottom: i < 3 ? `1px solid ${T.border}` : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 8, background: T.card2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🚗</div>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: T.card2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CarSVG color={T.gold} width={26} opacity={0.9} />
+                </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{r.client}</div>
                   <div style={{ fontSize: 11, color: T.sub }}>{r.car}</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: T.gold }}>{r.amount}</div>
                 <div style={{ padding: '3px 10px', borderRadius: 99, background: r.color + '18', color: r.color, fontSize: 11, fontWeight: 600 }}>{r.status}</div>
               </div>
@@ -339,9 +372,9 @@ const SceneDashboard = ({ frame, fps }) => {
   );
 };
 
-// --- Scène 5 : CTA final (690→900f / 23→30s) ---
+// --- Scène 5 : CTA (690→900f) ---
 const SceneCTA = ({ frame, fps }) => {
-  const glowR = fi(frame, 100, 400, 0, 80);
+  const glowR = fi(frame, 100, 420, 0, 80);
   const logoOp = fi(frame, 0, 1, 0, 22);
   const logoSc = spring({ frame, fps, from: 0.75, to: 1, durationInFrames: 32, config: { damping: 11 } });
   const lineW = fi(frame, 0, 200, 30, 58);
@@ -351,71 +384,42 @@ const SceneCTA = ({ frame, fps }) => {
   const ctaSc = spring({ frame: frame - 70, fps, from: 0.8, to: 1, durationInFrames: 28, config: { damping: 10 } });
   const pulse = 1 + Math.sin((frame / 30) * Math.PI * 1.2) * 0.018;
   const urlOp = fi(frame, 0, 1, 100, 118);
+  const carOp = fi(frame, 0, 0.18, 30, 70);
+  const carX = fi(frame, -300, 400, 30, 200);
 
   return (
-    <AbsoluteFill style={{ background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32, fontFamily: FONT }}>
-      {/* Glow */}
+    <AbsoluteFill style={{ background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 30, fontFamily: FONT, overflow: 'hidden' }}>
       <div style={{
         position: 'absolute',
         width: glowR * 2, height: glowR * 2,
         borderRadius: '50%',
         background: `radial-gradient(ellipse, ${T.gold}18 0%, transparent 70%)`,
-        pointerEvents: 'none',
       }} />
 
-      {/* Logo */}
-      <div style={{ opacity: logoOp, transform: `scale(${logoSc})`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <div style={{ fontSize: 100, fontWeight: 900, color: T.text, letterSpacing: 10, textTransform: 'uppercase', lineHeight: 1 }}>
-          Loqar
-        </div>
+      {/* Voiture fantôme qui traverse */}
+      <div style={{ position: 'absolute', bottom: 100, opacity: carOp, transform: `translateX(${carX}px)` }}>
+        <CarSVG color={T.gold} width={520} />
+      </div>
+
+      <div style={{ opacity: logoOp, transform: `scale(${logoSc})`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, zIndex: 2 }}>
+        <div style={{ fontSize: 100, fontWeight: 900, color: T.text, letterSpacing: 10, textTransform: 'uppercase', lineHeight: 1 }}>Loqar</div>
         <div style={{ width: lineW, height: 3, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)` }} />
       </div>
 
-      {/* Tag */}
-      <div style={{
-        opacity: tagOp,
-        transform: `translateY(${tagY}px)`,
-        fontSize: 22,
-        color: T.sub,
-        fontWeight: 400,
-        letterSpacing: 0.5,
-        textAlign: 'center',
-      }}>
+      <div style={{ opacity: tagOp, transform: `translateY(${tagY}px)`, fontSize: 22, color: T.sub, fontWeight: 400, letterSpacing: 0.5, textAlign: 'center', zIndex: 2 }}>
         Gérez votre agence depuis n'importe où
       </div>
 
-      {/* CTA bouton */}
-      <div style={{
-        opacity: ctaOp,
-        transform: `scale(${ctaSc * pulse})`,
-        background: T.gold,
-        color: '#0F0D0B',
-        fontSize: 22,
-        fontWeight: 800,
-        padding: '18px 56px',
-        borderRadius: 50,
-        letterSpacing: 1,
-        boxShadow: `0 0 50px ${T.gold}40`,
-        fontFamily: FONT,
-      }}>
+      <div style={{ opacity: ctaOp, transform: `scale(${ctaSc * pulse})`, background: T.gold, color: '#0F0D0B', fontSize: 22, fontWeight: 800, padding: '18px 56px', borderRadius: 50, letterSpacing: 1, boxShadow: `0 0 50px ${T.gold}40`, zIndex: 2 }}>
         Essayez gratuitement
       </div>
 
-      {/* URL */}
-      <div style={{
-        opacity: urlOp,
-        fontSize: 16,
-        color: T.muted,
-        letterSpacing: 2,
-        fontFamily: FONT,
-      }}>
-        loqar.fr
-      </div>
+      <div style={{ opacity: urlOp, fontSize: 16, color: T.muted, letterSpacing: 2, zIndex: 2 }}>loqar.fr</div>
     </AbsoluteFill>
   );
 };
 
-// --- Root composition 30s ---
+// --- Root ---
 export const PromoLoqar = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -429,7 +433,7 @@ export const PromoLoqar = () => {
         <SceneTagline frame={frame - 90} fps={fps} />
       </Sequence>
       <Sequence from={240} durationInFrames={240}>
-        <SceneFeatures frame={frame - 240} fps={fps} />
+        <SceneCarContract frame={frame - 240} fps={fps} />
       </Sequence>
       <Sequence from={480} durationInFrames={210}>
         <SceneDashboard frame={frame - 480} fps={fps} />
