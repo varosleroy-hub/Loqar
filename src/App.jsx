@@ -2035,18 +2035,42 @@ function Dashboard({ vehicles, rentals, payments, clients, onNav }) {
 }
 
 // ─── VEHICLES ─────────────────────────────────────────────────────────────────
-function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
+function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAgencyId = null, dataLoading = false, rentals = [] }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
   const [sel, setSel]       = useState(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
   const [modal, setModal]   = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [form, setForm]     = useState({name:"",plate:"",fuel:"Essence",trans:"Manuelle",km:"",price:"",year:"",cat:"Citadine",photo:"",vin:"",color:"",ctDate:""});
   const [uploading, setUploading] = useState(false);
   const [confirm, setConfirm] = useState(null);
+
+  // Per-vehicle stats
+  const vehicleStats = (vId) => {
+    const vRentals = rentals.filter(r => r.vehicle_id === vId);
+    const revenue = vRentals.reduce((s, r) => s + (parseFloat(r.total) || 0), 0);
+    const totalDays = vRentals.reduce((s, r) => {
+      const d = Math.ceil((new Date(r.end_date) - new Date(r.start_date)) / 86400000);
+      return s + (d > 0 ? d : 0);
+    }, 0);
+    const periodDays = 365;
+    const occupancy = Math.min(100, Math.round((totalDays / periodDays) * 100));
+    return { count: vRentals.length, revenue, totalDays, occupancy };
+  };
+
+  // CT alert helper
+  const ctStatus = (ctDate) => {
+    if (!ctDate) return null;
+    const diff = Math.ceil((new Date(ctDate) - Date.now()) / 86400000);
+    if (diff < 0) return { label: lang==="en"?"CT expired":"CT expiré", color: T.red, bg: T.redDim };
+    if (diff <= 30) return { label: lang==="en"?`CT in ${diff}d`:`CT dans ${diff}j`, color: T.amber, bg: T.amberDim };
+    return null;
+  };
 
   const handlePhotoUpload = async (file) => {
     if (!file) return;
@@ -2061,11 +2085,19 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
     setUploading(false);
   };
 
-  const filtered = vehicles.filter(v=>{
-    if(filter!=="all" && v.status!==filter) return false;
-    if(search && !v.name.toLowerCase().includes(search.toLowerCase()) && !v.plate.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const filtered = vehicles
+    .filter(v=>{
+      if(filter!=="all" && v.status!==filter) return false;
+      if(search && !v.name.toLowerCase().includes(search.toLowerCase()) && !v.plate.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    })
+    .sort((a,b)=>{
+      if(sortBy==="km")    return (b.km||0)-(a.km||0);
+      if(sortBy==="price") return (b.price_per_day||b.price||0)-(a.price_per_day||a.price||0);
+      if(sortBy==="year")  return (b.year||0)-(a.year||0);
+      if(sortBy==="rev")   return vehicleStats(b.id).revenue - vehicleStats(a.id).revenue;
+      return a.name.localeCompare(b.name);
+    });
 
   return (
     <Page title={t.vehicles||"Véhicules"} sub={`${vehicles.length} ${t.vehicles||"véhicules"}`}
@@ -2082,11 +2114,11 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
         </div>
       }>
 
-      {/* Filters */}
+      {/* Filters + sort + view toggle */}
       <div style={{ display:"flex", gap:8, marginBottom:22, alignItems:"center", flexWrap:"wrap" }}>
         <div style={{ flex:1, minWidth:180, position:"relative" }}>
           <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, pointerEvents:"none" }}>{Icons.search}</span>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher un véhicule ou immatriculation…"
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={lang==="en"?"Search vehicle or plate…":"Chercher un véhicule ou immatriculation…"}
             style={{ width:"100%", background:T.card, border:`1px solid ${T.border}`, borderRadius:10, padding:"9px 12px 9px 36px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}/>
         </div>
         {[["all",lang==="en"?"All":"Tous"],["disponible",lang==="en"?"Available":"Disponible"],["en location",lang==="en"?"Rented":"En location"],["entretien",lang==="en"?"Maintenance":"Entretien"]].map(([k,l])=>{
@@ -2099,41 +2131,134 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
             </button>
           );
         })}
+        {/* Sort */}
+        <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+          style={{ padding:"8px 12px", borderRadius:9, fontSize:12, fontWeight:600, cursor:"pointer", background:T.card, border:`1px solid ${T.border}`, color:T.sub, fontFamily:"inherit", outline:"none" }}>
+          {[["name",lang==="en"?"Sort: Name":"Trier : Nom"],["km",lang==="en"?"Sort: Km":"Trier : Km"],["price",lang==="en"?"Sort: Price":"Trier : Prix"],["year",lang==="en"?"Sort: Year":"Trier : Année"],["rev",lang==="en"?"Sort: Revenue":"Trier : Revenus"]].map(([v,l])=>(
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
+        {/* View toggle */}
+        <div style={{ display:"flex", gap:4 }}>
+          {[["grid","⊞"],["list","☰"]].map(([mode,icon])=>(
+            <button key={mode} onClick={()=>setViewMode(mode)}
+              style={{ padding:"8px 11px", borderRadius:9, fontSize:14, cursor:"pointer", background:viewMode===mode?T.goldDim:T.card, border:`1px solid ${viewMode===mode?T.gold:T.border}`, color:viewMode===mode?T.gold:T.sub }}>
+              {icon}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div style={{ display:"flex", gap:20 }}>
-        {/* Grid */}
-        <div style={{ flex:1, display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(236px,1fr))", gap:16, alignContent:"start" }}>
-          {dataLoading && Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}
-          {!dataLoading && filtered.map(v=>{
+        {/* Grid or List */}
+        <div style={{ flex:1, ...(viewMode==="grid" ? { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(236px,1fr))", gap:16, alignContent:"start" } : {}) }}>
+          {dataLoading && viewMode==="grid" && Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}
+          {dataLoading && viewMode==="list" && (
+            <div style={{ background:T.card, borderRadius:14, overflow:"hidden" }}>
+              {Array.from({length:5}).map((_,i)=><div key={i} style={{ height:52, background:i%2===0?T.card:T.card2, borderBottom:`1px solid ${T.border}` }}/>)}
+            </div>
+          )}
+
+          {/* LIST VIEW */}
+          {!dataLoading && viewMode==="list" && (
+            <div style={{ background:T.card, borderRadius:14, overflow:"hidden", border:`1px solid ${T.border}` }}>
+              <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                <thead>
+                  <tr style={{ background:T.card2 }}>
+                    {[lang==="en"?"Vehicle":"Véhicule","Immat.",lang==="en"?"Fuel":"Carb.",lang==="en"?"Year":"Année","Km",lang==="en"?"Price/day":"Prix/j",lang==="en"?"Rentals":"Locations",lang==="en"?"Revenue":"Revenus",lang==="en"?"Occup.":"Occup.",t.status,"CT",""].map(h=>(
+                      <th key={h} style={{ padding:"10px 12px", textAlign:"left", fontSize:10, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".06em", whiteSpace:"nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((v,i)=>{
+                    const st = vehicleStats(v.id);
+                    const ct = ctStatus(v.ct_date);
+                    const selected = sel?.id===v.id;
+                    return (
+                      <tr key={v.id} onClick={()=>setSel(selected?null:v)} style={{ background:selected?T.goldDim:i%2===0?T.card:T.card2, cursor:"pointer", borderTop:`1px solid ${T.border}` }}>
+                        <td style={{ padding:"10px 12px", fontWeight:700, fontSize:13, color:T.text, whiteSpace:"nowrap" }}>
+                          {v.photo_url && <img src={v.photo_url} style={{ width:32, height:22, objectFit:"cover", borderRadius:4, marginRight:8, verticalAlign:"middle" }}/>}
+                          {v.name}
+                        </td>
+                        <td style={{ padding:"10px 12px", fontSize:11, color:T.muted, fontFamily:"monospace" }}>{v.plate}</td>
+                        <td style={{ padding:"10px 12px", fontSize:12, color:T.sub }}>{v.fuel}</td>
+                        <td style={{ padding:"10px 12px", fontSize:12, color:T.sub }}>{v.year}</td>
+                        <td style={{ padding:"10px 12px", fontSize:12, color:T.sub }}>{fmt(v.km)} km</td>
+                        <td style={{ padding:"10px 12px", fontSize:12, fontWeight:700, color:T.gold }}>{v.price_per_day||v.price} €</td>
+                        <td style={{ padding:"10px 12px", fontSize:12, color:T.sub }}>{st.count}</td>
+                        <td style={{ padding:"10px 12px", fontSize:12, fontWeight:600, color:T.text }}>{fmt(Math.round(st.revenue))} €</td>
+                        <td style={{ padding:"10px 12px" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                            <div style={{ flex:1, height:5, background:T.border, borderRadius:3, minWidth:40 }}>
+                              <div style={{ height:"100%", borderRadius:3, background:st.occupancy>70?T.gold:T.sub, width:`${st.occupancy}%` }}/>
+                            </div>
+                            <span style={{ fontSize:10, color:T.muted, whiteSpace:"nowrap" }}>{st.occupancy}%</span>
+                          </div>
+                        </td>
+                        <td style={{ padding:"10px 12px" }}><StatusBadge status={v.status}/></td>
+                        <td style={{ padding:"10px 12px" }}>{ct && <span style={{ fontSize:10, fontWeight:700, color:ct.color, background:ct.bg, padding:"2px 7px", borderRadius:6, whiteSpace:"nowrap" }}>{ct.label}</span>}</td>
+                        <td style={{ padding:"10px 12px" }}>
+                          <button onClick={e=>{e.stopPropagation(); setForm({name:v.name,plate:v.plate,fuel:v.fuel,trans:v.transmission||v.trans,km:String(v.km),price:String(v.price_per_day||v.price),year:String(v.year),cat:v.category||v.cat,photo:v.photo_url||"",vin:v.vin||"",color:v.color||"",ctDate:v.ct_date||""}); setSel(v); setModal("edit");}}
+                            style={{ padding:"4px 10px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:8, color:T.sub, cursor:"pointer", fontSize:11, fontFamily:"inherit" }}>
+                            {Icons.edit}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {!filtered.length && <div style={{ textAlign:"center", padding:40, color:T.muted, fontSize:13 }}>{lang==="en"?"No vehicles found":"Aucun véhicule trouvé"}</div>}
+            </div>
+          )}
+
+          {/* GRID VIEW */}
+          {!dataLoading && viewMode==="grid" && filtered.map(v=>{
             const selected = sel?.id===v.id;
+            const st = vehicleStats(v.id);
+            const ct = ctStatus(v.ct_date);
             return (
               <div key={v.id} onClick={()=>setSel(selected?null:v)}
                 style={{ background:T.card, border:`1px solid ${selected?T.gold:T.border}`, borderRadius:16, overflow:"hidden", cursor:"pointer", transition:"all .22s" }}
                 onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 16px 50px #00000060"; e.currentTarget.style.borderColor=selected?T.gold:T.border2; }}
                 onMouseLeave={e=>{ e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; e.currentTarget.style.borderColor=selected?T.gold:T.border; }}>
 
-                {/* Vehicle art — warm gradient stage */}
+                {/* Vehicle art */}
                 <div style={{ height:130, background:`linear-gradient(160deg,${T.card2} 0%,${T.surface} 100%)`, position:"relative", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
-                  {/* Warm glow under car */}
                   <div style={{ position:"absolute", bottom:-20, left:"50%", transform:"translateX(-50%)", width:160, height:60, borderRadius:"50%", background:`${T.gold}18`, filter:"blur(20px)", pointerEvents:"none" }}/>
                   {v.photo_url ? <img src={v.photo_url} style={{ width:"100%", height:"100%", objectFit:"cover", position:"absolute", inset:0, borderRadius:0 }}/> : <CarSilhouette cat={v.cat} color={T.gold} size={160}/>}
-                  {/* Status top-right */}
-                  <div style={{ position:"absolute", top:10, right:10 }}><StatusBadge status={v.status}/></div>
-                  {/* Category label bottom-left */}
+                  <div style={{ position:"absolute", top:10, right:10, display:"flex", flexDirection:"column", gap:4, alignItems:"flex-end" }}>
+                    <StatusBadge status={v.status}/>
+                    {ct && <span style={{ fontSize:9, fontWeight:700, color:ct.color, background:ct.bg, padding:"2px 6px", borderRadius:5 }}>{ct.label}</span>}
+                  </div>
                   <div style={{ position:"absolute", bottom:8, left:12, fontSize:10, color:T.muted, letterSpacing:".08em", textTransform:"uppercase", fontWeight:600 }}>{v.cat}</div>
-                  {/* Price bottom-right */}
-                  <div style={{ position:"absolute", bottom:8, right:12, fontSize:17, fontWeight:700, color:T.gold, letterSpacing:"-0.02em" }}>{v.price}€/j</div>
+                  <div style={{ position:"absolute", bottom:8, right:12, fontSize:17, fontWeight:700, color:T.gold, letterSpacing:"-0.02em" }}>{v.price_per_day||v.price}€/j</div>
                 </div>
 
                 {/* Info */}
                 <div style={{ padding:"14px 16px" }}>
                   <div style={{ fontSize:14, fontWeight:700, marginBottom:2, color:T.text }}>{v.name}</div>
                   <div style={{ fontSize:11, color:T.muted, fontFamily:"monospace", marginBottom:10, letterSpacing:".04em" }}>{v.plate}</div>
-                  <div style={{ display:"flex", gap:5, marginBottom:12, flexWrap:"wrap" }}>
+                  <div style={{ display:"flex", gap:5, marginBottom:10, flexWrap:"wrap" }}>
                     <Badge label={v.fuel} color={T.sub} bg={T.card2}/>
                     <Badge label={v.trans} color={T.sub} bg={T.card2}/>
                     <Badge label={String(v.year)} color={T.sub} bg={T.card2}/>
+                  </div>
+                  {/* Mini stats */}
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8, padding:"6px 0", borderTop:`1px solid ${T.border}` }}>
+                    <div style={{ textAlign:"center" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:T.text }}>{st.count}</div>
+                      <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase" }}>{lang==="en"?"Trips":"Locations"}</div>
+                    </div>
+                    <div style={{ textAlign:"center" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>{fmt(Math.round(st.revenue))} €</div>
+                      <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase" }}>{lang==="en"?"Revenue":"Revenus"}</div>
+                    </div>
+                    <div style={{ textAlign:"center" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:st.occupancy>70?T.gold:T.sub }}>{st.occupancy}%</div>
+                      <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase" }}>{lang==="en"?"Occup.":"Occup."}</div>
+                    </div>
                   </div>
                   <div style={{ fontSize:11, color:T.muted, marginBottom:6 }}>{fmt(v.km)} km parcourus</div>
                   <ProgressBar value={v.km} max={150000} color={v.km>100000?T.red:v.km>70000?T.amber:T.gold}/>
@@ -2141,10 +2266,10 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
               </div>
             );
           })}
-          {!dataLoading && !filtered.length && (
+          {!dataLoading && viewMode==="grid" && !filtered.length && (
             <div style={{ gridColumn:"1/-1", textAlign:"center", padding:80, color:T.muted }}>
               <div style={{ display:"flex", justifyContent:"center", opacity:.3, marginBottom:12 }}><CarSilhouette cat="Berline" color={T.muted} size={100}/></div>
-              Aucun véhicule trouvé
+              {lang==="en"?"No vehicles found":"Aucun véhicule trouvé"}
             </div>
           )}
         </div>
@@ -2154,32 +2279,85 @@ function Vehicles({ vehicles, setVehicles, user, userPlan = "starter", activeAge
           <div style={{ width:294, flexShrink:0, animation:"slideIn .25s" }}>
             <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden", position:"sticky", top:36 }}>
               {/* Art */}
-              <div style={{ height:150, background:`linear-gradient(160deg,${T.card2},${T.surface})`, display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
+              <div style={{ height:150, background:`linear-gradient(160deg,${T.card2},${T.surface})`, display:"flex", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
                 <div style={{ position:"absolute", bottom:-10, left:"50%", transform:"translateX(-50%)", width:180, height:60, background:`${T.gold}15`, borderRadius:"50%", filter:"blur(20px)" }}/>
-                <CarSilhouette cat={sel.cat} color={T.gold} size={190}/>
+                {sel.photo_url
+                  ? <img src={sel.photo_url} style={{ width:"100%", height:"100%", objectFit:"cover", position:"absolute", inset:0 }}/>
+                  : <CarSilhouette cat={sel.cat} color={T.gold} size={190}/>}
                 <button onClick={()=>setSel(null)} style={{ position:"absolute", top:10, right:10, background:T.card+"CC", border:"none", borderRadius:7, padding:5, color:T.sub, cursor:"pointer", display:"flex" }}>{Icons.x}</button>
               </div>
               <div style={{ padding:20 }}>
-                <div style={{ fontSize:17, fontWeight:700, letterSpacing:"-0.02em", marginBottom:3, color:T.text }}>{sel.name}</div>
-                <div style={{ marginBottom:14 }}><StatusBadge status={sel.status}/></div>
+                <div style={{ fontSize:17, fontWeight:700, letterSpacing:"-0.02em", marginBottom:8, color:T.text }}>{sel.name}</div>
+
+                {/* Status change */}
+                <div style={{ display:"flex", flexDirection:"column", gap:4, marginBottom:14 }}>
+                  <span style={{ fontSize:10, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>{t.status||"Statut"}</span>
+                  <select value={sel.status} onChange={async e=>{
+                    const newStatus = e.target.value;
+                    await supabase.from("vehicles").update({ status: newStatus }).eq("id", sel.id);
+                    setVehicles(vehicles.map(v=>v.id===sel.id?{...v,status:newStatus}:v));
+                    setSel(s=>({...s,status:newStatus}));
+                    toast(lang==="en"?"Status updated":"Statut mis à jour", "success");
+                  }}
+                  style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"7px 10px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none", cursor:"pointer" }}>
+                    {[["disponible",lang==="en"?"Available":"Disponible"],["en location",lang==="en"?"Rented":"En location"],["entretien",lang==="en"?"Maintenance":"Entretien"]].map(([v,l])=>(
+                      <option key={v} value={v}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* CT alert */}
+                {ctStatus(sel.ct_date) && (() => { const ct = ctStatus(sel.ct_date); return (
+                  <div style={{ padding:"8px 12px", background:ct.bg, border:`1px solid ${ct.color}40`, borderRadius:9, marginBottom:12, display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ fontSize:14 }}>⚠️</span>
+                    <span style={{ fontSize:12, fontWeight:700, color:ct.color }}>{ct.label}</span>
+                  </div>
+                );})()}
+
+                {/* Stats */}
+                {(() => { const st = vehicleStats(sel.id); return (
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
+                    {[[st.count, lang==="en"?"Trips":"Locations", T.text],[`${fmt(Math.round(st.revenue))} €`, lang==="en"?"Revenue":"Revenus", T.gold],[`${st.occupancy}%`, lang==="en"?"Occup.":"Occup.", st.occupancy>70?T.gold:T.sub]].map(([val,lbl,col])=>(
+                      <div key={lbl} style={{ padding:"8px", background:T.card2, borderRadius:9, textAlign:"center" }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:col }}>{val}</div>
+                        <div style={{ fontSize:9, color:T.muted, textTransform:"uppercase", marginTop:2 }}>{lbl}</div>
+                      </div>
+                    ))}
+                  </div>
+                );})()}
+
+                {/* Fields */}
                 <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
-                  {[["Immatriculation",sel.plate],["Carburant",sel.fuel],["Transmission",sel.trans],["Kilométrage",fmt(sel.km)+" km"],["Prix / jour",sel.price+" €"],["Année",sel.year]].map(([k,v])=>(
-                    <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"9px 0", borderBottom:`1px solid ${T.border}` }}>
+                  {[
+                    ["Immatriculation", sel.plate],
+                    [lang==="en"?"Fuel":"Carburant", sel.fuel],
+                    [lang==="en"?"Gearbox":"Transmission", sel.trans],
+                    [lang==="en"?"Mileage":"Kilométrage", fmt(sel.km)+" km"],
+                    [lang==="en"?"Price / day":"Prix / jour", (sel.price_per_day||sel.price)+" €"],
+                    [lang==="en"?"Year":"Année", sel.year],
+                    ...(sel.color ? [[lang==="en"?"Color":"Couleur", sel.color]] : []),
+                    ...(sel.vin   ? [["VIN", sel.vin]] : []),
+                    ...(sel.ct_date ? [[lang==="en"?"Next CT":"Prochain CT", fmtDate(sel.ct_date)]] : []),
+                  ].map(([k,v])=>(
+                    <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:`1px solid ${T.border}` }}>
                       <span style={{ fontSize:12, color:T.muted }}>{k}</span>
                       <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{v}</span>
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop:14, padding:14, background:T.card2, borderRadius:11 }}>
+
+                {/* Km wear */}
+                <div style={{ marginTop:12, padding:12, background:T.card2, borderRadius:11 }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-                    <span style={{ fontSize:11, color:T.muted }}>Usure kilométrique</span>
+                    <span style={{ fontSize:11, color:T.muted }}>{lang==="en"?"Mileage wear":"Usure kilométrique"}</span>
                     <span style={{ fontSize:11, fontWeight:700, color:sel.km>100000?T.red:sel.km>70000?T.amber:T.gold }}>{Math.round((sel.km/150000)*100)}%</span>
                   </div>
                   <ProgressBar value={sel.km} max={150000} color={sel.km>100000?T.red:sel.km>70000?T.amber:T.gold}/>
                 </div>
+
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ name:sel.name, plate:sel.plate, fuel:sel.fuel, trans:sel.transmission||sel.trans, km:String(sel.km), price:String(sel.price_per_day||sel.price), year:String(sel.year), cat:sel.category||sel.cat, photo:sel.photo_url||"" }); setModal("edit"); }}>{Icons.edit} Modifier</button>
-                  <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={()=>setConfirm({ message:`Supprimer le véhicule "${sel.name}" ? Cette action est irréversible.`, onConfirm: async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); toast("Véhicule supprimé"); } })}/>
+                  <button style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"9px 14px", background:T.card, border:`1px solid ${T.border2}`, borderRadius:10, color:T.text, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }} onClick={()=>{ setForm({ name:sel.name, plate:sel.plate, fuel:sel.fuel, trans:sel.transmission||sel.trans, km:String(sel.km), price:String(sel.price_per_day||sel.price), year:String(sel.year), cat:sel.category||sel.cat, photo:sel.photo_url||"", vin:sel.vin||"", color:sel.color||"", ctDate:sel.ct_date||"" }); setModal("edit"); }}>{Icons.edit} {lang==="en"?"Edit":"Modifier"}</button>
+                  <Btn variant="danger" icon={Icons.trash} style={{ padding:"9px 11px" }} onClick={()=>setConfirm({ message:`Supprimer le véhicule "${sel.name}" ? Cette action est irréversible.`, onConfirm: async ()=>{ await supabase.from("vehicles").delete().eq("id", sel.id); setVehicles(vehicles.filter(v=>v.id!==sel.id)); setSel(null); toast(lang==="en"?"Vehicle deleted":"Véhicule supprimé"); } })}/>
                 </div>
               </div>
             </div>
@@ -4529,7 +4707,7 @@ function App() {
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
     rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} setVehicles={setVehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} onGenDoc={r=>{ setDocPrefill(r); setPage("documents"); }}/>,
-    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} prefill={docPrefill} onClearPrefill={()=>setDocPrefill(null)}/>,
