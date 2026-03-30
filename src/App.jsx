@@ -2809,7 +2809,7 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const t = TR[lang]||TR.fr;
   const toast = useToast();
   const [docType, setDocType] = useState("contrat");
-  const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:""});
+  const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:"",clientLicense:"",clientAddress:"",paymentDue:"",quoteValidity:"30 jours"});
 
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
   const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
@@ -2818,9 +2818,12 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const tva     = total - totalHT;
   const selectedClient  = clients.find(c=>c.id===p.clientId)||null;
   const selectedVehicle = vehicles.find(v=>v.id===p.vehicleId)||null;
-  const agencyName = agencyProfile?.agency_name || "Mon Agence";
+  const agencyName    = agencyProfile?.name    || agencyProfile?.agency_name || "Mon Agence";
   const agencyAddress = agencyProfile?.address || "Adresse de l'agence";
-  const agencySiret = agencyProfile?.siret || "SIRET : XX XXX XXX XXXXX";
+  const agencySiret   = agencyProfile?.siret   || "SIRET : XX XXX XXX XXXXX";
+  const agencyPhone   = agencyProfile?.phone   || "";
+  const agencyEmail   = agencyProfile?.email   || "";
+  const agencyFranchise = agencyProfile?.franchise || "800 €";
   const docNumRef = useRef(`LQ-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,"0")}-${Date.now().toString(36).toUpperCase().slice(-4)}`);
   const docNum = docNumRef.current;
 
@@ -2906,12 +2909,24 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 </select>
               </div>
 
+              {/* Infos locataire complémentaires */}
+              <Input label={lang==="en"?"License number":"N° de permis"} value={p.clientLicense} onChange={v=>up("clientLicense",v)} placeholder="12AA12345"/>
+              <Input label={lang==="en"?"Tenant address":"Adresse du locataire"} value={p.clientAddress} onChange={v=>up("clientAddress",v)} placeholder="12 rue de la Paix, 75001 Paris"/>
+
               <Input label={t.price||"Prix/jour (€)"} value={p.price} onChange={v=>up("price",v)} type="number"/>
               <Input label={t.deposit||"Caution (€)"} value={p.deposit} onChange={v=>up("deposit",v)} type="number"/>
               <Input label={lang==="en"?"Start mileage":"Km départ"} value={p.km} onChange={v=>up("km",v)} type="number"/>
               {(docType==="etat"||docType==="contrat") && <Input label={lang==="en"?"End mileage":"Km retour"} value={p.kmReturn} onChange={v=>up("kmReturn",v)} type="number"/>}
               <Input label={t.start||"Début"} type="date" value={p.startDate} onChange={v=>up("startDate",v)}/>
               <Input label={t.end||"Fin"} type="date" value={p.endDate} onChange={v=>up("endDate",v)}/>
+
+              {/* Champs spécifiques par type */}
+              {docType==="facture" && (
+                <Input label={lang==="en"?"Payment due date":"Date d'échéance"} value={p.paymentDue} onChange={v=>up("paymentDue",v)} type="date"/>
+              )}
+              {docType==="devis" && (
+                <Input label={lang==="en"?"Quote validity":"Validité du devis"} value={p.quoteValidity} onChange={v=>up("quoteValidity",v)} placeholder="30 jours"/>
+              )}
 
               {/* Fuel level */}
               {(docType==="etat"||docType==="contrat") && (
@@ -2978,15 +2993,21 @@ function Documents({ agencyProfile, vehicles, clients }) {
                 <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Lessor":"Loueur"}</div>
                 <div style={{ fontWeight:700, fontSize:13 }}>{agencyName}</div>
                 <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{agencyAddress}</div>
+                {agencyPhone && <div style={{ fontSize:11, color:"#555" }}>{agencyPhone}</div>}
+                {agencyEmail && <div style={{ fontSize:11, color:"#555" }}>{agencyEmail}</div>}
                 <div style={{ fontSize:11, color:"#555" }}>{agencySiret}</div>
               </div>
               <div style={{ padding:"12px 14px", background:"#F5F0E8", borderRadius:8 }}>
                 <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:6 }}>{lang==="en"?"Tenant":"Locataire"}</div>
                 {selectedClient ? <>
-                  <div style={{ fontWeight:700, fontSize:13 }}>{selectedClient.firstName} {selectedClient.lastName}</div>
-                  <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{selectedClient.email}</div>
+                  <div style={{ fontWeight:700, fontSize:13 }}>{selectedClient.first_name||selectedClient.firstName} {selectedClient.last_name||selectedClient.lastName}</div>
+                  {p.clientAddress && <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{p.clientAddress}</div>}
+                  <div style={{ fontSize:11, color:"#555", marginTop:p.clientAddress?0:2 }}>{selectedClient.email}</div>
                   <div style={{ fontSize:11, color:"#555" }}>{selectedClient.phone}</div>
-                  <div style={{ fontSize:11, color:"#555" }}>Permis : {fmtDate(selectedClient.licenseExpiry)}</div>
+                  <div style={{ fontSize:11, color:"#555" }}>
+                    {lang==="en"?"License exp.":"Permis exp."} : {fmtDate(selectedClient.license_expiry||selectedClient.licenseExpiry)}
+                    {p.clientLicense && <span style={{ marginLeft:10 }}>N° {p.clientLicense}</span>}
+                  </div>
                 </> : <div style={{ fontSize:11, color:"#AAA", fontStyle:"italic" }}>{lang==="en"?"Select a client":"Sélectionnez un client"}</div>}
               </div>
             </div>
@@ -3094,6 +3115,22 @@ function Documents({ agencyProfile, vehicles, clients }) {
               </table>
             )}
 
+            {/* Conditions de paiement — facture uniquement */}
+            {docType==="facture" && (
+              <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, marginBottom:16, fontSize:11, color:"#555", display:"flex", gap:24 }}>
+                <div><span style={{ fontWeight:700 }}>{lang==="en"?"Payment terms":"Conditions de règlement"} :</span> {lang==="en"?"Payable upon receipt":"Paiement à réception de facture"}</div>
+                {p.paymentDue && <div><span style={{ fontWeight:700 }}>{lang==="en"?"Due date":"Échéance"} :</span> {fmtDate(p.paymentDue)}</div>}
+                <div style={{ fontSize:10, color:"#888" }}>{lang==="en"?"Late payment penalty: 3× legal rate + €40 recovery fee":"Pénalités de retard : 3× le taux légal + indemnité forfaitaire de recouvrement 40 €"}</div>
+              </div>
+            )}
+
+            {/* Validité — devis uniquement */}
+            {docType==="devis" && (
+              <div style={{ padding:"10px 14px", background:"#FFF8E8", border:"1px solid #E8C870", borderRadius:6, marginBottom:16, fontSize:11, color:"#7A6030" }}>
+                ⏳ <strong>{lang==="en"?"Quote validity":"Validité du devis"} :</strong> {p.quoteValidity||"30 jours"} {lang==="en"?"from the date of issue":"à compter de la date d'émission"}
+              </div>
+            )}
+
             {p.notes && (
               <div style={{ padding:"10px 14px", background:"#F5F0E8", borderRadius:6, borderLeft:"3px solid #C9A55A", marginBottom:20 }}>
                 <div style={{ fontSize:9, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:".1em", marginBottom:4 }}>{lang==="en"?"Notes":"Notes / Observations"}</div>
@@ -3110,8 +3147,9 @@ function Documents({ agencyProfile, vehicles, clients }) {
                   <p style={{ margin:"0 0 6px" }}>2. <strong>Carburant</strong> — Le véhicule doit être restitué avec le même niveau de carburant qu'au départ. Tout déficit sera facturé.</p>
                   <p style={{ margin:"0 0 6px" }}>3. <strong>Kilométrage</strong> — Tout dépassement du kilométrage convenu sera facturé selon le tarif en vigueur.</p>
                   <p style={{ margin:"0 0 6px" }}>4. <strong>Caution</strong> — La caution sera restituée dans un délai de 7 jours après la restitution du véhicule, sous réserve d'absence de dommages.</p>
-                  <p style={{ margin:"0 0 6px" }}>5. <strong>Assurance</strong> — Le locataire doit être titulaire d'un permis de conduire valide. Le véhicule est couvert par l'assurance du loueur (RC + dommages tous accidents avec franchise).</p>
-                  <p style={{ margin:"0 0 0" }}>6. <strong>Restitution</strong> — Le véhicule doit être restitué aux date, heure et lieu convenus. Tout retard non signalé pourra faire l'objet d'une facturation supplémentaire.</p>
+                  <p style={{ margin:"0 0 6px" }}>5. <strong>Assurance</strong> — Le locataire doit être titulaire d'un permis de conduire valide en cours de validité. Le véhicule est couvert par l'assurance du loueur (RC + dommages tous accidents) avec une franchise opposable au locataire de <strong>{agencyFranchise}</strong>.</p>
+                  <p style={{ margin:"0 0 6px" }}>6. <strong>Restitution</strong> — Le véhicule doit être restitué aux date, heure et lieu convenus. Tout retard non signalé pourra faire l'objet d'une facturation supplémentaire.</p>
+                  <p style={{ margin:"0 0 0" }}>7. <strong>Protection des données</strong> — Les données personnelles collectées sont traitées conformément au RGPD (UE 2016/679). Elles sont utilisées uniquement pour la gestion de la location et ne sont pas cédées à des tiers. Droit d'accès et de rectification sur demande à {agencyEmail||agencyName}.</p>
                 </div>
               </div>
             )}
@@ -3129,8 +3167,14 @@ function Documents({ agencyProfile, vehicles, clients }) {
             </div>
 
             {/* Footer légal */}
-            <div style={{ marginTop:24, paddingTop:12, borderTop:"1px solid #EEE", textAlign:"center" }}>
-              <div style={{ fontSize:9, color:"#AAA" }}>{agencyName} — {agencySiret} — Document généré par Loqar</div>
+            <div style={{ marginTop:24, paddingTop:12, borderTop:"1px solid #EEE" }}>
+              <div style={{ fontSize:9, color:"#AAA", textAlign:"center", marginBottom:4 }}>{agencyName} — {agencySiret}{agencyPhone?` — ${agencyPhone}`:""}{agencyEmail?` — ${agencyEmail}`:""}</div>
+              <div style={{ fontSize:8, color:"#BBB", textAlign:"center", lineHeight:1.5 }}>
+                {lang==="en"
+                  ? "Personal data processed in accordance with GDPR (EU 2016/679). Data used solely for rental management and not shared with third parties. Right of access/rectification upon request."
+                  : "Données personnelles traitées conformément au RGPD (UE 2016/679) — utilisées uniquement pour la gestion de la location, non transmises à des tiers — droit d'accès et de rectification sur demande."}
+              </div>
+              <div style={{ fontSize:8, color:"#CCC", textAlign:"center", marginTop:3 }}>Document généré par Loqar · loqar.vercel.app</div>
             </div>
           </div>
         </div>
