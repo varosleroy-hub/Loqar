@@ -2821,7 +2821,152 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
 }
 
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
-function Documents({ agencyProfile, vehicles, clients }) {
+// ─── VEHICLE CANVAS (état des lieux interactif) ───────────────────────────────
+function VehicleCanvas({ storageKey = "loqar_canvas_draft", exportRef }) {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+  const lastPos = useRef(null);
+  const [color, setColor] = useState("#E53935");
+  const [size, setSize] = useState(4);
+
+  const drawCar = (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#FDFAF5"; ctx.fillRect(0, 0, w, h);
+    const sx = w/320, sy = h/180;
+    // Corps principal
+    ctx.beginPath(); ctx.roundRect(80*sx, 20*sy, 160*sx, 140*sy, 30*Math.min(sx,sy));
+    ctx.fillStyle = "#E8E0D0"; ctx.strokeStyle = "#AAA"; ctx.lineWidth = 1.5;
+    ctx.fill(); ctx.stroke();
+    // Capot avant
+    ctx.beginPath(); ctx.roundRect(95*sx, 20*sy, 130*sx, 40*sy, 10*Math.min(sx,sy));
+    ctx.fillStyle = "#D8CFC0"; ctx.fill(); ctx.stroke();
+    // Coffre
+    ctx.beginPath(); ctx.roundRect(95*sx, 120*sy, 130*sx, 40*sy, 10*Math.min(sx,sy));
+    ctx.fillStyle = "#D8CFC0"; ctx.fill(); ctx.stroke();
+    // Habitacle
+    ctx.beginPath(); ctx.roundRect(100*sx, 62*sy, 120*sx, 56*sy, 6*Math.min(sx,sy));
+    ctx.fillStyle = "#B8B0A0"; ctx.fill(); ctx.stroke();
+    // Pare-brise
+    ctx.beginPath(); ctx.roundRect(105*sx, 55*sy, 110*sx, 18*sy, 4*Math.min(sx,sy));
+    ctx.fillStyle = "rgba(200,224,240,.7)"; ctx.fill(); ctx.stroke();
+    // Lunette AR
+    ctx.beginPath(); ctx.roundRect(105*sx, 107*sy, 110*sx, 16*sy, 4*Math.min(sx,sy));
+    ctx.fillStyle = "rgba(200,224,240,.7)"; ctx.fill(); ctx.stroke();
+    // Roues
+    [[56,30],[236,30],[56,106],[236,106]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.roundRect(x*sx, y*sy, 28*sx, 44*sy, 8*Math.min(sx,sy));
+      ctx.fillStyle = "#555"; ctx.strokeStyle = "#333"; ctx.lineWidth = 1;
+      ctx.fill(); ctx.stroke();
+    });
+    // Labels
+    ctx.font = `${8*Math.min(sx,sy)+7}px sans-serif`; ctx.fillStyle = "#666"; ctx.textAlign = "center";
+    ctx.fillText("AVANT",  160*sx, 46*sy);
+    ctx.fillText("ARRIÈRE",160*sx, 148*sy);
+    ctx.save(); ctx.translate(14*sx, 95*sy); ctx.rotate(-Math.PI/2);
+    ctx.fillText("GAUCHE", 0, 0); ctx.restore();
+    ctx.save(); ctx.translate((320-14)*sx, 95*sy); ctx.rotate(Math.PI/2);
+    ctx.fillText("DROITE", 0, 0); ctx.restore();
+  };
+
+  const getPos = (e, canvas) => {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * (canvas.width / r.width), y: (src.clientY - r.top) * (canvas.height / r.height) };
+  };
+
+  const restoreStrokes = (ctx) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      saved.forEach(s => {
+        ctx.beginPath(); ctx.strokeStyle = s.color; ctx.lineWidth = s.size;
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
+        s.pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+        ctx.stroke();
+      });
+    } catch(e) {}
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    drawCar(ctx, canvas.width, canvas.height);
+    restoreStrokes(ctx);
+    if (exportRef) exportRef.current = () => canvas.toDataURL("image/png");
+  }, [storageKey]);
+
+  const startDraw = (e) => {
+    e.preventDefault();
+    drawing.current = true;
+    const p = getPos(e, canvasRef.current);
+    lastPos.current = p;
+    // start new stroke
+    const key = storageKey+"_cur";
+    localStorage.setItem(key, JSON.stringify({ color, size, pts: [p] }));
+  };
+  const moveDraw = (e) => {
+    if (!drawing.current) return;
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const pos = getPos(e, canvas);
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = size;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.moveTo(lastPos.current.x, lastPos.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    lastPos.current = pos;
+    // append to cur stroke
+    try {
+      const key = storageKey+"_cur";
+      const cur = JSON.parse(localStorage.getItem(key)||"{}");
+      cur.pts.push(pos);
+      localStorage.setItem(key, JSON.stringify(cur));
+    } catch(e) {}
+  };
+  const endDraw = () => {
+    if (!drawing.current) return;
+    drawing.current = false;
+    try {
+      const key = storageKey+"_cur";
+      const cur = JSON.parse(localStorage.getItem(key)||"null");
+      if (cur && cur.pts.length > 1) {
+        const saved = JSON.parse(localStorage.getItem(storageKey)||"[]");
+        saved.push(cur);
+        localStorage.setItem(storageKey, JSON.stringify(saved));
+      }
+      localStorage.removeItem(key);
+    } catch(e) {}
+  };
+  const clearCanvas = () => {
+    localStorage.removeItem(storageKey);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    drawCar(ctx, canvas.width, canvas.height);
+  };
+
+  return (
+    <div style={{ marginBottom:16 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, flexWrap:"wrap" }}>
+        <div style={{ fontSize:9, color:"#888", textTransform:"uppercase", letterSpacing:".08em", fontWeight:700 }}>Marquer les dommages :</div>
+        {["#E53935","#FF9800","#2196F3","#4CAF50","#000"].map(c=>(
+          <button key={c} onClick={()=>setColor(c)} style={{ width:18, height:18, borderRadius:"50%", background:c, border:color===c?"2px solid #333":"2px solid transparent", cursor:"pointer", flexShrink:0 }}/>
+        ))}
+        <select value={size} onChange={e=>setSize(Number(e.target.value))} style={{ fontSize:10, padding:"2px 6px", borderRadius:6, border:"1px solid #CCC", background:"#FFF" }}>
+          {[2,4,6,10].map(s=><option key={s} value={s}>{s}px</option>)}
+        </select>
+        <button onClick={clearCanvas} style={{ fontSize:10, padding:"3px 10px", borderRadius:6, border:"1px solid #DDD", background:"#FFF", cursor:"pointer", color:"#E53935", fontWeight:700 }}>✕ Effacer</button>
+      </div>
+      <canvas ref={canvasRef} width={640} height={360}
+        style={{ width:"100%", maxWidth:400, border:"1px solid #DDD", borderRadius:8, touchAction:"none", cursor:"crosshair", display:"block" }}
+        onMouseDown={startDraw} onMouseMove={moveDraw} onMouseUp={endDraw} onMouseLeave={endDraw}
+        onTouchStart={startDraw} onTouchMove={moveDraw} onTouchEnd={endDraw}
+      />
+    </div>
+  );
+}
+
+function Documents({ agencyProfile, vehicles, clients, prefill = null, onClearPrefill }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -2829,6 +2974,24 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const [p, setP] = useState({clientId:"",vehicleId:"",startDate:"",endDate:"",price:"",deposit:"",km:"",kmReturn:"",fuelLevel:"full",fuelReturn:"full",notes:"",invoiceNum:"",clientLicense:"",clientAddress:"",paymentDue:"",quoteValidity:"30 jours",pickupLocation:"",returnLocation:"",additionalDriver:"",kmIncluded:"",kmOverRate:"0.20",paymentMethod:""});
 
   const up = (k,v) => setP(prev=>({...prev,[k]:v}));
+
+  // Prefill from rental
+  useEffect(() => {
+    if (!prefill) return;
+    setP(prev => ({
+      ...prev,
+      clientId:  prefill.client_id  || "",
+      vehicleId: prefill.vehicle_id || "",
+      startDate: prefill.start_date || "",
+      endDate:   prefill.end_date   || "",
+      price:     String(prefill.prix_per_day || prefill.price_per_day || ""),
+      deposit:   String(prefill.deposit || ""),
+      km:        String(prefill.km_start || ""),
+      notes:     prefill.notes || "",
+    }));
+    if (onClearPrefill) onClearPrefill();
+    toast(lang==="en"?"Rental data loaded into the form":"Données de location chargées dans le formulaire", "success");
+  }, [prefill]);
   const days  = Math.ceil((new Date(p.endDate)-new Date(p.startDate))/86400000);
   const total = (parseInt(p.price)||0)*(days>0?days:0);
   const totalHT = Math.round(total / 1.20);
@@ -2858,10 +3021,27 @@ function Documents({ agencyProfile, vehicles, clients }) {
     if (!p.vehicleId) { toast("Veuillez sélectionner un véhicule avant de générer le document.", "error"); return; }
     const el = document.getElementById("doc-preview");
     if (!el) return;
+    let html = el.innerHTML;
+    // Replace canvas with its image for print
+    if (canvasExportRef.current) {
+      try {
+        const dataUrl = canvasExportRef.current();
+        html = html.replace(/<canvas[^>]*><\/canvas>/gi, `<img src="${dataUrl}" style="width:100%;max-width:400px;border:1px solid #DDD;border-radius:8px;display:block;"/>`);
+      } catch(e) {}
+    }
     const w = window.open("","_blank");
-    w.document.write(`<html><head><title>Document Loqar</title><style>body{margin:0;font-family:Arial,sans-serif;color:#1A1510;}@media print{body{margin:0}}</style></head><body>${el.innerHTML}</body></html>`);
+    w.document.write(`<html><head><title>Document Loqar</title><style>body{margin:0;font-family:Arial,sans-serif;color:#1A1510;}@media print{body{margin:0}}</style></head><body>${html}</body></html>`);
     w.document.close();
     w.focus();
+    // Save to history
+    try {
+      const hist = JSON.parse(localStorage.getItem("loqar_docs_history")||"[]");
+      const entry = { docNum, docType, clientName: selectedClient?(selectedClient.first_name||selectedClient.firstName)+" "+(selectedClient.last_name||selectedClient.lastName):"", vehicleName: selectedVehicle?.name||"", date: new Date().toISOString(), params: p };
+      hist.unshift(entry);
+      const trimmed = hist.slice(0,50);
+      localStorage.setItem("loqar_docs_history", JSON.stringify(trimmed));
+      setDocHistory(trimmed);
+    } catch(e) {}
     setTimeout(()=>{ w.print(); w.close(); }, 400);
   };
 
@@ -2881,6 +3061,9 @@ function Documents({ agencyProfile, vehicles, clients }) {
   const [checkNotes, setCheckNotes] = useState(()=>{ try { return JSON.parse(localStorage.getItem(`loqar_checks_${p.vehicleId||"draft"}`)||"{}").notes||{}; } catch(e) { return {}; } });
   const toggleCheck = (item, val) => setChecks(prev=>{ const n={...prev,[item]:val}; try { localStorage.setItem(`loqar_checks_${p.vehicleId||"draft"}`,JSON.stringify({checks:n,notes:checkNotes})); } catch(e){} return n; });
   const setCheckNote = (item, val) => setCheckNotes(prev=>{ const n={...prev,[item]:val}; try { localStorage.setItem(`loqar_checks_${p.vehicleId||"draft"}`,JSON.stringify({checks,notes:n})); } catch(e){} return n; });
+  const canvasExportRef = useRef(null);
+  const [docHistory, setDocHistory] = useState(() => { try { return JSON.parse(localStorage.getItem("loqar_docs_history")||"[]"); } catch(e) { return []; } });
+  const [showHistory, setShowHistory] = useState(false);
   const [elementPhotos, setElementPhotos] = useState({});
   const handleElementPhoto = async (element, file) => {
     if (!file) return;
@@ -2908,6 +3091,48 @@ function Documents({ agencyProfile, vehicles, clients }) {
           );
         })}
       </div>
+
+      {/* Historique des documents générés */}
+      {docHistory.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <button onClick={()=>setShowHistory(h=>!h)}
+            style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:`1px solid ${T.border}`, borderRadius:10, padding:"8px 14px", color:T.sub, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+            <span style={{ fontSize:14 }}>🗂</span>
+            {lang==="en"?"Document history":"Historique des documents"} ({docHistory.length})
+            <span style={{ marginLeft:4, fontSize:11 }}>{showHistory?"▲":"▼"}</span>
+          </button>
+          {showHistory && (
+            <div style={{ marginTop:10, background:T.card, border:`1px solid ${T.border}`, borderRadius:12, overflow:"hidden" }}>
+              <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                <thead>
+                  <tr style={{ background:T.card2 }}>
+                    {[lang==="en"?"Number":"Numéro", lang==="en"?"Type":"Type", lang==="en"?"Client":"Client", lang==="en"?"Vehicle":"Véhicule", lang==="en"?"Date":"Date", ""].map(h=>(
+                      <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:10, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".06em" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {docHistory.map((d,i)=>(
+                    <tr key={i} style={{ borderTop:`1px solid ${T.border}` }}>
+                      <td style={{ padding:"8px 12px", fontSize:12, fontWeight:700, color:T.gold }}>{d.docNum}</td>
+                      <td style={{ padding:"8px 12px", fontSize:12, color:T.sub }}>{({contrat:"Contrat",facture:"Facture",etat:"État des lieux",devis:"Devis"})[d.docType]||d.docType}</td>
+                      <td style={{ padding:"8px 12px", fontSize:12, color:T.text }}>{d.clientName||"—"}</td>
+                      <td style={{ padding:"8px 12px", fontSize:12, color:T.sub }}>{d.vehicleName||"—"}</td>
+                      <td style={{ padding:"8px 12px", fontSize:11, color:T.muted }}>{new Date(d.date).toLocaleDateString("fr-FR")}</td>
+                      <td style={{ padding:"8px 12px" }}>
+                        <button onClick={()=>{ setDocType(d.docType); setP(d.params); setShowHistory(false); toast(lang==="en"?"Parameters restored":"Paramètres restaurés","success"); }}
+                          style={{ fontSize:11, padding:"4px 10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:7, color:T.gold, cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
+                          {lang==="en"?"Restore":"Restaurer"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ display:"grid", gridTemplateColumns:"290px 1fr", gap:22 }}>
         <div>
@@ -3131,37 +3356,8 @@ function Documents({ agencyProfile, vehicles, clients }) {
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontSize:11, fontWeight:700, color:"#1A1510", marginBottom:10, textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"Vehicle Condition Check":"Contrôle de l'état du véhicule"}</div>
 
-                {/* Schéma véhicule top-down */}
-                <div style={{ marginBottom:16, textAlign:"center" }}>
-                  <div style={{ fontSize:9, color:"#888", marginBottom:6, textTransform:"uppercase", letterSpacing:".08em" }}>{lang==="en"?"Mark any damage on the diagram below":"Annotez les dommages sur le schéma ci-dessous"}</div>
-                  <svg viewBox="0 0 320 180" style={{ width:"100%", maxWidth:380, border:"1px solid #DDD", borderRadius:8, background:"#FDFAF5" }} xmlns="http://www.w3.org/2000/svg">
-                    {/* Carrosserie principale */}
-                    <rect x="80" y="20" width="160" height="140" rx="30" fill="#E8E0D0" stroke="#AAA" strokeWidth="1.5"/>
-                    {/* Capot avant */}
-                    <rect x="95" y="20" width="130" height="40" rx="10" fill="#D8CFC0" stroke="#AAA" strokeWidth="1"/>
-                    {/* Coffre arrière */}
-                    <rect x="95" y="120" width="130" height="40" rx="10" fill="#D8CFC0" stroke="#AAA" strokeWidth="1"/>
-                    {/* Habitacle */}
-                    <rect x="100" y="62" width="120" height="56" rx="6" fill="#B8B0A0" stroke="#999" strokeWidth="1"/>
-                    {/* Roues AV G */}
-                    <rect x="56" y="30" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
-                    {/* Roues AV D */}
-                    <rect x="236" y="30" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
-                    {/* Roues AR G */}
-                    <rect x="56" y="106" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
-                    {/* Roues AR D */}
-                    <rect x="236" y="106" width="28" height="44" rx="8" fill="#555" stroke="#333" strokeWidth="1"/>
-                    {/* Etiquettes */}
-                    <text x="160" y="46" textAnchor="middle" fontSize="8" fill="#666">{lang==="en"?"FRONT":"AVANT"}</text>
-                    <text x="160" y="148" textAnchor="middle" fontSize="8" fill="#666">{lang==="en"?"REAR":"ARRIÈRE"}</text>
-                    <text x="26" y="95" textAnchor="middle" fontSize="7" fill="#666" transform="rotate(-90,26,95)">{lang==="en"?"LEFT":"GAUCHE"}</text>
-                    <text x="295" y="95" textAnchor="middle" fontSize="7" fill="#666" transform="rotate(90,295,95)">{lang==="en"?"RIGHT":"DROITE"}</text>
-                    {/* Pare-brise */}
-                    <rect x="105" y="55" width="110" height="18" rx="4" fill="#C8E0F0" stroke="#AAA" strokeWidth="0.8" opacity="0.7"/>
-                    {/* Lunette AR */}
-                    <rect x="105" y="107" width="110" height="16" rx="4" fill="#C8E0F0" stroke="#AAA" strokeWidth="0.8" opacity="0.7"/>
-                  </svg>
-                </div>
+                {/* Schéma véhicule interactif */}
+                <VehicleCanvas storageKey={`loqar_canvas_${p.vehicleId||"draft"}`} exportRef={canvasExportRef}/>
 
                 {/* Checklist carrosserie / mécanique */}
                 <table style={{ width:"100%", borderCollapse:"collapse", marginBottom:12 }}>
@@ -3574,7 +3770,7 @@ function Pricing() {
 
 
 // ─── LOCATIONS ────────────────────────────────────────────────────────────────
-function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false }) {
+function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClients, user, userPlan = "starter", activeAgencyId = null, dataLoading = false, onGenDoc }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -3896,10 +4092,18 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                     </select>
                   </td>
                   <td style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}` }}>
-                    <button onClick={e=>{e.stopPropagation();handleDelete(r.id);}}
-                      style={{ background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, padding:"5px 9px", color:T.red, cursor:"pointer", display:"flex", alignItems:"center" }}>
-                      {Icons.trash}
-                    </button>
+                    <div style={{ display:"flex", gap:6 }}>
+                      {onGenDoc && (
+                        <button onClick={e=>{e.stopPropagation();onGenDoc(r);}}
+                          style={{ background:T.goldDim, border:`1px solid ${T.gold}30`, borderRadius:8, padding:"5px 9px", color:T.gold, cursor:"pointer", display:"flex", alignItems:"center", title:"Générer un document" }}>
+                          {Icons.download}
+                        </button>
+                      )}
+                      <button onClick={e=>{e.stopPropagation();handleDelete(r.id);}}
+                        style={{ background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, padding:"5px 9px", color:T.red, cursor:"pointer", display:"flex", alignItems:"center" }}>
+                        {Icons.trash}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -3931,6 +4135,12 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                 style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:10, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
                 {Icons.mail} Envoyer le lien portail
               </button>
+              {onGenDoc && (
+                <button onClick={()=>onGenDoc(sel)}
+                  style={{ marginTop:8, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, color:T.text, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                  {Icons.download} {lang==="en"?"Generate document":"Générer un document"}
+                </button>
+              )}
             </Card>
           </div>
         )}
@@ -4200,6 +4410,7 @@ function App() {
   const [agencyProfile,  setAgencyProfile]  = useState(DEFAULT_AGENCY);
   const [userPlan,       setUserPlan]       = useState("starter");
   const [activeAgency,   setActiveAgency]   = useState(null); // null = agence principale
+  const [docPrefill,     setDocPrefill]     = useState(null);
   const unread = NOTIFS.filter(n=>!n.read).length;
 
   useEffect(() => {
@@ -4317,11 +4528,11 @@ function App() {
 
   const screens = {
     dashboard: <Dashboard vehicles={vehicles} rentals={rentals} payments={payments} clients={clients} onNav={p=>setPage(p)}/>,
-    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} setVehicles={setVehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
+    rentals:   <Rentals rentals={rentals} setRentals={setRentals} vehicles={vehicles} setVehicles={setVehicles} clients={clients} setClients={setClients} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} onGenDoc={r=>{ setDocPrefill(r); setPage("documents"); }}/>,
     vehicles:  <Vehicles  vehicles={vehicles} setVehicles={setVehicles} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
-    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients}/>,
+    documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} prefill={docPrefill} onClearPrefill={()=>setDocPrefill(null)}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
     pricing:   <Pricing/>,
