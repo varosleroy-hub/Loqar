@@ -173,8 +173,7 @@ export const ShortLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: T.bg }}>
-      {/* Décommente quand tu as le fichier audio :
-      <Audio src={staticFile('voiceover.mp3')} startFrom={0} /> */}
+      <Audio src={staticFile('voiceover.mp3')} startFrom={0} />
 
       <Sequence from={0} durationInFrames={60}>
         <S1Logo frame={frame} fps={fps} />
