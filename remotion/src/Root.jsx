@@ -3,6 +3,7 @@ import { AdLoqar } from './AdLoqar.jsx';
 import { PromoLoqar } from './PromoLoqar.jsx';
 import { ShortLoqar } from './ShortLoqar.jsx';
 import { ReelsLoqar } from './ReelsLoqar.jsx';
+import { StoryLoqar } from './StoryLoqar.jsx';
 
 export const Root = () => {
   return (
@@ -40,6 +41,14 @@ export const Root = () => {
       <Composition
         id="ReelsLoqar"
         component={ReelsLoqar}
+        durationInFrames={600}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="StoryLoqar"
+        component={StoryLoqar}
         durationInFrames={600}
         fps={30}
         width={1080}
