@@ -5,7 +5,9 @@ import {
   interpolate,
   spring,
   Sequence,
+  Audio,
 } from 'remotion';
+import { staticFile } from 'remotion';
 
 // --- Palette exacte Loqar ---
 const T = {
@@ -419,6 +421,49 @@ const SceneCTA = ({ frame, fps }) => {
   );
 };
 
+// --- Sous-titres PromoLoqar ---
+const PROMO_SUBS = [
+  { text: "Loqar — la solution de gestion pour loueurs de voitures.",       start: 0,   end: 88  },
+  { text: "Gérez. Automatisez. Encaissez.",                                  start: 90,  end: 150 },
+  { text: "Le logiciel tout-en-un pour les agences de location.",            start: 150, end: 238 },
+  { text: "Votre flotte centralisée. Vos contrats automatisés.",             start: 240, end: 340 },
+  { text: "Paiements et dépôts suivis en temps réel.",                       start: 340, end: 478 },
+  { text: "Tableau de bord complet. Revenus, véhicules, locations.",         start: 480, end: 580 },
+  { text: "Tout ce dont votre agence a besoin, en un seul endroit.",         start: 580, end: 688 },
+  { text: "Essayez Loqar gratuitement — loqar.fr",                          start: 690, end: 900 },
+];
+
+const PromoSubtitles = ({ frame }) => {
+  const current = PROMO_SUBS.find(s => frame >= s.start && frame < s.end);
+  if (!current) return null;
+  const op = Math.min(
+    interpolate(frame, [current.start, current.start + 10], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+    interpolate(frame, [current.end - 10, current.end], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+  );
+  return (
+    <div style={{
+      position: 'absolute', bottom: '5%', left: '6%', right: '6%',
+      textAlign: 'center', opacity: op, zIndex: 100,
+    }}>
+      <div style={{
+        display: 'inline-block',
+        background: '#00000090',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 12,
+        padding: '10px 24px',
+        fontFamily: "'Plus Jakarta Sans', Arial, sans-serif",
+        fontSize: 26,
+        fontWeight: 600,
+        color: '#ffffff',
+        lineHeight: 1.4,
+        maxWidth: '90%',
+      }}>
+        {current.text}
+      </div>
+    </div>
+  );
+};
+
 // --- Root ---
 export const PromoLoqar = () => {
   const frame = useCurrentFrame();
@@ -426,6 +471,11 @@ export const PromoLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: T.bg }}>
+      {/* Narration */}
+      <Audio src={staticFile('narration-promo.mp3')} startFrom={0} volume={1.5} />
+      {/* Musique de fond */}
+      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.1} />
+
       <Sequence from={0} durationInFrames={90}>
         <SceneLogo frame={frame} fps={fps} />
       </Sequence>
@@ -441,6 +491,9 @@ export const PromoLoqar = () => {
       <Sequence from={690} durationInFrames={210}>
         <SceneCTA frame={frame - 690} fps={fps} />
       </Sequence>
+
+      {/* Sous-titres */}
+      <PromoSubtitles frame={frame} />
     </AbsoluteFill>
   );
 };

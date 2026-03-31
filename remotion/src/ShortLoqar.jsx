@@ -173,7 +173,8 @@ export const ShortLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: T.bg }}>
-      <Audio src={staticFile('voiceover.mp3')} startFrom={0} />
+      <Audio src={staticFile('voiceover.mp3')} startFrom={0} volume={1.5} />
+      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.1} />
 
       <Sequence from={0} durationInFrames={60}>
         <S1Logo frame={frame} fps={fps} />
