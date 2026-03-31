@@ -471,8 +471,10 @@ export const PromoLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: T.bg }}>
+      {/* Narration */}
+      <Audio src={staticFile('narration-promo.mp3')} startFrom={0} volume={1.5} />
       {/* Musique de fond */}
-      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.2} />
+      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.1} />
 
       <Sequence from={0} durationInFrames={90}>
         <SceneLogo frame={frame} fps={fps} />
