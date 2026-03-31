@@ -368,6 +368,8 @@ export const StoryLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: C.obsidian }}>
+      {/* Musique de fond */}
+      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.18} />
       {/* Sons */}
       {/* Impact au début — révélation logo Loqar scène 3 */}
       <Audio src={staticFile('impact.mp3')} startFrom={0} endAt={60} volume={0.5} />
