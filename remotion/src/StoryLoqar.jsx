@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, useCurrentFrame, Audio, staticFile } from 'remotion';
 
 const C = {
   obsidian: '#080807',
@@ -368,6 +368,26 @@ export const StoryLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: C.obsidian }}>
+      {/* Sons */}
+      {/* Impact au début — révélation logo Loqar scène 3 */}
+      <Audio src={staticFile('impact.mp3')} startFrom={0} endAt={60} volume={0.5} />
+      {/* Whoosh transition scène 1→2 */}
+      <Audio src={staticFile('whoosh.wav')} startFrom={58} endAt={90} volume={0.4} />
+      {/* Ding pour chaque message scène 2 */}
+      <Audio src={staticFile('ding.wav')} startFrom={83} endAt={110} volume={0.5} />
+      <Audio src={staticFile('ding.wav')} startFrom={98} endAt={125} volume={0.5} />
+      <Audio src={staticFile('ding.wav')} startFrom={113} endAt={140} volume={0.5} />
+      {/* Whoosh transition scène 2→3 */}
+      <Audio src={staticFile('whoosh.wav')} startFrom={158} endAt={190} volume={0.4} />
+      {/* Impact révélation Loqar scène 3 */}
+      <Audio src={staticFile('impact.mp3')} startFrom={178} endAt={220} volume={0.6} />
+      {/* Whoosh split screen scène 4 */}
+      <Audio src={staticFile('whoosh.wav')} startFrom={258} endAt={290} volume={0.4} />
+      {/* Succès scène 5 — résultats */}
+      <Audio src={staticFile('success.wav')} startFrom={422} endAt={470} volume={0.5} />
+      {/* Impact final CTA */}
+      <Audio src={staticFile('impact.mp3')} startFrom={498} endAt={540} volume={0.4} />
+
       {frame < 78  && <Scene1 frame={frame} />}
       {frame >= 58  && frame < 175 && <Scene2 frame={frame - 65} />}
       {frame >= 158 && frame < 278 && <Scene3 frame={frame - 165} />}
