@@ -370,25 +370,17 @@ export const StoryLoqar = () => {
     <AbsoluteFill style={{ background: C.obsidian }}>
       {/* Musique de fond */}
       <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.18} />
-      {/* Sons */}
-      {/* Impact au début — révélation logo Loqar scène 3 */}
-      <Audio src={staticFile('impact.mp3')} startFrom={0} endAt={60} volume={0.5} />
-      {/* Whoosh transition scène 1→2 */}
-      <Audio src={staticFile('whoosh.wav')} startFrom={58} endAt={90} volume={0.4} />
-      {/* Ding pour chaque message scène 2 */}
-      <Audio src={staticFile('ding.wav')} startFrom={83} endAt={110} volume={0.5} />
-      <Audio src={staticFile('ding.wav')} startFrom={98} endAt={125} volume={0.5} />
-      <Audio src={staticFile('ding.wav')} startFrom={113} endAt={140} volume={0.5} />
-      {/* Whoosh transition scène 2→3 */}
-      <Audio src={staticFile('whoosh.wav')} startFrom={158} endAt={190} volume={0.4} />
-      {/* Impact révélation Loqar scène 3 */}
-      <Audio src={staticFile('impact.mp3')} startFrom={178} endAt={220} volume={0.6} />
-      {/* Whoosh split screen scène 4 */}
-      <Audio src={staticFile('whoosh.wav')} startFrom={258} endAt={290} volume={0.4} />
-      {/* Succès scène 5 — résultats */}
-      <Audio src={staticFile('success.wav')} startFrom={422} endAt={470} volume={0.5} />
-      {/* Impact final CTA */}
-      <Audio src={staticFile('impact.mp3')} startFrom={498} endAt={540} volume={0.4} />
+      {/* Effets sonores */}
+      <Audio src={staticFile('impact.mp3')} startFrom={0} endAt={60} volume={0.3} />
+      <Audio src={staticFile('whoosh.wav')} startFrom={58} endAt={90} volume={0.25} />
+      <Audio src={staticFile('ding.wav')} startFrom={83} endAt={110} volume={0.3} />
+      <Audio src={staticFile('ding.wav')} startFrom={98} endAt={125} volume={0.3} />
+      <Audio src={staticFile('ding.wav')} startFrom={113} endAt={140} volume={0.3} />
+      <Audio src={staticFile('whoosh.wav')} startFrom={158} endAt={190} volume={0.25} />
+      <Audio src={staticFile('impact.mp3')} startFrom={178} endAt={220} volume={0.35} />
+      <Audio src={staticFile('whoosh.wav')} startFrom={258} endAt={290} volume={0.25} />
+      <Audio src={staticFile('success.wav')} startFrom={422} endAt={470} volume={0.3} />
+      <Audio src={staticFile('impact.mp3')} startFrom={498} endAt={540} volume={0.25} />
 
       {frame < 78  && <Scene1 frame={frame} />}
       {frame >= 58  && frame < 175 && <Scene2 frame={frame - 65} />}
