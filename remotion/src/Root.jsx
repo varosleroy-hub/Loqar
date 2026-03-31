@@ -1,0 +1,59 @@
+import { Composition } from 'remotion';
+import { AdLoqar } from './AdLoqar.jsx';
+import { PromoLoqar } from './PromoLoqar.jsx';
+import { ShortLoqar } from './ShortLoqar.jsx';
+import { ReelsLoqar } from './ReelsLoqar.jsx';
+import { StoryLoqar } from './StoryLoqar.jsx';
+
+export const Root = () => {
+  return (
+    <>
+      <Composition
+        id="AdLoqar"
+        component={AdLoqar}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1080}
+        defaultProps={{
+          agencyName: 'Loqar',
+          slogan: 'Votre voiture, quand vous en avez besoin.',
+          primaryColor: '#1a1a2e',
+          accentColor: '#e94560',
+        }}
+      />
+      <Composition
+        id="PromoLoqar"
+        component={PromoLoqar}
+        durationInFrames={900}
+        fps={30}
+        width={1080}
+        height={1080}
+      />
+      <Composition
+        id="ShortLoqar"
+        component={ShortLoqar}
+        durationInFrames={300}
+        fps={30}
+        width={1080}
+        height={1080}
+      />
+      <Composition
+        id="ReelsLoqar"
+        component={ReelsLoqar}
+        durationInFrames={600}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="StoryLoqar"
+        component={StoryLoqar}
+        durationInFrames={600}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+    </>
+  );
+};
