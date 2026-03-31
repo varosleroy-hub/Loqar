@@ -362,25 +362,79 @@ function Scene6({ frame }) {
   );
 }
 
+// ── SOUS-TITRES synced avec narration ─────────────────────
+const SUBTITLES = [
+  { text: "Karim. 8 voitures. 14 heures de travail par jour.",         start: 0,   end: 55  },
+  { text: "Des messages sans réponse. Des contrats perdus.",           start: 58,  end: 105 },
+  { text: "Sa famille qui attend.",                                     start: 105, end: 135 },
+  { text: "Jusqu'au jour où un ami lui parle de Loqar.",               start: 158, end: 210 },
+  { text: "En une semaine — tout change.",                             start: 210, end: 248 },
+  { text: "Les contrats se génèrent en un clic.",                      start: 248, end: 290 },
+  { text: "Les paiements arrivent automatiquement.",                   start: 290, end: 330 },
+  { text: "Il reprend le contrôle.",                                   start: 330, end: 370 },
+  { text: "+34% de chiffre d'affaires. Ses soirées de retour.",        start: 390, end: 460 },
+  { text: "Et toi — tu attends quoi ?",                               start: 505, end: 550 },
+  { text: "Loqar.fr — Essai gratuit, aucune carte requise.",           start: 555, end: 600 },
+];
+
+const Subtitles = ({ frame }) => {
+  const current = SUBTITLES.find(s => frame >= s.start && frame < s.end);
+  if (!current) return null;
+  const op = Math.min(
+    interpolate(frame, [current.start, current.start + 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+    interpolate(frame, [current.end - 8, current.end], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+  );
+  return (
+    <div style={{
+      position: 'absolute', bottom: '6%', left: '6%', right: '6%',
+      textAlign: 'center', opacity: op, zIndex: 100,
+    }}>
+      <div style={{
+        display: 'inline-block',
+        background: '#00000088',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 12,
+        padding: '10px 22px',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 28,
+        fontWeight: 600,
+        color: '#ffffff',
+        lineHeight: 1.4,
+        maxWidth: '90%',
+      }}>
+        {current.text}
+      </div>
+    </div>
+  );
+};
+
+function interpolate(frame, [inF, outF], [from, to], opts = {}) {
+  if (frame <= inF) return opts.extrapolateLeft === 'clamp' ? from : from;
+  if (frame >= outF) return opts.extrapolateRight === 'clamp' ? to : to;
+  return from + ((frame - inF) / (outF - inF)) * (to - from);
+}
+
 // ── COMPOSITION REMOTION ──────────────────────────────────
 export const StoryLoqar = () => {
   const frame = useCurrentFrame();
 
   return (
     <AbsoluteFill style={{ background: C.obsidian }}>
+      {/* Narration voix off */}
+      <Audio src={staticFile('narration.mp3')} startFrom={0} volume={0.9} />
       {/* Musique de fond */}
-      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.18} />
+      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.12} />
       {/* Effets sonores */}
-      <Audio src={staticFile('impact.mp3')} startFrom={0} endAt={60} volume={0.3} />
-      <Audio src={staticFile('whoosh.wav')} startFrom={58} endAt={90} volume={0.25} />
-      <Audio src={staticFile('ding.wav')} startFrom={83} endAt={110} volume={0.3} />
-      <Audio src={staticFile('ding.wav')} startFrom={98} endAt={125} volume={0.3} />
-      <Audio src={staticFile('ding.wav')} startFrom={113} endAt={140} volume={0.3} />
-      <Audio src={staticFile('whoosh.wav')} startFrom={158} endAt={190} volume={0.25} />
-      <Audio src={staticFile('impact.mp3')} startFrom={178} endAt={220} volume={0.35} />
-      <Audio src={staticFile('whoosh.wav')} startFrom={258} endAt={290} volume={0.25} />
-      <Audio src={staticFile('success.wav')} startFrom={422} endAt={470} volume={0.3} />
-      <Audio src={staticFile('impact.mp3')} startFrom={498} endAt={540} volume={0.25} />
+      <Audio src={staticFile('impact.mp3')} startFrom={0} endAt={60} volume={0.2} />
+      <Audio src={staticFile('whoosh.wav')} startFrom={58} endAt={90} volume={0.18} />
+      <Audio src={staticFile('ding.wav')} startFrom={83} endAt={110} volume={0.22} />
+      <Audio src={staticFile('ding.wav')} startFrom={98} endAt={125} volume={0.22} />
+      <Audio src={staticFile('ding.wav')} startFrom={113} endAt={140} volume={0.22} />
+      <Audio src={staticFile('whoosh.wav')} startFrom={158} endAt={190} volume={0.18} />
+      <Audio src={staticFile('impact.mp3')} startFrom={178} endAt={220} volume={0.25} />
+      <Audio src={staticFile('whoosh.wav')} startFrom={258} endAt={290} volume={0.18} />
+      <Audio src={staticFile('success.wav')} startFrom={422} endAt={470} volume={0.22} />
+      <Audio src={staticFile('impact.mp3')} startFrom={498} endAt={540} volume={0.18} />
 
       {frame < 78  && <Scene1 frame={frame} />}
       {frame >= 58  && frame < 175 && <Scene2 frame={frame - 65} />}
@@ -388,6 +442,9 @@ export const StoryLoqar = () => {
       {frame >= 258 && frame < 398 && <Scene4 frame={frame - 265} />}
       {frame >= 382 && frame < 515 && <Scene5 frame={frame - 390} />}
       {frame >= 498 && <Scene6 frame={frame - 505} />}
+
+      {/* Sous-titres */}
+      <Subtitles frame={frame} />
     </AbsoluteFill>
   );
 };
