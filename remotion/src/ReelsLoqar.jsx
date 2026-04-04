@@ -1,4 +1,5 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, useCurrentFrame, useVideoConfig, Audio } from 'remotion';
+import { staticFile } from 'remotion';
 
 const C = {
   obsidian: '#080807',
@@ -281,6 +282,7 @@ export const ReelsLoqar = () => {
 
   return (
     <AbsoluteFill style={{ background: C.obsidian }}>
+      <Audio src={staticFile('reelsloqar.mp3')} startFrom={0} volume={0.25} />
       {frame < 75  && <SceneChaos   frame={frame} />}
       {frame >= 50  && frame < 160 && <ScenePain    frame={frame - 55} />}
       {frame >= 140 && frame < 285 && <ScenePivot   frame={frame - 145} />}
