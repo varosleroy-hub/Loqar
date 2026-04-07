@@ -91,12 +91,10 @@ function Scene({ children, blurAmount=0, opacity=1 }){
 function Act1({ frame }){
   const blur=motionBlur(frame,0,5,5)+motionBlur(frame,67,6,6);
   const op=cl(lerp(frame,0,1,0,6));
-  const chiffreOp=cl(lerp(frame,0,1,8,16));
-  const flashOp=cl(lerp(frame,0,1,6,9)*lerp(frame,1,0,9,14));
+  const chiffreOp=cl(lerp(frame,0,1,4,14));
   return (
     <Scene blurAmount={blur} opacity={op}>
       <div style={{ position:'absolute', inset:0, background:'#030303' }}/>
-      <div style={{ position:'absolute', inset:0, background:'#fff', opacity:flashOp, pointerEvents:'none' }}/>
       <div style={{ position:'absolute', top:'12%', left:'8%', opacity:chiffreOp, transform:`scale(${.6+sp(frame,8,.15)*.4})`, transformOrigin:'left top' }}>
         <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:800, fontSize:200, color:C.red, lineHeight:.9, letterSpacing:-4 }}>22H</div>
         <div style={{ fontFamily:"'Outfit',sans-serif", fontSize:32, color:'#ffffff44', letterSpacing:3, textTransform:'uppercase', marginTop:8 }}>perdues chaque semaine</div>
