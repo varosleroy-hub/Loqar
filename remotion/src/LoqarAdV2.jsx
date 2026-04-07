@@ -1,4 +1,4 @@
-import { useCurrentFrame } from 'remotion';
+import { useCurrentFrame, Audio, staticFile, AbsoluteFill } from 'remotion';
 
 const C = { obsidian:'#080807', gold:'#C9A84C', warm:'#F2EDE4', red:'#D93B2B', charcoal:'#1A1A18' };
 
@@ -90,7 +90,7 @@ function Scene({ children, blurAmount=0, opacity=1 }){
 
 function Act1({ frame }){
   const blur=motionBlur(frame,0,5,5)+motionBlur(frame,67,6,6);
-  const op=cl(lerp(frame,0,1,0,6)*lerp(frame,1,0,58,67));
+  const op=cl(lerp(frame,0,1,0,6));
   const chiffreOp=cl(lerp(frame,0,1,8,16));
   const flashOp=cl(lerp(frame,0,1,6,9)*lerp(frame,1,0,9,14));
   return (
@@ -117,7 +117,7 @@ function Act1({ frame }){
 
 function Act2({ frame }){
   const blur=motionBlur(frame,0,6,6)+motionBlur(frame,113,5,5);
-  const op=cl(lerp(frame,0,1,0,14)*lerp(frame,1,0,98,113));
+  const op=cl(lerp(frame,0,1,0,14));
   return (
     <Scene blurAmount={blur} opacity={op}>
       <div style={{ position:'absolute', inset:0, background:C.charcoal }}/>
@@ -144,7 +144,7 @@ function Act2({ frame }){
 
 function Act3({ frame }){
   const blur=motionBlur(frame,0,7,7)+motionBlur(frame,75,5,5);
-  const op=cl(lerp(frame,0,1,0,10)*lerp(frame,1,0,65,75));
+  const op=cl(lerp(frame,0,1,0,10));
   const logoScale=sp(frame,8,.09);
   const pulse=.96+Math.sin(frame*.09)*.04;
   return (
@@ -180,7 +180,7 @@ function Act3({ frame }){
 
 function Act4({ frame }){
   const blur=motionBlur(frame,0,6,6)+motionBlur(frame,105,5,5);
-  const op=cl(lerp(frame,0,1,0,14)*lerp(frame,1,0,92,105));
+  const op=cl(lerp(frame,0,1,0,14));
   const sunP=.97+Math.sin(frame*.05)*.03;
   const moments=[
     { q:"T'as déjà eu...", a:"un dimanche sans ta flotte ?", icon:"🌅", delay:12, stat:"2j récupérés/sem" },
@@ -274,13 +274,18 @@ export const LoqarAdV2 = () => {
   const frame = useCurrentFrame();
   const f = frame;
   return (
-    <div style={{ width:1080, height:1920, position:'relative', overflow:'hidden', fontFamily:"'Outfit',sans-serif" }}>
+    <AbsoluteFill style={{ background:'#080807', fontFamily:"'Outfit',sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;700;800&family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400&display=swap" rel="stylesheet"/>
-      {f < 72            && <Act1  frame={f}/>}
-      {f >= 60 && f < 188 && <Act2  frame={Math.max(0,f-67)}/>}
-      {f >= 170 && f < 264 && <Act3  frame={Math.max(0,f-180)}/>}
-      {f >= 248 && f < 370 && <Act4  frame={Math.max(0,f-255)}/>}
-      {f >= 352            && <Act56 frame={Math.max(0,f-360)}/>}
-    </div>
+
+      {/* Musique de fond */}
+      <Audio src={staticFile('mixkit-rising-forest-471.mp3')} startFrom={0} volume={0.25}/>
+
+      {/* Scènes — chevauchement large pour éviter les trous */}
+      {f < 78             && <Act1  frame={f}/>}
+      {f >= 55 && f < 190 && <Act2  frame={Math.max(0,f-67)}/>}
+      {f >= 165 && f < 268 && <Act3  frame={Math.max(0,f-180)}/>}
+      {f >= 244 && f < 372 && <Act4  frame={Math.max(0,f-255)}/>}
+      {f >= 348            && <Act56 frame={Math.max(0,f-360)}/>}
+    </AbsoluteFill>
   );
 };
