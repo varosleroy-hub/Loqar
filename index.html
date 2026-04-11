@@ -31,6 +31,15 @@
     <!-- Theme -->
     <meta name="theme-color" content="#141210" />
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iOS / Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Loqar" />
+    <link rel="apple-touch-icon" href="/loqar-favicon.png" />
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/loqar-favicon.ico" />
     <link rel="icon" type="image/png" href="/loqar-favicon.png" />
@@ -61,5 +70,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>
