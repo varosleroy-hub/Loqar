@@ -138,15 +138,18 @@ export default async function handler(req, res) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "rental",
+          type: "booking_request",
           to: profile.email,
           data: {
             agencyName: profile.agency_name,
             clientName: `${first_name} ${last_name}`,
+            clientEmail: email,
+            clientPhone: phone || null,
             vehicleName: `${vehicle?.name || ""} — ${vehicle?.plate || ""}`,
             startDate: start_date,
             endDate: end_date,
             total,
+            notes: notes || null,
           },
         }),
       });
