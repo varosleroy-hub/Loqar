@@ -90,11 +90,15 @@ export default async function handler(req, res) {
 <tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Dates</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${rental.start_date} → ${rental.end_date}</div></td></tr>
 <tr><td style="padding:16px 20px;"><span style="color:#8A8075;font-size:13px;">Total</span><div style="color:#C9A84C;font-weight:700;font-size:18px;margin-top:4px;">${rental.total} €</div></td></tr>
 </table>
-<p style="color:#B0A898;font-size:14px;line-height:1.8;margin:24px 0 0;">L'agence vous contactera pour les modalités de prise en charge. À bientôt !</p>
+<p style="color:#B0A898;font-size:14px;line-height:1.8;margin:24px 0;">Votre contrat est prêt à être signé en ligne. Cliquez sur le bouton ci-dessous pour accéder à votre espace locataire et signer votre contrat :</p>
+<div style="text-align:center;margin:24px 0;">
+<a href="https://loqar.fr/portal/${rental.portal_token}" style="display:inline-block;background:#C9A84C;color:#0E0C0A;font-weight:700;font-size:15px;padding:16px 36px;border-radius:10px;text-decoration:none;">✍️ Signer mon contrat</a>
+</div>
+<p style="color:#6A6460;font-size:12px;text-align:center;margin:0;">Ce lien est personnel et sécurisé. Ne le partagez pas.</p>
 </td></tr>
 <tr><td style="padding:24px 40px;text-align:center;border-top:1px solid #2A2420;"><div style="font-size:12px;color:#4A4440;">Propulsé par <strong style="color:#C9A84C;">Loqar</strong></div></td></tr>
 </table></td></tr></table></body></html>`;
-        await sendEmail(client.email, "Votre réservation est confirmée !", html).catch(() => {});
+        await sendEmail(client.email, "✅ Réservation confirmée — Signez votre contrat", html).catch(() => {});
       } else {
         const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E0C0A;font-family:'Helvetica Neue',Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">

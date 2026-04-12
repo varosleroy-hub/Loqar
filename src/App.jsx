@@ -4487,13 +4487,16 @@ function ClientPortal({ token }) {
     </div>
   );
 
-  const canSign = rental.status === "réservée" && !done;
+  const canSign = (rental.status === "en cours" || rental.status === "réservée") && !done;
 
   return (
     <div style={{minHeight:"100vh",background:"#0F0D0B",fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:60}}>
       {/* Header */}
       <div style={{background:"#141210",borderBottom:"1px solid #2E2B27",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div style={{fontSize:20,fontWeight:700,color:"#C9A55A",letterSpacing:"-0.03em"}}>Loqar</div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <img src="/loqar-favicon.png" alt="Loqar" width="28" height="28" style={{borderRadius:"50%"}}/>
+          <div style={{fontSize:20,fontWeight:700,color:"#C9A55A",letterSpacing:"-0.03em"}}>Loqar</div>
+        </div>
         <div style={{fontSize:12,color:"#8A8075"}}>Espace locataire</div>
       </div>
 
@@ -4503,6 +4506,44 @@ function ClientPortal({ token }) {
           <div style={{fontSize:22,fontWeight:700,color:"#E8E4DF",letterSpacing:"-0.02em"}}>Bonjour {rental.client_name?.split(" ")[0]} 👋</div>
           <div style={{fontSize:13,color:"#8A8075",marginTop:4}}>Voici votre espace locataire Loqar</div>
         </div>
+
+        {/* Bannière statut */}
+        {rental.status === "réservée" && (
+          <div style={{background:"#1A1500",border:"1px solid #C9A84C40",borderRadius:12,padding:"14px 18px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
+            <div style={{fontSize:20}}>⏳</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#C9A84C"}}>En attente de confirmation</div>
+              <div style={{fontSize:12,color:"#8A7050",marginTop:2}}>L'agence va traiter votre demande sous peu.</div>
+            </div>
+          </div>
+        )}
+        {rental.status === "en cours" && !done && (
+          <div style={{background:"#0D1F13",border:"1px solid #4CAF7D40",borderRadius:12,padding:"14px 18px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
+            <div style={{fontSize:20}}>✅</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#4CAF7D"}}>Réservation confirmée</div>
+              <div style={{fontSize:12,color:"#3A7A52",marginTop:2}}>Signez votre contrat ci-dessous pour finaliser.</div>
+            </div>
+          </div>
+        )}
+        {rental.status === "annulée" && (
+          <div style={{background:"#1F0D0D",border:"1px solid #E8746A40",borderRadius:12,padding:"14px 18px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
+            <div style={{fontSize:20}}>❌</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#E8746A"}}>Réservation annulée</div>
+              <div style={{fontSize:12,color:"#8A4040",marginTop:2}}>Cette réservation a été refusée ou annulée.</div>
+            </div>
+          </div>
+        )}
+        {done && (
+          <div style={{background:"#0D1F13",border:"1px solid #4CAF7D40",borderRadius:12,padding:"14px 18px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
+            <div style={{fontSize:20}}>✍️</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#4CAF7D"}}>Contrat signé</div>
+              <div style={{fontSize:12,color:"#3A7A52",marginTop:2}}>Votre signature a bien été enregistrée. À bientôt !</div>
+            </div>
+          </div>
+        )}
 
         {/* Contrat */}
         <div style={{background:"#141210",border:"1px solid #2E2B27",borderRadius:16,padding:24,marginBottom:16}}>

@@ -39,12 +39,10 @@ export default async function handler(req, res) {
       .eq("portal_token", token)
       .single();
 
-    if (!rental || rental.status === "annulée") {
+    if (!rental || rental.status === "annulée" || rental.status === "terminée") {
       return res.status(400).json({ error: "Contrat non signable" });
     }
-    if (rental.status === "réservée") {
-      await supabase.from("rentals").update({ status: "en cours" }).eq("portal_token", token);
-    }
+    await supabase.from("rentals").update({ signed_at: new Date().toISOString() }).eq("portal_token", token);
     return res.status(200).json({ success: true });
   }
 
