@@ -155,8 +155,9 @@ ${phone ? `<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><s
 <tr><td style="padding:16px 20px;"><span style="color:#8A8075;font-size:13px;">Total estimé</span><div style="color:#C9A84C;font-weight:700;font-size:18px;margin-top:4px;">${total} €</div></td></tr>
 </table>
 ${notes ? `<div style="background:#1A1710;border-left:3px solid #C9A84C;padding:12px 16px;margin-top:16px;border-radius:0 8px 8px 0;font-size:13px;color:#8A8075;font-style:italic;">"${notes}"</div>` : ""}
-<div style="text-align:center;margin-top:32px;">
-<a href="https://loqar.fr" style="display:inline-block;background:#C9A84C;color:#0E0C0A;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Voir la réservation sur Loqar</a>
+<div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;">
+<a href="https://loqar.fr/api/action?token=${rental.portal_token}&action=confirm" style="display:inline-block;background:#4CAF7D;color:#fff;font-weight:700;font-size:14px;padding:14px 28px;border-radius:8px;text-decoration:none;">✓ Confirmer</a>
+<a href="https://loqar.fr/api/action?token=${rental.portal_token}&action=refuse" style="display:inline-block;background:#E8746A;color:#fff;font-weight:700;font-size:14px;padding:14px 28px;border-radius:8px;text-decoration:none;">✕ Refuser</a>
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;text-align:center;border-top:1px solid #2A2420;">

@@ -5,7 +5,7 @@ const TR = {
 fr: {
   dashboard:"Tableau de bord", vehicles:"Véhicules", clients:"Clients",
   rentals:"Locations", payments:"Paiements", documents:"Documents",
-  signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres", agencies:"Multi-agences",
+  signatures:"Signatures", pricing:"Abonnements", settings:"Paramètres", agencies:"Multi-agences", calendar:"Calendrier",
   welcome:"Bienvenue sur Loqar", newRental:"Nouvelle location",
   addVehicle:"Ajouter un véhicule", newClient:"Nouveau client",
   newPayment:"Nouveau paiement", save:"Enregistrer", cancel:"Annuler",
@@ -43,7 +43,7 @@ fr: {
 en: {
   dashboard:"Dashboard", vehicles:"Vehicles", clients:"Clients",
   rentals:"Rentals", payments:"Payments", documents:"Documents",
-  signatures:"Signatures", pricing:"Pricing", settings:"Settings", agencies:"Multi-agencies",
+  signatures:"Signatures", pricing:"Pricing", settings:"Settings", agencies:"Multi-agencies", calendar:"Calendar",
   welcome:"Welcome to Loqar", newRental:"New rental",
   addVehicle:"Add vehicle", newClient:"New client",
   newPayment:"New payment", save:"Save", cancel:"Cancel",
@@ -364,6 +364,7 @@ const Icons = {
   building: <Ic size={15} paths={["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z","M9 22V12h6v10"]}/>,
   upload:   <Ic size={15} paths={["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4","M17 8l-5-5-5 5","M12 3v12"]}/>,
   user:     <Ic size={15} paths={["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2","M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"]}/>,
+  calGrid:  <Ic size={15} paths={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z","M3 14h7v7H3z"]}/>,
 };
 
 // ─── BASE COMPONENTS ─────────────────────────────────────────────────────────
@@ -1265,6 +1266,7 @@ const NAV_KEYS = [
   { id:"rentals",    labelKey:"rentals",   icon:Icons.calendar},
   { id:"payments",   labelKey:"payments",  icon:Icons.dollar},
   { id:"documents",  labelKey:"documents", icon:Icons.doc  },
+  { id:"calendar",   labelKey:"calendar",  icon:Icons.calGrid },
   { id:"signature",  labelKey:"signatures",icon:Icons.pen  },
   { id:"agencies",   labelKey:"agencies",  icon:Icons.building },
   { id:"pricing",    labelKey:"pricing",   icon:Icons.zap  },
@@ -4781,6 +4783,7 @@ function App() {
     clients:   <Clients   clients={clients}   setClients={setClients} user={user} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading} rentals={rentals}/>,
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} prefill={docPrefill} onClearPrefill={()=>setDocPrefill(null)}/>,
+    calendar:  <CalendarPage rentals={rentals} vehicles={vehicles}/>,
     signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
     pricing:   <Pricing userPlan={userPlan}/>,
@@ -4806,6 +4809,147 @@ function App() {
 
 
 
+
+// ─── CALENDRIER ──────────────────────────────────────────────────────────────
+function CalendarPage({ rentals = [], vehicles = [] }) {
+  const lang = useLang();
+  const today = new Date();
+  const [cur, setCur] = useState({ y: today.getFullYear(), m: today.getMonth() });
+  const [sel, setSel] = useState(null);
+
+  const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const months = lang === "en" ? MONTHS_EN : MONTHS_FR;
+
+  const daysInMonth = new Date(cur.y, cur.m + 1, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const statusColor = { "en cours": T.success, "réservée": T.amber, "terminée": T.muted, "annulée": T.red };
+
+  // Pour chaque véhicule, trouver les locations qui couvrent ce mois
+  const activeVehicles = vehicles.filter(v => v.status !== "entretien" || rentals.some(r => r.vehicle_id === v.id));
+
+  function getRentalForDay(vehicleId, day) {
+    const date = new Date(cur.y, cur.m, day);
+    const dateStr = date.toISOString().split("T")[0];
+    return rentals.find(r => {
+      if (r.vehicle_id !== vehicleId && String(r.vehicle_id) !== String(vehicleId)) return false;
+      return r.start_date <= dateStr && r.end_date >= dateStr &&
+        ["en cours", "réservée"].includes(r.status);
+    });
+  }
+
+  function isToday(day) {
+    return cur.y === today.getFullYear() && cur.m === today.getMonth() && day === today.getDate();
+  }
+
+  const prevMonth = () => setCur(c => c.m === 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m: c.m - 1 });
+  const nextMonth = () => setCur(c => c.m === 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m: c.m + 1 });
+
+  return (
+    <Page title={lang === "en" ? "Calendar" : "Calendrier"} sub={lang === "en" ? "Fleet availability by day" : "Disponibilité de la flotte par jour"}>
+      {/* Header navigation */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <button onClick={prevMonth} style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"6px 12px", color:T.text, cursor:"pointer", fontSize:16, fontFamily:"inherit" }}>‹</button>
+          <span style={{ fontSize:18, fontWeight:700, color:T.text, minWidth:180, textAlign:"center" }}>{months[cur.m]} {cur.y}</span>
+          <button onClick={nextMonth} style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"6px 12px", color:T.text, cursor:"pointer", fontSize:16, fontFamily:"inherit" }}>›</button>
+        </div>
+        <button onClick={()=>setCur({ y: today.getFullYear(), m: today.getMonth() })} style={{ background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:8, padding:"6px 14px", color:T.gold, cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit" }}>
+          {lang === "en" ? "Today" : "Aujourd'hui"}
+        </button>
+      </div>
+
+      {/* Légende */}
+      <div style={{ display:"flex", gap:16, marginBottom:16, flexWrap:"wrap" }}>
+        {[["en cours", lang==="en"?"In progress":"En cours"], ["réservée", lang==="en"?"Reserved":"Réservée"]].map(([s,l]) => (
+          <div key={s} style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:T.sub }}>
+            <div style={{ width:10, height:10, borderRadius:2, background:statusColor[s] }}/>
+            {l}
+          </div>
+        ))}
+      </div>
+
+      {/* Grille calendrier */}
+      {activeVehicles.length === 0 ? (
+        <div style={{ textAlign:"center", padding:"60px 20px", color:T.muted }}>
+          <div style={{ fontSize:40, marginBottom:12 }}>🚗</div>
+          <div style={{ fontSize:15, fontWeight:600 }}>{lang==="en"?"No vehicles":"Aucun véhicule"}</div>
+        </div>
+      ) : (
+        <div style={{ overflowX:"auto" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", minWidth: 600 }}>
+            <thead>
+              <tr>
+                <th style={{ padding:"8px 12px", textAlign:"left", fontSize:12, fontWeight:600, color:T.muted, background:T.surface, position:"sticky", left:0, zIndex:2, borderBottom:`1px solid ${T.border}`, minWidth:120, whiteSpace:"nowrap" }}>
+                  {lang === "en" ? "Vehicle" : "Véhicule"}
+                </th>
+                {days.map(d => (
+                  <th key={d} style={{ padding:"6px 2px", textAlign:"center", fontSize:11, fontWeight:isToday(d)?700:500, color:isToday(d)?T.gold:T.muted, background:T.surface, borderBottom:`1px solid ${T.border}`, minWidth:28, maxWidth:32 }}>
+                    {d}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {activeVehicles.map(v => (
+                <tr key={v.id}>
+                  <td style={{ padding:"6px 12px", fontSize:12, fontWeight:600, color:T.text, background:T.surface, position:"sticky", left:0, zIndex:1, borderBottom:`1px solid ${T.border}`, whiteSpace:"nowrap" }}>
+                    <div>{v.name}</div>
+                    <div style={{ fontSize:10, color:T.muted, fontWeight:400 }}>{v.plate}</div>
+                  </td>
+                  {days.map(d => {
+                    const rental = getRentalForDay(v.id, d);
+                    const color = rental ? (statusColor[rental.status] || T.gold) : null;
+                    const isStart = rental && rental.start_date === new Date(cur.y, cur.m, d).toISOString().split("T")[0];
+                    return (
+                      <td key={d} onClick={() => rental && setSel(rental)}
+                        style={{ padding:"3px 2px", textAlign:"center", borderBottom:`1px solid ${T.border}`, cursor:rental?"pointer":"default" }}>
+                        <div style={{
+                          height:22, borderRadius: isStart ? "4px 0 0 4px" : "0",
+                          background: rental ? color + "40" : isToday(d) ? T.goldDim : "transparent",
+                          border: isToday(d) && !rental ? `1px solid ${T.gold}30` : "none",
+                          position:"relative"
+                        }}>
+                          {isStart && <div style={{ position:"absolute", left:2, top:"50%", transform:"translateY(-50%)", width:4, height:4, borderRadius:"50%", background:color }}/>}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Panneau détail location */}
+      {sel && (
+        <div style={{ position:"fixed", inset:0, background:"#00000070", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center" }} onClick={()=>setSel(null)}>
+          <div style={{ background:T.card, border:`1px solid ${T.border2}`, borderRadius:16, padding:28, width:"90%", maxWidth:380 }} onClick={e=>e.stopPropagation()}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+              <div style={{ fontSize:16, fontWeight:700, color:T.text }}>{lang==="en"?"Rental details":"Détails location"}</div>
+              <button onClick={()=>setSel(null)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", fontSize:18 }}>✕</button>
+            </div>
+            {[
+              [lang==="en"?"Client":"Client", sel.client_name],
+              [lang==="en"?"Vehicle":"Véhicule", sel.vehicle_name],
+              [lang==="en"?"Start":"Début", sel.start_date],
+              [lang==="en"?"End":"Fin", sel.end_date],
+              [lang==="en"?"Total":"Total", `${sel.total} €`],
+              [lang==="en"?"Status":"Statut", sel.status],
+            ].map(([label, val]) => val && (
+              <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:`1px solid ${T.border}` }}>
+                <span style={{ fontSize:13, color:T.muted }}>{label}</span>
+                <span style={{ fontSize:13, fontWeight:600, color: label===(lang==="en"?"Status":"Statut") ? (statusColor[val]||T.text) : T.text }}>{val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Page>
+  );
+}
 
 // ─── PAGE RÉSERVATION PUBLIQUE ────────────────────────────────────────────────
 function BookingPage({ slug }) {
