@@ -233,7 +233,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: "varos.leroy@gmail.com", name: "Loqar" },
+        from: { email: "noreply@loqar.fr", name: "Loqar" },
         subject: template.subject,
         content: [{ type: "text/html", value: template.html }]
       })
