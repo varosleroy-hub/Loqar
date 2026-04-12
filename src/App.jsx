@@ -810,6 +810,30 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
               </div>
             ))}
           </div>
+
+          {/* URL de réservation publique */}
+          <div style={{ marginTop:18, paddingTop:18, borderTop:`1px solid ${T.border}` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>URL de réservation publique</label>
+              <span style={{ fontSize:10, background:T.successDim, color:T.success, border:`1px solid ${T.success}30`, borderRadius:6, padding:"2px 7px", fontWeight:700 }}>NOUVEAU</span>
+            </div>
+            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+              <span style={{ fontSize:13, color:T.muted, whiteSpace:"nowrap" }}>loqar.vercel.app/book/</span>
+              <input value={form.bookingSlug||""} onChange={e=>up("bookingSlug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,""))} placeholder="mon-agence"
+                style={{ flex:1, background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
+                onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
+            </div>
+            {form.bookingSlug && (
+              <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:12, color:T.muted }}>→ </span>
+                <a href={`/book/${form.bookingSlug}`} target="_blank" rel="noreferrer"
+                  style={{ fontSize:12, color:T.gold, fontWeight:600 }}>
+                  loqar.vercel.app/book/{form.bookingSlug}
+                </a>
+              </div>
+            )}
+            <div style={{ fontSize:11, color:T.muted, marginTop:6 }}>Partagez ce lien à vos clients pour qu'ils puissent réserver en ligne.</div>
+          </div>
         </Card>
 
         <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
@@ -4583,7 +4607,7 @@ function ClientPortal({ token }) {
 }
 
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
-const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", tva:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €" };
+const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", tva:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €", bookingSlug:"" };
 
 function App() {
   const isMobile = useIsMobile();
@@ -4675,13 +4699,13 @@ function App() {
 
   const fetchProfile = async (uid, currentUser) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
-    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", tva: data.tva||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"" }); setUserPlan(data.plan||"starter"); }
+    if (data) { setAgencyProfile({ name: data.agency_name||"", logo: data.logo||"🚗", address: data.address||"", phone: data.phone||"", email: data.email||"", website: data.website||"", siret: data.siret||"", tva: data.tva||"", iban: data.iban||"", bic: data.bic||"", bankHolder: data.bank_holder||"", terms: data.terms||"", franchise: data.franchise||"800 €", brandColor: data.brand_color||"", bookingSlug: data.booking_slug||"" }); setUserPlan(data.plan||"starter"); }
     if (!data?.agency_name) setShowOnboarding(true);
   };
 
   const handleSaveProfile = async (profile) => {
     setAgencyProfile(profile);
-    await supabase.from("profiles").update({ agency_name: profile.name, logo: profile.logo, address: profile.address, phone: profile.phone, email: profile.email, website: profile.website, siret: profile.siret, tva: profile.tva||null, iban: profile.iban, bic: profile.bic, bank_holder: profile.bankHolder, terms: profile.terms, franchise: profile.franchise, brand_color: profile.brandColor||null }).eq("id", user.id);
+    await supabase.from("profiles").update({ agency_name: profile.name, logo: profile.logo, address: profile.address, phone: profile.phone, email: profile.email, website: profile.website, siret: profile.siret, tva: profile.tva||null, iban: profile.iban, bic: profile.bic, bank_holder: profile.bankHolder, terms: profile.terms, franchise: profile.franchise, brand_color: profile.brandColor||null, booking_slug: profile.bookingSlug||null }).eq("id", user.id);
   };
 
   const handleLogout = async () => {
@@ -4781,8 +4805,223 @@ function App() {
 }
 
 
+
+
+// ─── PAGE RÉSERVATION PUBLIQUE ────────────────────────────────────────────────
+function BookingPage({ slug }) {
+  const [agency, setAgency]     = useState(null);
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate]     = useState("");
+  const [selected, setSelected]   = useState(null);
+  const [step, setStep]           = useState("browse"); // browse | form | success
+  const [form, setForm]           = useState({ firstName:"", lastName:"", email:"", phone:"", notes:"" });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError]   = useState("");
+  const up = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+  const days = startDate && endDate ? Math.max(1, Math.ceil((new Date(endDate)-new Date(startDate))/86400000)) : 0;
+
+  useEffect(() => {
+    fetch(`/api/book?slug=${encodeURIComponent(slug)}`)
+      .then(r=>r.json())
+      .then(d=>{ if(d.error){setError(d.error);}else{setAgency(d.agency);setVehicles(d.vehicles);} setLoading(false); })
+      .catch(()=>{ setError("Impossible de charger la page"); setLoading(false); });
+  }, [slug]);
+
+  useEffect(() => {
+    if (!startDate || !endDate || new Date(endDate)<=new Date(startDate)) return;
+    fetch(`/api/book?slug=${encodeURIComponent(slug)}&start=${startDate}&end=${endDate}`)
+      .then(r=>r.json())
+      .then(d=>{ if(!d.error) setVehicles(d.vehicles); });
+  }, [startDate, endDate]);
+
+  const handleSubmit = async () => {
+    setFormError("");
+    if (!form.firstName.trim()||!form.lastName.trim()||!form.email.trim()) { setFormError("Prénom, nom et email sont requis."); return; }
+    if (!startDate||!endDate) { setFormError("Veuillez choisir des dates."); return; }
+    setSubmitting(true);
+    const res = await fetch("/api/book", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ slug, vehicle_id: selected.id, start_date: startDate, end_date: endDate, first_name: form.firstName, last_name: form.lastName, email: form.email, phone: form.phone, notes: form.notes }),
+    });
+    const data = await res.json();
+    if (data.success) { setStep("success"); } else { setFormError(data.error||"Une erreur est survenue."); }
+    setSubmitting(false);
+  };
+
+  const FUEL_LABEL = { essence:"Essence", diesel:"Diesel", electrique:"Électrique", hybride:"Hybride" };
+  const TRANS_LABEL = { manuelle:"Manuelle", automatique:"Automatique" };
+
+  if (loading) return (
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{color:T.muted,fontSize:14}}>Chargement…</div>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}>
+      <div style={{fontSize:32}}>🚗</div>
+      <div style={{color:T.text,fontWeight:700,fontSize:18}}>Page introuvable</div>
+      <div style={{color:T.muted,fontSize:14}}>{error}</div>
+    </div>
+  );
+
+  if (step === "success") return (
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:20,padding:"48px 40px",maxWidth:480,width:"100%",textAlign:"center",animation:"fadeUp .3s"}}>
+        <div style={{width:64,height:64,borderRadius:"50%",background:T.successDim,border:`1px solid ${T.success}40`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 24px"}}>
+          <Ic size={28} d="M20 6L9 17l-5-5" color={T.success} sw={2.5}/>
+        </div>
+        <div style={{fontSize:22,fontWeight:700,color:T.text,marginBottom:10}}>Demande envoyée !</div>
+        <p style={{fontSize:14,color:T.sub,lineHeight:1.7,marginBottom:24}}>
+          Votre demande de réservation pour <strong style={{color:T.text}}>{selected?.name}</strong> du <strong style={{color:T.text}}>{fmtDate(startDate)}</strong> au <strong style={{color:T.text}}>{fmtDate(endDate)}</strong> a bien été transmise à <strong style={{color:T.gold}}>{agency?.agency_name}</strong>.<br/><br/>Vous recevrez une confirmation par email sous peu.
+        </p>
+        <div style={{fontSize:12,color:T.muted}}>Propulsé par <span style={{color:T.gold,fontWeight:700}}>Loqar</span></div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{minHeight:"100vh",background:T.bg,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+      {/* Header agence */}
+      <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"16px 24px",display:"flex",alignItems:"center",gap:14,position:"sticky",top:0,zIndex:10}}>
+        <div style={{width:44,height:44,borderRadius:12,background:T.card2,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+          {agency?.logo?.startsWith("data:")||agency?.logo?.startsWith("http") ? <img src={agency.logo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:10}}/> : agency?.logo||"🚗"}
+        </div>
+        <div>
+          <div style={{fontSize:16,fontWeight:700,color:T.text}}>{agency?.agency_name||"Agence"}</div>
+          {agency?.phone && <div style={{fontSize:12,color:T.muted}}>{agency.phone}</div>}
+        </div>
+        <div style={{marginLeft:"auto",fontSize:11,color:T.muted}}>Réservation en ligne</div>
+      </div>
+
+      <div style={{maxWidth:900,margin:"0 auto",padding:"32px 20px"}}>
+        {/* Titre */}
+        <div style={{marginBottom:32,textAlign:"center"}}>
+          <h1 style={{fontSize:28,fontWeight:700,color:T.text,letterSpacing:"-.02em",marginBottom:8}}>Réservez votre véhicule</h1>
+          <p style={{fontSize:14,color:T.sub}}>Choisissez vos dates pour voir les véhicules disponibles</p>
+        </div>
+
+        {/* Sélecteur de dates */}
+        <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:16,padding:"20px 24px",marginBottom:32,display:"flex",gap:16,alignItems:"flex-end",flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:160,display:"flex",flexDirection:"column",gap:6}}>
+            <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Date de départ</label>
+            <input type="date" value={startDate} min={new Date().toISOString().split("T")[0]} onChange={e=>{setStartDate(e.target.value);setSelected(null);}}
+              style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+          </div>
+          <div style={{flex:1,minWidth:160,display:"flex",flexDirection:"column",gap:6}}>
+            <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Date de retour</label>
+            <input type="date" value={endDate} min={startDate||new Date().toISOString().split("T")[0]} onChange={e=>{setEndDate(e.target.value);setSelected(null);}}
+              style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+          </div>
+          {days > 0 && (
+            <div style={{background:T.goldDim,border:`1px solid ${T.gold}30`,borderRadius:9,padding:"10px 16px",whiteSpace:"nowrap"}}>
+              <span style={{fontSize:13,fontWeight:700,color:T.gold}}>{days} jour{days>1?"s":""}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Grille véhicules */}
+        {vehicles.length === 0 ? (
+          <div style={{textAlign:"center",padding:"60px 20px",color:T.muted}}>
+            <div style={{fontSize:40,marginBottom:12}}>🚗</div>
+            <div style={{fontSize:16,fontWeight:600,color:T.sub,marginBottom:6}}>{startDate&&endDate?"Aucun véhicule disponible pour ces dates":"Sélectionnez des dates pour voir les véhicules"}</div>
+          </div>
+        ) : (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16,marginBottom:32}}>
+            {vehicles.map(v=>{
+              const isSelected = selected?.id === v.id;
+              const total = days > 0 ? (v.price_per_day||0)*days : null;
+              return (
+                <div key={v.id} onClick={()=>{setSelected(isSelected?null:v);if(!isSelected)setStep("browse");}}
+                  style={{background:T.surface,border:`2px solid ${isSelected?T.gold:T.border}`,borderRadius:16,overflow:"hidden",cursor:"pointer",transition:"all .2s",transform:isSelected?"translateY(-2px)":"none",boxShadow:isSelected?`0 8px 32px ${T.gold}20`:"none"}}>
+                  {/* Photo */}
+                  <div style={{height:160,background:T.card2,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+                    {v.photo_url ? <img src={v.photo_url} alt={v.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <div style={{fontSize:48,opacity:.3}}>🚗</div>}
+                    <div style={{position:"absolute",top:10,right:10,background:T.bg+"CC",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,color:T.gold}}>{v.category||"Véhicule"}</div>
+                    {isSelected && <div style={{position:"absolute",top:10,left:10,width:24,height:24,borderRadius:"50%",background:T.gold,display:"flex",alignItems:"center",justifyContent:"center"}}><Ic size={12} d="M20 6L9 17l-5-5" color="#0F0D0B" sw={2.5}/></div>}
+                  </div>
+                  {/* Infos */}
+                  <div style={{padding:"14px 16px"}}>
+                    <div style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:4}}>{v.name}</div>
+                    <div style={{fontSize:12,color:T.muted,marginBottom:10}}>{v.plate}</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+                      {v.fuel && <span style={{fontSize:11,background:T.card2,border:`1px solid ${T.border}`,borderRadius:6,padding:"2px 8px",color:T.sub}}>{FUEL_LABEL[v.fuel]||v.fuel}</span>}
+                      {v.transmission && <span style={{fontSize:11,background:T.card2,border:`1px solid ${T.border}`,borderRadius:6,padding:"2px 8px",color:T.sub}}>{TRANS_LABEL[v.transmission]||v.transmission}</span>}
+                      {v.year && <span style={{fontSize:11,background:T.card2,border:`1px solid ${T.border}`,borderRadius:6,padding:"2px 8px",color:T.sub}}>{v.year}</span>}
+                    </div>
+                    <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between"}}>
+                      <div>
+                        <span style={{fontSize:22,fontWeight:700,color:T.gold,letterSpacing:"-.02em"}}>{v.price_per_day||"—"}</span>
+                        <span style={{fontSize:12,color:T.muted}}> €/jour</span>
+                      </div>
+                      {total && <div style={{fontSize:12,fontWeight:600,color:T.sub}}>{total} € total</div>}
+                    </div>
+                  </div>
+                  <div style={{padding:"0 16px 14px"}}>
+                    <div style={{width:"100%",padding:"9px",borderRadius:9,textAlign:"center",fontSize:13,fontWeight:600,background:isSelected?T.gold:T.goldDim,color:isSelected?"#0F0D0B":T.gold,border:`1px solid ${T.gold}40`,transition:"all .2s"}}>
+                      {isSelected ? "✓ Sélectionné" : "Choisir ce véhicule"}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Formulaire de réservation */}
+        {selected && (
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:16,padding:"28px 28px",animation:"fadeUp .25s"}}>
+            <div style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:4}}>Vos informations</div>
+            <div style={{fontSize:12,color:T.muted,marginBottom:20}}>Réservation pour <strong style={{color:T.gold}}>{selected.name}</strong> · {fmtDate(startDate)} → {fmtDate(endDate)}{days>0?` · ${days} jour${days>1?"s":""}`:""}{days>0?` · ${(selected.price_per_day||0)*days} €`:""}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Prénom *</label>
+                <input value={form.firstName} onChange={e=>up("firstName",e.target.value)} placeholder="Marie"
+                  style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Nom *</label>
+                <input value={form.lastName} onChange={e=>up("lastName",e.target.value)} placeholder="Dupont"
+                  style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Email *</label>
+                <input type="email" value={form.email} onChange={e=>up("email",e.target.value)} placeholder="marie@email.fr"
+                  style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Téléphone</label>
+                <input type="tel" value={form.phone} onChange={e=>up("phone",e.target.value)} placeholder="+33 6 12 34 56 78"
+                  style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              </div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:18}}>
+              <label style={{fontSize:11,fontWeight:600,color:T.sub,letterSpacing:".08em",textTransform:"uppercase"}}>Message (optionnel)</label>
+              <textarea value={form.notes} onChange={e=>up("notes",e.target.value)} placeholder="Questions, demandes particulières…" rows={3}
+                style={{background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",color:T.text,fontSize:13,fontFamily:"inherit",outline:"none",resize:"vertical"}}/>
+            </div>
+            {formError && <div style={{marginBottom:14,padding:"10px 14px",background:T.redDim,border:`1px solid ${T.red}30`,borderRadius:9,fontSize:12,color:T.red}}>{formError}</div>}
+            <button onClick={handleSubmit} disabled={submitting}
+              style={{width:"100%",padding:"13px",borderRadius:10,background:T.gold,color:"#0F0D0B",fontWeight:700,fontSize:14,fontFamily:"inherit",border:"none",cursor:submitting?"wait":"pointer",opacity:submitting?.7:1,transition:"opacity .15s"}}>
+              {submitting ? "Envoi en cours…" : "Envoyer ma demande de réservation →"}
+            </button>
+            <div style={{textAlign:"center",marginTop:10,fontSize:11,color:T.muted}}>Propulsé par <span style={{color:T.gold,fontWeight:700}}>Loqar</span></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PortalWrapper() {
   const portalToken = window.location.pathname.match(/^\/portal\/(.+)/)?.[1];
   if (portalToken) return <ClientPortal token={portalToken}/>;
+  const bookingSlug = window.location.pathname.match(/^\/book\/(.+)/)?.[1];
+  if (bookingSlug) return <BookingPage slug={bookingSlug}/>;
   return <App/>;
 }
