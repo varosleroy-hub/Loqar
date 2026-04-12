@@ -5,7 +5,7 @@ function page(title, message, color = "#C9A84C", emoji = "✓") {
 <body style="margin:0;padding:0;background:#0E0C0A;font-family:'Helvetica Neue',Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;">
 <div style="text-align:center;padding:40px 24px;max-width:480px;">
   <div style="width:72px;height:72px;border-radius:50%;background:${color}20;border:2px solid ${color};display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;">${emoji}</div>
-  <img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:12px;display:block;margin:0 auto 10px;" />
+  <img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:50%;display:block;margin:0 auto 10px;" />
   <div style="font-size:20px;font-weight:700;color:#F5F0E8;margin-bottom:12px;">${title}</div>
   <div style="font-size:14px;color:#8A8075;line-height:1.7;">${message}</div>
   <a href="https://loqar.fr" style="display:inline-block;margin-top:32px;background:#C9A84C;color:#0E0C0A;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">Ouvrir Loqar</a>
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
 <tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
-<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:12px;display:block;margin:0 auto 10px;" />
+<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:50%;display:block;margin:0 auto 10px;" />
 <div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:16px;">Réservation confirmée !</div>
 <div style="font-size:14px;color:#8A8075;margin-top:8px;">Bonjour ${client.first_name}, votre réservation est validée.</div>
 </td></tr>
@@ -100,7 +100,7 @@ export default async function handler(req, res) {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
 <tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
-<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:12px;display:block;margin:0 auto 10px;" />
+<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:50%;display:block;margin:0 auto 10px;" />
 <div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:16px;">Demande non retenue</div>
 <div style="font-size:14px;color:#8A8075;margin-top:8px;">Bonjour ${client.first_name}, nous sommes désolés.</div>
 </td></tr>

@@ -141,7 +141,7 @@ export default async function handler(req, res) {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
 <tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
-<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="52" height="52" style="border-radius:12px;display:block;margin:0 auto 10px;" />
+<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="52" height="52" style="border-radius:50%;display:block;margin:0 auto 10px;" />
 <div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:8px;">Nouvelle demande de réservation</div>
 <div style="font-size:14px;color:#8A8075;margin-top:8px;">${clientName} souhaite réserver via votre page publique</div>
 </td></tr>
@@ -190,7 +190,7 @@ ${notes ? `<div style="background:#1A1710;border-left:3px solid #C9A84C;padding:
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
 <tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
-<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="52" height="52" style="border-radius:12px;display:block;margin:0 auto 10px;" />
+<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="52" height="52" style="border-radius:50%;display:block;margin:0 auto 10px;" />
 <div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:8px;">Demande reçue !</div>
 <div style="font-size:14px;color:#8A8075;margin-top:8px;">Bonjour ${first_name}, votre demande a bien été transmise à <strong style="color:#C9A84C;">${profile.agency_name || "l'agence"}</strong>.</div>
 </td></tr>
