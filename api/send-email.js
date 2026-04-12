@@ -22,7 +22,7 @@ export default async function handler(req, res) {
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="text-align:center;">
-                <div style="display:inline-block;background:linear-gradient(135deg,${accentColor},#8A6A2A);border-radius:12px;width:44px;height:44px;line-height:44px;font-size:20px;margin-bottom:12px;">🚗</div>
+                <img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:12px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;" />
                 <div style="font-size:22px;font-weight:800;color:${accentColor};letter-spacing:-0.02em;margin-bottom:2px;">LOQAR</div>
                 <div style="font-size:10px;color:#5A5550;letter-spacing:0.14em;text-transform:uppercase;">Gestion de location automobile</div>
               </td>

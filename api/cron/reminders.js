@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
 <tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
-<div style="font-size:28px;font-weight:800;color:#C9A84C;">Loqar</div>
+<img src="https://loqar.fr/loqar-favicon.png" alt="Loqar" width="48" height="48" style="border-radius:12px;display:block;margin:0 auto 10px;" />
 <div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:16px;">C'est demain !</div>
 <div style="font-size:14px;color:#8A8075;margin-top:8px;">Bonjour ${client.first_name}, votre location commence demain.</div>
 </td></tr>
