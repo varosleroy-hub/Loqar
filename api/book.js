@@ -132,28 +132,53 @@ export default async function handler(req, res) {
 
     if (rentalError) return res.status(500).json({ error: rentalError.message || "Erreur lors de la création de la réservation" });
 
-    // Notifier l'agence par email
-    try {
-      await fetch(`${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : ""}/api/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "booking_request",
-          to: profile.email,
-          data: {
-            agencyName: profile.agency_name,
-            clientName: `${first_name} ${last_name}`,
-            clientEmail: email,
-            clientPhone: phone || null,
-            vehicleName: `${vehicle?.name || ""} — ${vehicle?.plate || ""}`,
-            startDate: start_date,
-            endDate: end_date,
-            total,
-            notes: notes || null,
+    // Notifier l'agence par email (appel direct SendGrid)
+    if (profile.email && process.env.SENDGRID_API_KEY) {
+      try {
+        const clientName = `${first_name} ${last_name}`;
+        const vehicleName = `${vehicle?.name || ""} — ${vehicle?.plate || ""}`;
+        const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E0C0A;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
+<tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
+<div style="font-size:28px;font-weight:800;color:#C9A84C;letter-spacing:-.5px;">Loqar</div>
+<div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:16px;">Nouvelle demande de réservation</div>
+<div style="font-size:14px;color:#8A8075;margin-top:8px;">${clientName} souhaite réserver via votre page publique</div>
+</td></tr>
+<tr><td style="padding:32px 40px;">
+<table width="100%" style="background:#1A1710;border-radius:12px;border:1px solid #2A2420;" cellpadding="0" cellspacing="0">
+<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Client</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${clientName}</div></td></tr>
+<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Email</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${email}</div></td></tr>
+${phone ? `<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Téléphone</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${phone}</div></td></tr>` : ""}
+<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Véhicule</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${vehicleName}</div></td></tr>
+<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Dates</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${start_date} → ${end_date}</div></td></tr>
+<tr><td style="padding:16px 20px;"><span style="color:#8A8075;font-size:13px;">Total estimé</span><div style="color:#C9A84C;font-weight:700;font-size:18px;margin-top:4px;">${total} €</div></td></tr>
+</table>
+${notes ? `<div style="background:#1A1710;border-left:3px solid #C9A84C;padding:12px 16px;margin-top:16px;border-radius:0 8px 8px 0;font-size:13px;color:#8A8075;font-style:italic;">"${notes}"</div>` : ""}
+<div style="text-align:center;margin-top:32px;">
+<a href="https://loqar.fr" style="display:inline-block;background:#C9A84C;color:#0E0C0A;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Voir la réservation sur Loqar</a>
+</div>
+</td></tr>
+<tr><td style="padding:24px 40px;text-align:center;border-top:1px solid #2A2420;">
+<div style="font-size:12px;color:#4A4440;">Propulsé par <strong style="color:#C9A84C;">Loqar</strong> — loqar.fr</div>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+        await fetch("https://api.sendgrid.com/v3/mail/send", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`,
+            "Content-Type": "application/json",
           },
-        }),
-      });
-    } catch (_) {}
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email: profile.email }] }],
+            from: { email: "noreply@loqar.fr", name: "Loqar" },
+            subject: `Nouvelle réservation — ${vehicleName}`,
+            content: [{ type: "text/html", value: emailHtml }],
+          }),
+        });
+      } catch (_) {}
+    }
 
     return res.status(200).json({ success: true, rental_id: rental.id });
   }
