@@ -818,7 +818,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
               <span style={{ fontSize:10, background:T.successDim, color:T.success, border:`1px solid ${T.success}30`, borderRadius:6, padding:"2px 7px", fontWeight:700 }}>NOUVEAU</span>
             </div>
             <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-              <span style={{ fontSize:13, color:T.muted, whiteSpace:"nowrap" }}>loqar.vercel.app/book/</span>
+              <span style={{ fontSize:13, color:T.muted, whiteSpace:"nowrap" }}>loqar.fr/book/</span>
               <input value={form.bookingSlug||""} onChange={e=>up("bookingSlug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,""))} placeholder="mon-agence"
                 style={{ flex:1, background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
                 onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
@@ -828,7 +828,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
                 <span style={{ fontSize:12, color:T.muted }}>→ </span>
                 <a href={`/book/${form.bookingSlug}`} target="_blank" rel="noreferrer"
                   style={{ fontSize:12, color:T.gold, fontWeight:600 }}>
-                  loqar.vercel.app/book/{form.bookingSlug}
+                  loqar.fr/book/{form.bookingSlug}
                 </a>
               </div>
             )}
