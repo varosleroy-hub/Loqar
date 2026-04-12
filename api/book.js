@@ -116,12 +116,12 @@ export default async function handler(req, res) {
       .insert({
         user_id: profile.id,
         client_id: clientId,
-        vehicle_id,
+        vehicle_id: parseInt(vehicle_id) || vehicle_id,
         client_name: `${first_name} ${last_name}`,
         vehicle_name: `${vehicle?.name || ""} — ${vehicle?.plate || ""}`,
         start_date,
         end_date,
-        price_per_day: vehicle?.price_per_day || 0,
+        prix_per_day: vehicle?.price_per_day || 0,
         total,
         notes: notes || null,
         status: "réservée",
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
       .select()
       .single();
 
-    if (rentalError) return res.status(500).json({ error: "Erreur lors de la création de la réservation" });
+    if (rentalError) return res.status(500).json({ error: rentalError.message || "Erreur lors de la création de la réservation" });
 
     // Notifier l'agence par email
     try {
