@@ -180,6 +180,49 @@ ${notes ? `<div style="background:#1A1710;border-left:3px solid #C9A84C;padding:
       } catch (_) {}
     }
 
+    // Email de confirmation au client
+    if (email && process.env.SENDGRID_API_KEY) {
+      try {
+        const clientName = `${first_name} ${last_name}`;
+        const vehicleName = `${vehicle?.name || ""} — ${vehicle?.plate || ""}`;
+        const clientEmailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E0C0A;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 20px;">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#141210;border-radius:16px;border:1px solid #2A2420;overflow:hidden;">
+<tr><td style="padding:40px;text-align:center;background:linear-gradient(135deg,#1A1710 0%,#141210 100%);border-bottom:1px solid #2A2420;">
+<div style="font-size:28px;font-weight:800;color:#C9A84C;letter-spacing:-.5px;">Loqar</div>
+<div style="font-size:22px;font-weight:700;color:#F5F0E8;margin-top:16px;">Demande reçue !</div>
+<div style="font-size:14px;color:#8A8075;margin-top:8px;">Bonjour ${first_name}, votre demande a bien été transmise à <strong style="color:#C9A84C;">${profile.agency_name || "l'agence"}</strong>.</div>
+</td></tr>
+<tr><td style="padding:32px 40px;">
+<p style="color:#B0A898;font-size:14px;line-height:1.8;margin:0 0 24px;">L'agence va examiner votre demande et vous contactera rapidement pour confirmer votre réservation.</p>
+<table width="100%" style="background:#1A1710;border-radius:12px;border:1px solid #2A2420;" cellpadding="0" cellspacing="0">
+<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Véhicule demandé</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${vehicleName}</div></td></tr>
+<tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Dates</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${start_date} → ${end_date}</div></td></tr>
+<tr><td style="padding:16px 20px;"><span style="color:#8A8075;font-size:13px;">Total estimé</span><div style="color:#C9A84C;font-weight:700;font-size:18px;margin-top:4px;">${total} €</div></td></tr>
+</table>
+<p style="color:#8A8075;font-size:12px;line-height:1.8;margin:24px 0 0;text-align:center;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+</td></tr>
+<tr><td style="padding:24px 40px;text-align:center;border-top:1px solid #2A2420;">
+<div style="font-size:12px;color:#4A4440;">Propulsé par <strong style="color:#C9A84C;">Loqar</strong> — loqar.fr</div>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+        await fetch("https://api.sendgrid.com/v3/mail/send", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email }] }],
+            from: { email: "noreply@loqar.fr", name: "Loqar" },
+            subject: `Votre demande de réservation — ${profile.agency_name || "Loqar"}`,
+            content: [{ type: "text/html", value: clientEmailHtml }],
+          }),
+        });
+      } catch (_) {}
+    }
+
     return res.status(200).json({ success: true, rental_id: rental.id });
   }
 
