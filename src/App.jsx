@@ -2906,6 +2906,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
   const [agencies, setAgencies] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [modal,    setModal]    = useState(false);
+  const [editId,   setEditId]   = useState(null); // id of agency being edited
   const [form,     setForm]     = useState({ name:"", email:"", phone:"", city:"", slug:"" });
   const [slugError, setSlugError] = useState("");
   const [mainSlug, setMainSlug] = useState("");
@@ -2924,16 +2925,25 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
     await supabase.from("profiles").update({ sub_agencies: list }).eq("id", user.id);
   };
 
-  const handleAdd = async () => {
+  const openAdd = () => { setEditId(null); setForm({ name:"", email:"", phone:"", city:"", slug:"" }); setSlugError(""); setModal(true); };
+  const openEdit = (a) => { setEditId(a.id); setForm({ name:a.name||"", email:a.email||"", phone:a.phone||"", city:a.city||"", slug:a.slug||"" }); setSlugError(""); setModal(true); };
+
+  const handleSave = async () => {
     if (!form.name.trim()) return;
     const slug = form.slug.trim() || toSlug(form.name);
     if (!slug) { setSlugError("Le slug est requis"); return; }
     if (slug === mainSlug) { setSlugError("Ce slug est déjà utilisé par votre compte principal"); return; }
-    if (agencies.some(a => a.slug === slug)) { setSlugError("Ce slug est déjà utilisé par une autre agence"); return; }
-    const newA = { id: Date.now(), ...form, slug, status: "active", createdAt: new Date().toISOString() };
-    await saveAgencies([...agencies, newA]);
+    if (agencies.some(a => a.slug === slug && a.id !== editId)) { setSlugError("Ce slug est déjà utilisé par une autre agence"); return; }
+    let updated;
+    if (editId) {
+      updated = agencies.map(a => a.id === editId ? { ...a, ...form, slug } : a);
+    } else {
+      updated = [...agencies, { id: Date.now(), ...form, slug, status: "active", createdAt: new Date().toISOString() }];
+    }
+    await saveAgencies(updated);
     setModal(false);
     setSlugError("");
+    setEditId(null);
     setForm({ name:"", email:"", phone:"", city:"", slug:"" });
   };
 
@@ -2964,7 +2974,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
   return (
     <Page title="Multi-agences" sub={`${agencies.length} agence${agencies.length!==1?"s":""} gérée${agencies.length!==1?"s":""}`}>
       <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:20 }}>
-        <Btn label="Ajouter une agence" variant="primary" icon={Icons.plus} onClick={()=>setModal(true)}/>
+        <Btn label="Ajouter une agence" variant="primary" icon={Icons.plus} onClick={openAdd}/>
       </div>
 
       {loading ? (
@@ -3000,6 +3010,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
                     color: a.status==="active" ? T.success : T.red }}>
                     {a.status==="active" ? "Actif" : "Inactif"}
                   </button>
+                  <button onClick={()=>openEdit(a)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", fontSize:13, padding:"2px 4px" }} title="Modifier">✎</button>
                   <button onClick={()=>handleDelete(a.id)} style={{ background:"none", border:"none", color:T.muted, cursor:"pointer", fontSize:14, padding:"2px 4px" }}>✕</button>
                 </div>
               </div>
@@ -3008,10 +3019,13 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
               {a.email && <div style={{ fontSize:12, color:T.muted, marginBottom:2 }}>✉ {a.email}</div>}
               {a.phone && <div style={{ fontSize:12, color:T.muted, marginBottom:4 }}>📞 {a.phone}</div>}
               {a.slug && (
-                <div style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:7, padding:"6px 10px", marginTop:8, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-                  <span style={{ fontSize:10, color:T.gold, fontFamily:"monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>loqar.fr/book/{a.slug}</span>
-                  <button onClick={()=>navigator.clipboard?.writeText(`https://loqar.fr/book/${a.slug}`)} style={{ fontSize:10, background:"none", border:"none", color:T.muted, cursor:"pointer", flexShrink:0 }}>📋</button>
-                </div>
+                <>
+                  <div style={{ background:T.card2, border:`1px solid ${a.slug===mainSlug?T.red:T.border}`, borderRadius:7, padding:"6px 10px", marginTop:8, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+                    <span style={{ fontSize:10, color: a.slug===mainSlug ? T.red : T.gold, fontFamily:"monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>loqar.fr/book/{a.slug}</span>
+                    <button onClick={()=>navigator.clipboard?.writeText(`https://loqar.fr/book/${a.slug}`)} style={{ fontSize:10, background:"none", border:"none", color:T.muted, cursor:"pointer", flexShrink:0 }}>📋</button>
+                  </div>
+                  {a.slug===mainSlug && <div style={{ fontSize:10, color:T.red, marginTop:4 }}>⚠️ Conflit avec le slug principal — modifiez ce slug</div>}
+                </>
               )}
               <div style={{ fontSize:11, color:T.muted, marginTop:10, paddingTop:10, borderTop:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <span>Ajoutée le {new Date(a.createdAt).toLocaleDateString("fr-FR")}</span>
@@ -3028,7 +3042,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
       )}
 
       {modal && (
-        <Modal title="Nouvelle agence" onClose={()=>{ setModal(false); setForm({ name:"", email:"", phone:"", city:"", slug:"" }); }}>
+        <Modal title={editId ? "Modifier l'agence" : "Nouvelle agence"} onClose={()=>{ setModal(false); setSlugError(""); setEditId(null); setForm({ name:"", email:"", phone:"", city:"", slug:"" }); }}>
           <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
             {[["Nom de l'agence *","name","Ex: Loqar Paris"],["Slug (URL réservation) *","slug","agence-paris"],["Email","email","contact@paris.loqar.fr"],["Téléphone","phone","+33 1 23 45 67 89"],["Ville","city","Paris"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -3036,7 +3050,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
                 <input value={form[key]||""}
                   onChange={e => {
                     up(key, e.target.value);
-                    if (key === "name" && !form.slug) up("slug", toSlug(e.target.value));
+                    if (key === "name" && !form.slug && !editId) up("slug", toSlug(e.target.value));
                   }}
                   placeholder={key==="slug" ? (form.name ? toSlug(form.name) : ph) : ph}
                   style={{ background:T.card2, border:`1px solid ${key==="slug" && slugError ? T.red : T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
@@ -3050,8 +3064,8 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
               </div>
             ))}
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:4 }}>
-              <Btn label="Annuler" onClick={()=>{ setModal(false); setSlugError(""); }}/>
-              <Btn label="Créer l'agence" variant="primary" onClick={handleAdd}/>
+              <Btn label="Annuler" onClick={()=>{ setModal(false); setSlugError(""); setEditId(null); }}/>
+              <Btn label={editId ? "Enregistrer" : "Créer l'agence"} variant="primary" onClick={handleSave}/>
             </div>
           </div>
         </Modal>
