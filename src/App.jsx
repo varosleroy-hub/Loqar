@@ -683,7 +683,7 @@ function OnboardingScreen({ onDone, onNav }) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
-function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user }) {
+function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user, activeAgency = null }) {
   const toast = useToast();
   const lang = useLang();
   const t = TR[lang]||TR.fr;
@@ -738,6 +738,15 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
 
   return (
     <Page title={t.settings||"Paramètres"} sub={lang==="en"?"Your agency info · shown on PDF contracts":"Informations de votre agence · apparaissent sur vos contrats PDF"}>
+      {activeAgency && (
+        <div style={{ background:"#C9A84C15", border:"1px solid #C9A84C40", borderRadius:12, padding:"12px 16px", marginBottom:20, display:"flex", alignItems:"center", gap:12 }}>
+          <span style={{ fontSize:18 }}>ℹ️</span>
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>Mode sous-agence actif : {activeAgency.name}</div>
+            <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>Ces paramètres concernent le <strong style={{ color:T.text }}>compte principal</strong>, pas la sous-agence. Pour modifier le slug de cette agence, allez dans <strong style={{ color:T.text }}>Multi-agences → ✎</strong>.</div>
+          </div>
+        </div>
+      )}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
 
         {/* Infos agence */}
@@ -1001,7 +1010,7 @@ function Settings({ agencyProfile, setAgencyProfile, userPlan = "starter", user 
 }
 
 // ─── SIGNATURE ÉLECTRONIQUE ───────────────────────────────────────────────────
-function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], user }) {
+function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], user, activeAgencyId = null }) {
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
@@ -1024,6 +1033,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
     if (!form.startDate || !form.endDate) { toast("Renseignez les dates", "error"); return; }
     const newR = {
       user_id: user?.id,
+      agency_id: activeAgencyId||null,
       client_id: parseInt(form.clientId)||form.clientId,
       vehicle_id: parseInt(form.vehicleId)||form.vehicleId,
       client_name: `${client.first_name} ${client.last_name}`,
@@ -4866,10 +4876,10 @@ function App() {
     payments:  <Payments payments={payments} setPayments={setPayments} clients={clients} setClients={setClients} rentals={rentals} user={user} userPlan={userPlan} activeAgencyId={activeAgency?.id||null} dataLoading={dataLoading}/>,
     documents: <Documents agencyProfile={agencyProfile} vehicles={vehicles} clients={clients} prefill={docPrefill} onClearPrefill={()=>setDocPrefill(null)}/>,
     calendar:  <CalendarPage rentals={rentals} vehicles={vehicles}/>,
-    signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user}/>,
+    signature: <SignaturePage rentals={rentals} setRentals={setRentals} clients={clients} vehicles={vehicles} user={user} activeAgencyId={activeAgency?.id||null}/>,
     agencies:  <MultiAgences user={user} userPlan={userPlan} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency}/>,
     pricing:   <Pricing userPlan={userPlan}/>,
-    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan} user={user}/>,
+    settings:  <Settings agencyProfile={agencyProfile} setAgencyProfile={handleSaveProfile} userPlan={userPlan} user={user} activeAgency={activeAgency}/>,
   };
 
   return (
