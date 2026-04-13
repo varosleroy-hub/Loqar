@@ -2906,7 +2906,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
   const [agencies, setAgencies] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [modal,    setModal]    = useState(false);
-  const [form,     setForm]     = useState({ name:"", email:"", phone:"", city:"" });
+  const [form,     setForm]     = useState({ name:"", email:"", phone:"", city:"", slug:"" });
   const up = (k,v) => setForm(f=>({...f,[k]:v}));
 
   useEffect(() => {
@@ -2925,7 +2925,7 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
     const newA = { id: Date.now(), ...form, status: "active", createdAt: new Date().toISOString() };
     await saveAgencies([...agencies, newA]);
     setModal(false);
-    setForm({ name:"", email:"", phone:"", city:"" });
+    setForm({ name:"", email:"", phone:"", city:"", slug:"" });
   };
 
   const handleDelete = async (id) => {
@@ -2997,7 +2997,13 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
               <div style={{ fontWeight:700, fontSize:15, color:T.text, marginBottom:4 }}>{a.name}</div>
               {a.city && <div style={{ fontSize:12, color:T.muted, marginBottom:4 }}>📍 {a.city}</div>}
               {a.email && <div style={{ fontSize:12, color:T.muted, marginBottom:2 }}>✉ {a.email}</div>}
-              {a.phone && <div style={{ fontSize:12, color:T.muted }}>📞 {a.phone}</div>}
+              {a.phone && <div style={{ fontSize:12, color:T.muted, marginBottom:4 }}>📞 {a.phone}</div>}
+              {a.slug && (
+                <div style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:7, padding:"6px 10px", marginTop:8, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+                  <span style={{ fontSize:10, color:T.gold, fontFamily:"monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>loqar.fr/book/{a.slug}</span>
+                  <button onClick={()=>navigator.clipboard?.writeText(`https://loqar.fr/book/${a.slug}`)} style={{ fontSize:10, background:"none", border:"none", color:T.muted, cursor:"pointer", flexShrink:0 }}>📋</button>
+                </div>
+              )}
               <div style={{ fontSize:11, color:T.muted, marginTop:10, paddingTop:10, borderTop:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <span>Ajoutée le {new Date(a.createdAt).toLocaleDateString("fr-FR")}</span>
                 <button onClick={()=>onSwitchAgency && onSwitchAgency(activeAgency?.id===a.id ? null : a)}
@@ -3013,9 +3019,9 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
       )}
 
       {modal && (
-        <Modal title="Nouvelle agence" onClose={()=>{ setModal(false); setForm({ name:"", email:"", phone:"", city:"" }); }}>
+        <Modal title="Nouvelle agence" onClose={()=>{ setModal(false); setForm({ name:"", email:"", phone:"", city:"", slug:"" }); }}>
           <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-            {[["Nom de l'agence *","name","Ex: Loqar Paris"],["Email","email","contact@paris.loqar.fr"],["Téléphone","phone","+33 1 23 45 67 89"],["Ville","city","Paris"]].map(([lbl,key,ph])=>(
+            {[["Nom de l'agence *","name","Ex: Loqar Paris"],["Slug (URL réservation) *","slug","agence-paris"],["Email","email","contact@paris.loqar.fr"],["Téléphone","phone","+33 1 23 45 67 89"],["Ville","city","Paris"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
                 <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}

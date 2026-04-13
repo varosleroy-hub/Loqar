@@ -16,11 +16,34 @@ export default async function handler(req, res) {
     const { slug, start, end } = req.query;
     if (!slug) return res.status(400).json({ error: "Slug manquant" });
 
-    const { data: profile } = await supabase
+    // Chercher d'abord dans les profils principaux
+    let profile = null;
+    let agencyId = null;
+
+    const { data: mainProfile } = await supabase
       .from("profiles")
-      .select("id, agency_name, logo, phone, email, address")
+      .select("id, agency_name, logo, phone, email, address, sub_agencies")
       .eq("booking_slug", slug)
       .single();
+
+    if (mainProfile) {
+      profile = mainProfile;
+    } else {
+      // Chercher dans les sous-agences
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("id, agency_name, logo, phone, email, address, sub_agencies")
+        .not("sub_agencies", "is", null);
+
+      for (const p of allProfiles || []) {
+        const found = (p.sub_agencies || []).find(a => a.slug === slug && a.status === "active");
+        if (found) {
+          profile = { ...p, agency_name: found.name, email: found.email || p.email, phone: found.phone || p.phone };
+          agencyId = String(found.id);
+          break;
+        }
+      }
+    }
 
     if (!profile) return res.status(404).json({ error: "Agence introuvable" });
 
@@ -29,6 +52,12 @@ export default async function handler(req, res) {
       .select("id, name, plate, fuel, transmission, km, price_per_day, year, category, status, photo_url")
       .eq("user_id", profile.id)
       .neq("status", "entretien");
+
+    if (agencyId) {
+      vehicleQuery = vehicleQuery.eq("agency_id", agencyId);
+    } else {
+      vehicleQuery = vehicleQuery.is("agency_id", null);
+    }
 
     // Filtrer par disponibilité si dates fournies
     if (start && end) {
@@ -58,11 +87,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Champs obligatoires manquants" });
     }
 
-    const { data: profile } = await supabase
+    // Chercher profil principal ou sous-agence
+    let profile = null;
+    let agencyId = null;
+
+    const { data: mainProfile } = await supabase
       .from("profiles")
-      .select("id, agency_name, email")
+      .select("id, agency_name, email, sub_agencies")
       .eq("booking_slug", slug)
       .single();
+
+    if (mainProfile) {
+      profile = mainProfile;
+    } else {
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("id, agency_name, email, sub_agencies")
+        .not("sub_agencies", "is", null);
+      for (const p of allProfiles || []) {
+        const found = (p.sub_agencies || []).find(a => a.slug === slug && a.status === "active");
+        if (found) {
+          profile = { ...p, agency_name: found.name, email: found.email || p.email };
+          agencyId = String(found.id);
+          break;
+        }
+      }
+    }
 
     if (!profile) return res.status(404).json({ error: "Agence introuvable" });
 
@@ -117,6 +167,7 @@ export default async function handler(req, res) {
         user_id: profile.id,
         client_id: clientId,
         vehicle_id: parseInt(vehicle_id) || vehicle_id,
+        agency_id: agencyId || null,
         client_name: `${first_name} ${last_name}`,
         vehicle_name: `${vehicle?.name || ""} — ${vehicle?.plate || ""}`,
         start_date,
