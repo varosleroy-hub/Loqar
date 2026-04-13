@@ -1724,6 +1724,17 @@ function LandingPage({ onGetStarted }) {
         </div>
       </div>
 
+      {/* CONTACT */}
+      <div style={{ padding:"60px 28px", textAlign:"center", borderTop:`1px solid ${T.border}` }}>
+        <div style={{ fontSize:22, fontWeight:800, color:T.text, marginBottom:10, letterSpacing:"-0.02em" }}>Une question ? On vous répond.</div>
+        <div style={{ fontSize:14, color:T.muted, marginBottom:28, maxWidth:440, margin:"0 auto 28px" }}>
+          Pour toute demande, démonstration ou devis sur mesure, écrivez-nous directement.
+        </div>
+        <a href="mailto:contact@loqar.fr" style={{ display:"inline-flex", alignItems:"center", gap:10, background:T.gold, color:"#0F0D0B", padding:"14px 32px", borderRadius:10, fontSize:15, fontWeight:700, textDecoration:"none" }}>
+          ✉ contact@loqar.fr
+        </a>
+      </div>
+
       {/* FOOTER */}
       <footer style={{ borderTop:`1px solid ${T.border}`, padding:"24px 28px", background:T.surface, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:14 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -1734,7 +1745,10 @@ function LandingPage({ onGetStarted }) {
           </div>
         </div>
         <span style={{ fontSize:12, color:T.muted }}>© 2025 Loqar · Logiciel de gestion de location de véhicules</span>
-        <Btn label="Se connecter" variant="secondary" onClick={onGetStarted}/>
+        <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          <a href="mailto:contact@loqar.fr" style={{ fontSize:12, color:T.gold, textDecoration:"none", fontWeight:600 }}>contact@loqar.fr</a>
+          <Btn label="Se connecter" variant="secondary" onClick={onGetStarted}/>
+        </div>
       </footer>
     </div>
   );
