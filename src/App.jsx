@@ -2907,12 +2907,16 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
   const [loading,  setLoading]  = useState(true);
   const [modal,    setModal]    = useState(false);
   const [form,     setForm]     = useState({ name:"", email:"", phone:"", city:"", slug:"" });
-  const up = (k,v) => setForm(f=>({...f,[k]:v}));
+  const [slugError, setSlugError] = useState("");
+  const [mainSlug, setMainSlug] = useState("");
+  const up = (k,v) => { setForm(f=>({...f,[k]:v})); if (k==="slug") setSlugError(""); };
+
+  const toSlug = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 
   useEffect(() => {
     if (!user || userPlan !== "enterprise") { setLoading(false); return; }
-    supabase.from("profiles").select("sub_agencies").eq("id", user.id).single()
-      .then(({ data }) => { setAgencies(data?.sub_agencies || []); setLoading(false); });
+    supabase.from("profiles").select("sub_agencies, booking_slug").eq("id", user.id).single()
+      .then(({ data }) => { setAgencies(data?.sub_agencies || []); setMainSlug(data?.booking_slug || ""); setLoading(false); });
   }, [user, userPlan]);
 
   const saveAgencies = async (list) => {
@@ -2922,9 +2926,14 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
 
   const handleAdd = async () => {
     if (!form.name.trim()) return;
-    const newA = { id: Date.now(), ...form, status: "active", createdAt: new Date().toISOString() };
+    const slug = form.slug.trim() || toSlug(form.name);
+    if (!slug) { setSlugError("Le slug est requis"); return; }
+    if (slug === mainSlug) { setSlugError("Ce slug est déjà utilisé par votre compte principal"); return; }
+    if (agencies.some(a => a.slug === slug)) { setSlugError("Ce slug est déjà utilisé par une autre agence"); return; }
+    const newA = { id: Date.now(), ...form, slug, status: "active", createdAt: new Date().toISOString() };
     await saveAgencies([...agencies, newA]);
     setModal(false);
+    setSlugError("");
     setForm({ name:"", email:"", phone:"", city:"", slug:"" });
   };
 
@@ -3024,13 +3033,24 @@ function MultiAgences({ user, userPlan = "starter", activeAgency = null, onSwitc
             {[["Nom de l'agence *","name","Ex: Loqar Paris"],["Slug (URL réservation) *","slug","agence-paris"],["Email","email","contact@paris.loqar.fr"],["Téléphone","phone","+33 1 23 45 67 89"],["Ville","city","Paris"]].map(([lbl,key,ph])=>(
               <div key={key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 <label style={{ fontSize:11, fontWeight:600, color:T.sub, letterSpacing:".08em", textTransform:"uppercase" }}>{lbl}</label>
-                <input value={form[key]||""} onChange={e=>up(key,e.target.value)} placeholder={ph}
-                  style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
-                  onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
+                <input value={form[key]||""}
+                  onChange={e => {
+                    up(key, e.target.value);
+                    if (key === "name" && !form.slug) up("slug", toSlug(e.target.value));
+                  }}
+                  placeholder={key==="slug" ? (form.name ? toSlug(form.name) : ph) : ph}
+                  style={{ background:T.card2, border:`1px solid ${key==="slug" && slugError ? T.red : T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none" }}
+                  onFocus={e=>e.target.style.borderColor=key==="slug"&&slugError?T.red:T.gold}
+                  onBlur={e=>e.target.style.borderColor=key==="slug"&&slugError?T.red:T.border}/>
+                {key==="slug" && (
+                  <div style={{ fontSize:11, color: slugError ? T.red : T.muted }}>
+                    {slugError || `URL : loqar.fr/book/${form.slug || toSlug(form.name) || "…"}`}
+                  </div>
+                )}
               </div>
             ))}
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:4 }}>
-              <Btn label="Annuler" onClick={()=>setModal(false)}/>
+              <Btn label="Annuler" onClick={()=>{ setModal(false); setSlugError(""); }}/>
               <Btn label="Créer l'agence" variant="primary" onClick={handleAdd}/>
             </div>
           </div>
