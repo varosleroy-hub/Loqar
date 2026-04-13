@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
   const { data: rental } = await supabase
     .from("rentals")
-    .select("id, status, client_name, vehicle_name, start_date, end_date, total, client_id, user_id")
+    .select("id, status, client_name, vehicle_name, start_date, end_date, total, client_id, user_id, portal_token")
     .eq("portal_token", token)
     .single();
 
