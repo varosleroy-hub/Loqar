@@ -172,7 +172,7 @@ export default async function handler(req, res) {
         vehicle_name: `${vehicle?.name || ""} — ${vehicle?.plate || ""}`,
         start_date,
         end_date,
-        prix_per_day: vehicle?.price_per_day || 0,
+        price_per_day: vehicle?.price_per_day || 0,
         total,
         notes: notes || null,
         status: "réservée",

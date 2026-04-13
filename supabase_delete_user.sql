@@ -1,22 +1,18 @@
--- Fonction RPC pour supprimer le compte de l'utilisateur connecté
+-- Fonction RPC pour permettre à un utilisateur de supprimer son propre compte
 -- À coller dans : Supabase Dashboard → SQL Editor → New query → Run
 
-create or replace function delete_user()
-returns void
-language plpgsql
-security definer
-as $$
-begin
-  -- Supprimer les données métier de l'utilisateur
-  delete from payments where user_id = auth.uid();
-  delete from rentals  where user_id = auth.uid();
-  delete from clients  where user_id = auth.uid();
-  delete from vehicles where user_id = auth.uid();
-  delete from profiles where id      = auth.uid();
-  -- Supprimer le compte auth (doit être en dernier)
-  delete from auth.users where id = auth.uid();
-end;
+CREATE OR REPLACE FUNCTION delete_user()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Supprimer le profil (les autres tables seront nettoyées via RLS ou cascade)
+  DELETE FROM public.profiles WHERE id = auth.uid();
+  -- Supprimer le compte auth
+  DELETE FROM auth.users WHERE id = auth.uid();
+END;
 $$;
 
--- Accorder l'exécution aux utilisateurs authentifiés
-grant execute on function delete_user() to authenticated;
+-- Autoriser les utilisateurs authentifiés à appeler cette fonction
+GRANT EXECUTE ON FUNCTION delete_user() TO authenticated;

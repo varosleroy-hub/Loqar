@@ -4554,7 +4554,7 @@ function ClientPortal({ token }) {
       <div style={{maxWidth:620,margin:"0 auto",padding:"28px 16px"}}>
         {/* Bienvenue */}
         <div style={{marginBottom:24}}>
-          <div style={{fontSize:22,fontWeight:700,color:"#E8E4DF",letterSpacing:"-0.02em"}}>Bonjour {rental.client_name?.split(" ")[0]} 👋</div>
+          <div style={{fontSize:22,fontWeight:700,color:"#E8E4DF",letterSpacing:"-0.02em"}}>Bonjour {rental.client_name?.split(" ")[0] || "Client"} 👋</div>
           <div style={{fontSize:13,color:"#8A8075",marginTop:4}}>Voici votre espace locataire Loqar</div>
         </div>
 
@@ -4700,6 +4700,39 @@ function ClientPortal({ token }) {
   );
 }
 
+// ─── PASSWORD RESET MODAL ─────────────────────────────────────────────────────
+function PasswordResetModal({ onDone }) {
+  const toast = useToast();
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const handle = async () => {
+    if (pw.length < 6) { toast("Le mot de passe doit faire au moins 6 caractères", "error"); return; }
+    if (pw !== pw2) { toast("Les mots de passe ne correspondent pas", "error"); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setLoading(false);
+    if (error) { toast(error.message, "error"); return; }
+    toast("Mot de passe mis à jour !");
+    onDone();
+  };
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:2000, background:"#0E0C0Acc", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"32px 28px", width:"100%", maxWidth:380, boxShadow:"0 24px 64px #00000060" }}>
+        <div style={{ fontSize:20, fontWeight:700, color:T.text, marginBottom:6 }}>Nouveau mot de passe</div>
+        <div style={{ fontSize:13, color:T.muted, marginBottom:24 }}>Choisissez un nouveau mot de passe pour votre compte.</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="Nouveau mot de passe"
+            style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", width:"100%", boxSizing:"border-box" }}/>
+          <input type="password" value={pw2} onChange={e=>setPw2(e.target.value)} placeholder="Confirmer le mot de passe" onKeyDown={e=>e.key==="Enter"&&handle()}
+            style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"10px 13px", color:T.text, fontSize:13, fontFamily:"inherit", outline:"none", width:"100%", boxSizing:"border-box" }}/>
+          <Btn label={loading?"...":"Enregistrer"} variant="primary" onClick={handle} full/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 const DEFAULT_AGENCY = { name:"", logo:"🚗", address:"", phone:"", email:"", website:"", siret:"", tva:"", iban:"", bic:"", bankHolder:"", terms:"", franchise:"800 €", bookingSlug:"" };
 
@@ -4724,6 +4757,7 @@ function App() {
   const [userPlan,       setUserPlan]       = useState("starter");
   const [activeAgency,   setActiveAgency]   = useState(null); // null = agence principale
   const [docPrefill,     setDocPrefill]     = useState(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [readNotifIds, setReadNotifIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem("loqar_read_notifs")||"[]")); } catch { return new Set(); }
   });
@@ -4761,7 +4795,8 @@ function App() {
       if (session?.user) { fetchData(session.user.id); fetchProfile(session.user.id, session.user); }
       setLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") { setPasswordRecovery(true); return; }
       setUser(session?.user ?? null);
       if (session?.user) { fetchData(session.user.id); fetchProfile(session.user.id, session.user); }
       else { setLoading(false); }
@@ -4889,6 +4924,7 @@ function App() {
       {cmdOpen && <CommandBar onClose={()=>setCmdOpen(false)} onNav={p=>{ setPage(p); setCmdOpen(false); }}/>}
       {showOnboarding && <OnboardingScreen onDone={()=>setShowOnboarding(false)} onNav={p=>setPage(p)}/>}
       {notifOpen && <NotifPanel onClose={()=>setNotifOpen(false)} notifs={computedNotifs} onMarkAll={handleMarkAllRead} onMarkRead={handleMarkRead}/>}
+      {passwordRecovery && <PasswordResetModal onDone={()=>setPasswordRecovery(false)}/>}
       <Sidebar page={page} onNav={p=>setPage(p)} user={user} onLogout={handleLogout} onCmd={()=>setCmdOpen(true)} vehicles={vehicles} onNotif={()=>setNotifOpen(o=>!o)} unreadCount={unread} userPlan={userPlan} payments={payments} onLangChange={handleLang} activeAgency={activeAgency} onSwitchAgency={handleSwitchAgency} trialDaysLeft={trialDaysLeft}/>
       <main style={{ flex:1, marginLeft:isMobile?0:220, minHeight:"100vh", paddingTop:isMobile?56:0 }}>
         <div key={page} style={{ animation:"fadeUp .3s" }}>{screens[page]}</div>
