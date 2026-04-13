@@ -62,12 +62,9 @@ export default async function handler(req, res) {
       } catch (_) {}
     }
 
-    await supabase.from("rentals").update({
-      signed_at: new Date().toISOString(),
-      ...(signatureUrl ? { signature_url: signatureUrl } : {}),
-    }).eq("portal_token", token);
+    await supabase.from("rentals").update({ signed_at: new Date().toISOString() }).eq("portal_token", token);
 
-    // Notifier l'agence par email
+    // Notifier l'agence par email avec la signature en pièce jointe
     if (process.env.SENDGRID_API_KEY) {
       try {
         const { data: profile } = await supabase
@@ -92,13 +89,24 @@ export default async function handler(req, res) {
 <tr><td style="padding:16px 20px;border-bottom:1px solid #2A2420;"><span style="color:#8A8075;font-size:13px;">Dates</span><div style="color:#F5F0E8;font-weight:600;margin-top:4px;">${rental.start_date} → ${rental.end_date}</div></td></tr>
 <tr><td style="padding:16px 20px;"><span style="color:#8A8075;font-size:13px;">Total</span><div style="color:#C9A84C;font-weight:700;font-size:18px;margin-top:4px;">${rental.total} €</div></td></tr>
 </table>
-${signatureUrl ? `<div style="margin-top:24px;text-align:center;"><div style="font-size:12px;color:#8A8075;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Signature du client</div><img src="${signatureUrl}" alt="Signature" style="max-width:280px;border:1px solid #2A2420;border-radius:8px;background:#fff;padding:8px;" /></div>` : ""}
-<div style="text-align:center;margin-top:28px;">
+<p style="color:#8A8075;font-size:13px;margin-top:20px;text-align:center;">La signature du client est jointe à cet email (signature.png).</p>
+<div style="text-align:center;margin-top:20px;">
 <a href="https://loqar.fr" style="display:inline-block;background:#C9A84C;color:#0E0C0A;font-weight:700;font-size:14px;padding:14px 32px;border-radius:8px;text-decoration:none;">Voir dans Loqar</a>
 </div>
 </td></tr>
 <tr><td style="padding:24px 40px;text-align:center;border-top:1px solid #2A2420;"><div style="font-size:12px;color:#4A4440;">Propulsé par <strong style="color:#C9A84C;">Loqar</strong></div></td></tr>
 </table></td></tr></table></body></html>`;
+
+          // Préparer la pièce jointe signature
+          const attachments = [];
+          if (signature && signature.startsWith("data:image/png;base64,")) {
+            attachments.push({
+              content: signature.replace("data:image/png;base64,", ""),
+              filename: `signature_${rental.client_name.replace(/\s+/g, "_")}.png`,
+              type: "image/png",
+              disposition: "attachment",
+            });
+          }
 
           await fetch("https://api.sendgrid.com/v3/mail/send", {
             method: "POST",
@@ -108,6 +116,7 @@ ${signatureUrl ? `<div style="margin-top:24px;text-align:center;"><div style="fo
               from: { email: "noreply@loqar.fr", name: "Loqar" },
               subject: `✍️ Contrat signé — ${rental.client_name}`,
               content: [{ type: "text/html", value: html }],
+              ...(attachments.length > 0 ? { attachments } : {}),
             }),
           });
         }
