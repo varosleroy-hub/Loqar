@@ -4460,9 +4460,10 @@ function ClientPortal({ token }) {
   const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
 
   const confirmSign = async () => {
-    const res = await fetch(`/api/portal?token=${token}`, { method:"POST", headers:{"Content-Type":"application/json"}, body:"{}" });
+    const signatureData = canvasRef.current?.toDataURL("image/png");
+    const res = await fetch(`/api/portal?token=${token}`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ signature: signatureData }) });
     const d = await res.json();
-    if (d.success) { setDone(true); setSigning(false); setRental(r=>({...r,status:"en cours"})); }
+    if (d.success) { setDone(true); setSigning(false); }
   };
 
   const SC = { "réservée":"#C9A55A","en cours":"#6AAF7A","terminée":"#8A8075","annulée":"#E8746A" };
