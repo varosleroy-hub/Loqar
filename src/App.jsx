@@ -1015,14 +1015,64 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
   const t = TR[lang]||TR.fr;
   const toast = useToast();
   const [selected, setSelected] = useState(null);
-  const [sigStep, setSigStep] = useState(null); // null | "send" | "signing" | "done"
+  const [sigStep, setSigStep] = useState(null);
   const [signed, setSigned] = useState([]);
   const [drawing, setDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [sigDataURL, setSigDataURL] = useState(null);
+  const [searchContract, setSearchContract] = useState("");
   const canvasRef = useRef(null);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
+
+  const contractNum = (id) => `LQ-${new Date().getFullYear()}-${String(id).padStart(4,"0")}`;
+
+  const downloadContractPDF = (contract, dataURL) => {
+    const num = contractNum(contract.id);
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Contrat ${num}</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:680px;margin:40px auto;color:#1A1510;font-size:14px}
+  .header{text-align:center;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #C9A84C}
+  .num{font-size:20px;font-weight:bold;color:#C9A84C;margin-bottom:4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+  .field{padding:10px 14px;background:#F5F0E8;border-radius:6px}
+  .fl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+  .fv{font-weight:700;font-size:14px}
+  .total{text-align:center;padding:16px;background:#FFF8E8;border:2px solid #C9A84C;border-radius:8px;margin:20px 0;font-size:18px;font-weight:bold;color:#C9A84C}
+  .sig-section{margin-top:30px;padding-top:20px;border-top:1px solid #ddd}
+  .sig-img{border:1px solid #ddd;border-radius:6px;max-width:280px;display:block;margin-top:8px}
+  .conditions{font-size:11px;color:#888;margin-top:24px;line-height:1.7;border-top:1px solid #eee;padding-top:16px}
+  .footer{text-align:center;font-size:11px;color:#aaa;margin-top:30px}
+  @media print{body{margin:20px}}
+</style></head><body>
+<div class="header"><div class="num">Contrat de location N° ${num}</div></div>
+<div class="grid">
+  <div class="field"><div class="fl">Locataire</div><div class="fv">${contract.client}</div></div>
+  <div class="field"><div class="fl">Véhicule</div><div class="fv">${contract.vehicle}</div></div>
+  <div class="field"><div class="fl">Date de début</div><div class="fv">${contract.start_date||"—"}</div></div>
+  <div class="field"><div class="fl">Date de fin</div><div class="fv">${contract.end_date||"—"}</div></div>
+  <div class="field"><div class="fl">Prix / jour</div><div class="fv">${contract.price_per_day||0} €</div></div>
+  <div class="field"><div class="fl">Kilométrage départ</div><div class="fv">${contract.km_start||0} km</div></div>
+  <div class="field"><div class="fl">Caution</div><div class="fv">${contract.deposit||0} €</div></div>
+</div>
+<div class="total">Total : ${contract.amount} €</div>
+${contract.notes ? `<div style="padding:12px 14px;background:#F5F0E8;border-radius:6px;font-size:13px;margin-bottom:12px"><strong>Notes :</strong> ${contract.notes}</div>` : ""}
+<div class="sig-section">
+  <strong>Signature du locataire :</strong>
+  ${dataURL ? `<img src="${dataURL}" class="sig-img" alt="Signature"/>` : `<div style="height:80px;border:1px dashed #ccc;border-radius:6px;margin-top:8px"></div>`}
+  <div style="font-size:12px;color:#888;margin-top:8px">Signé électroniquement — ${new Date().toLocaleDateString("fr-FR")}</div>
+</div>
+<div class="conditions">En signant ce document, le locataire reconnaît avoir pris connaissance et accepté les conditions générales de location. Ce contrat est établi en vertu de la réglementation en vigueur relative à la location de véhicules.</div>
+<div class="footer">Propulsé par Loqar — loqar.fr</div>
+</body></html>`;
+    const w = window.open("", "_blank");
+    if (!w) { toast("Autorisez les popups pour télécharger le PDF", "warn"); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 500);
+  };
   const days = Math.ceil((new Date(form.endDate)-new Date(form.startDate))/86400000);
   const total = (parseInt(form.pricePerDay)||0)*(days>0?days:0);
 
@@ -1055,7 +1105,7 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
     setForm({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   };
 
-  const contracts = rentals
+  const allContracts = rentals
     .filter(r => r.status === "réservée" || r.status === "en cours" || r.status === "terminée")
     .map(r => ({
       id: r.id,
@@ -1063,9 +1113,21 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
       client: r.client_name || "",
       vehicle: r.vehicle_name || "",
       date: r.start_date ? fmtDate(r.start_date) : "—",
+      start_date: r.start_date || "",
+      end_date: r.end_date || "",
       amount: r.total || 0,
+      deposit: r.deposit || 0,
+      km_start: r.km_start || 0,
+      price_per_day: r.price_per_day || 0,
+      notes: r.notes || "",
+      portal_token: r.portal_token || "",
       status: r.status === "terminée" ? "signé" : "en attente signature",
     }));
+  const contracts = allContracts.filter(c =>
+    !searchContract ||
+    c.client.toLowerCase().includes(searchContract.toLowerCase()) ||
+    c.vehicle.toLowerCase().includes(searchContract.toLowerCase())
+  );
 
   const getXY = e => { const t=e.touches?.[0]??e; return {x:t.clientX,y:t.clientY}; };
   const startDraw = e => { e.preventDefault?.(); setDrawing(true); const c=canvasRef.current; const r=c.getBoundingClientRect(); const {x,y}=getXY(e); const ctx=c.getContext("2d"); ctx.beginPath(); ctx.moveTo(x-r.left,y-r.top); };
@@ -1073,11 +1135,13 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
   const endDraw = () => setDrawing(false);
   const clearCanvas = () => { const c=canvasRef.current; c.getContext("2d").clearRect(0,0,c.width,c.height); setHasDrawn(false); };
   const confirmSign = async () => {
-    // Upload de la signature dans Supabase Storage
     const canvas = canvasRef.current;
+    let dataURL = null;
     if (canvas) {
       try {
-        const blob = await (await fetch(canvas.toDataURL("image/png"))).blob();
+        dataURL = canvas.toDataURL("image/png");
+        setSigDataURL(dataURL);
+        const blob = await (await fetch(dataURL)).blob();
         const path = `signatures/${user?.id}/${selected.id}_${Date.now()}.png`;
         await supabase.storage.from("photos").upload(path, blob, { contentType:"image/png", upsert:true });
       } catch(e) { console.error("Erreur upload signature:", e); }
@@ -1104,12 +1168,20 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
             <div style={{ fontSize:16, fontWeight:700, color:T.text, marginBottom:4 }}>Signature du contrat</div>
             <div style={{ fontSize:12, color:T.muted, marginBottom:22 }}>{selected.client} · {selected.vehicle} · {selected.amount} €</div>
 
-            <div style={{ background:"#FDFBF7", borderRadius:12, padding:20, marginBottom:20, color:"#1A1510", fontSize:12, lineHeight:1.6 }}>
-              <div style={{ fontWeight:700, fontSize:14, marginBottom:8 }}>Contrat de location N° LQ-2025-{selected.id.toString().padStart(4,"0")}</div>
-              <div>Véhicule : <strong>{selected.vehicle}</strong></div>
-              <div>Locataire : <strong>{selected.client}</strong></div>
-              <div>Montant : <strong>{selected.amount} €</strong></div>
-              <div style={{ marginTop:10, fontSize:11, color:"#888" }}>En signant ce document, le locataire accepte les conditions générales de location.</div>
+            <div style={{ background:"#FDFBF7", borderRadius:12, padding:20, marginBottom:20, color:"#1A1510", fontSize:12, lineHeight:1.7, maxHeight:260, overflowY:"auto" }}>
+              <div style={{ fontWeight:800, fontSize:14, marginBottom:14, color:"#C9A84C" }}>Contrat N° {contractNum(selected.id)}</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 20px" }}>
+                <div><span style={{ color:"#888" }}>Locataire</span><br/><strong>{selected.client}</strong></div>
+                <div><span style={{ color:"#888" }}>Véhicule</span><br/><strong>{selected.vehicle}</strong></div>
+                <div style={{ marginTop:8 }}><span style={{ color:"#888" }}>Début</span><br/><strong>{selected.start_date ? fmtDate(selected.start_date) : "—"}</strong></div>
+                <div style={{ marginTop:8 }}><span style={{ color:"#888" }}>Fin</span><br/><strong>{selected.end_date ? fmtDate(selected.end_date) : "—"}</strong></div>
+                <div style={{ marginTop:8 }}><span style={{ color:"#888" }}>Prix / jour</span><br/><strong>{selected.price_per_day} €</strong></div>
+                <div style={{ marginTop:8 }}><span style={{ color:"#888" }}>Km départ</span><br/><strong>{selected.km_start} km</strong></div>
+                <div style={{ marginTop:8 }}><span style={{ color:"#888" }}>Caution</span><br/><strong>{selected.deposit} €</strong></div>
+                <div style={{ marginTop:8 }}><span style={{ color:"#888" }}>Total</span><br/><strong style={{ color:"#C9A84C", fontSize:15 }}>{selected.amount} €</strong></div>
+              </div>
+              {selected.notes && <div style={{ marginTop:10, padding:"8px 10px", background:"#F0EBE0", borderRadius:6, fontSize:11 }}><strong>Notes :</strong> {selected.notes}</div>}
+              <div style={{ marginTop:12, fontSize:11, color:"#999", borderTop:"1px solid #E8E0D0", paddingTop:10 }}>En signant ce document, le locataire reconnaît avoir pris connaissance et accepté les conditions générales de location.</div>
             </div>
 
             <div style={{ marginBottom:16 }}>
@@ -1149,7 +1221,10 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
             </div>
             <div style={{ fontSize:20, fontWeight:700, color:T.text, marginBottom:8 }}>Contrat signé !</div>
             <p style={{ fontSize:13, color:T.sub, lineHeight:1.7, marginBottom:24 }}>La signature de <strong style={{ color:T.text }}>{selected?.client}</strong> a été enregistrée. Un email de confirmation lui a été envoyé.</p>
-            <Btn label="Fermer" variant="primary" onClick={()=>{ setSigStep(null); setSelected(null); setHasDrawn(false); }} style={{ justifyContent:"center", width:"100%" }}/>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <button onClick={()=>downloadContractPDF(selected, sigDataURL)} style={{ padding:"11px", background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:10, color:T.gold, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>📄 Télécharger le contrat PDF</button>
+              <Btn label="Fermer" variant="primary" onClick={()=>{ setSigStep(null); setSelected(null); setHasDrawn(false); setSigDataURL(null); }} style={{ justifyContent:"center", width:"100%" }}/>
+            </div>
           </div>
         </div>
       )}
@@ -1175,8 +1250,11 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
 
       {/* Contracts list */}
       <Card style={{ padding:0, overflow:"hidden" }}>
-        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}` }}>
-          <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Contracts pending signature":"Contrats en attente de signature"}</div>
+        <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{lang==="en"?"Contracts":"Contrats"}</div>
+          <input value={searchContract} onChange={e=>setSearchContract(e.target.value)} placeholder="Rechercher client ou véhicule…"
+            style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"6px 12px", color:T.text, fontSize:12, fontFamily:"inherit", outline:"none", width:220 }}
+            onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
         </div>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
@@ -1208,7 +1286,11 @@ function SignaturePage({ rentals = [], setRentals, clients = [], vehicles = [], 
                   <td style={{ padding:"13px 18px", borderBottom:`1px solid ${T.border}` }}>
                     {!isSigned
                       ? <div style={{ display:"flex", gap:8 }}>
-                          <Btn label={lang==="en"?"Send link":"Envoyer le lien"} variant="outline" size="sm" icon={Icons.mail} onClick={()=>{ setSelected(c); setSigStep("send"); setTimeout(()=>setSigStep("signing"),800); }}/>
+                          <Btn label={lang==="en"?"Copy link":"Copier le lien"} variant="outline" size="sm" icon={Icons.mail} onClick={()=>{
+                        const url = c.portal_token ? `https://loqar.fr/portal?token=${c.portal_token}` : null;
+                        if (url) { navigator.clipboard.writeText(url).then(()=>toast("Lien copié dans le presse-papier !")); }
+                        else toast("Aucun lien disponible pour ce contrat", "warn");
+                      }}/>
                           <Btn label={lang==="en"?"Sign here":"Signer ici"} variant="secondary" size="sm" icon={Icons.pen} onClick={()=>{ setSelected(c); setSigStep("signing"); setHasDrawn(false); }}/>
                         </div>
                       : <span style={{ fontSize:12, color:T.success, display:"flex", alignItems:"center", gap:5 }}>{Icons.check} Signé</span>
