@@ -1676,6 +1676,68 @@ function LandingPage({ onGetStarted }) {
         </div>
       </div>
 
+      {/* COMPTA */}
+      <div style={{ padding:"80px 24px", maxWidth:1080, margin:"0 auto" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:60, alignItems:"center" }}>
+          {/* Texte */}
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:12 }}>Comptabilité</div>
+            <h2 style={{ fontSize:"clamp(24px,3vw,34px)", fontWeight:800, letterSpacing:"-0.03em", marginBottom:16, lineHeight:1.2 }}>Votre comptabilité,<br/>enfin simple</h2>
+            <p style={{ fontSize:14, color:T.sub, lineHeight:1.8, marginBottom:28 }}>
+              Plus besoin de jongler entre des fichiers Excel et votre logiciel de compta. Loqar centralise tous vos encaissements et génère un export prêt à envoyer à votre comptable en un clic.
+            </p>
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {[
+                ["💶", "Suivi des encaissements en temps réel", "Chaque paiement est enregistré avec date, montant, méthode et statut. Fini les oublis."],
+                ["⚠️", "Alertes paiements en retard", "Loqar vous notifie automatiquement dès qu'un paiement dépasse son échéance."],
+                ["📊", "Export CSV en un clic", "Téléchargez tous vos paiements du mois en format Excel — prêt pour votre comptable ou votre déclaration."],
+                ["🔒", "Cautions et dépôts de garantie", "Suivi des cautions encaissées et à rembourser, sans risque d'erreur."],
+              ].map(([icon, title, desc]) => (
+                <div key={title} style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:T.goldDim, border:`1px solid ${T.gold}30`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{icon}</div>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:700, color:T.text, marginBottom:3 }}>{title}</div>
+                    <div style={{ fontSize:13, color:T.muted, lineHeight:1.6 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Visuel */}
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:20, padding:28, boxShadow:"0 24px 80px #00000050" }}>
+            <div style={{ fontSize:13, fontWeight:700, color:T.text, marginBottom:20 }}>Paiements — Avril 2025</div>
+            {/* Stats */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:20 }}>
+              {[["Encaissé",T.success,"8 420 €"],["En attente",T.amber,"1 200 €"],["En retard",T.red,"350 €"],["Cautions",T.blue,"2 400 €"]].map(([l,c,v])=>(
+                <div key={l} style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:12, padding:"14px 16px" }}>
+                  <div style={{ fontSize:10, color:T.muted, textTransform:"uppercase", letterSpacing:".08em", marginBottom:6 }}>{l}</div>
+                  <div style={{ fontSize:22, fontWeight:800, color:c, letterSpacing:"-0.02em" }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            {/* Liste paiements */}
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
+              {[["Martin Dupont","Espèces","650 €","encaissé",T.success],["Sarah Leroy","Virement","420 €","encaissé",T.success],["Pierre Martin","CB","310 €","en attente",T.amber],["Julie Bernard","CB","350 €","en retard",T.red]].map(([n,m,a,s,c])=>(
+                <div key={n} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:T.card2, borderRadius:10, fontSize:12 }}>
+                  <span style={{ fontWeight:600, color:T.text }}>{n}</span>
+                  <span style={{ color:T.muted }}>{m}</span>
+                  <span style={{ fontWeight:700, color:T.text }}>{a}</span>
+                  <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:6, background:c+"18", color:c }}>{s}</span>
+                </div>
+              ))}
+            </div>
+            {/* Export button */}
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 16px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:10, cursor:"pointer" }}>
+              <span style={{ fontSize:16 }}>↓</span>
+              <div>
+                <div style={{ fontSize:13, fontWeight:700, color:T.gold }}>Exporter en CSV</div>
+                <div style={{ fontSize:11, color:T.muted }}>loqar-paiements-2025-04.csv</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* PRICING */}
       <div style={{ padding:"72px 24px", maxWidth:1080, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:44 }}>
