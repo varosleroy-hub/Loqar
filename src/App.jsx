@@ -5511,6 +5511,112 @@ Loqar centralise tous ces indicateurs dans un tableau de bord clair :
 Avec Loqar, vous avez une vision à 360° de votre flotte depuis un seul outil.
     `,
   },
+  {
+    slug: "comptabilite-agence-location-voiture",
+    title: "Comptabilité d'une agence de location de voitures : guide complet 2025",
+    description: "Comment gérer la comptabilité de votre agence de location automobile ? Encaissements, TVA, cautions, export comptable — tout ce que doit savoir un loueur professionnel.",
+    date: "2026-04-14",
+    readTime: "8 min",
+    content: `
+## Pourquoi la comptabilité d'une agence de location est spécifique
+
+La comptabilité d'une agence de location de voitures ne ressemble pas à celle d'un commerce classique. Vous gérez des **revenus récurrents journaliers**, des **cautions bloquées puis restituées**, des **véhicules amortissables** sur plusieurs années, et parfois plusieurs agences en parallèle. Autant de particularités qui imposent une organisation rigoureuse dès le départ.
+
+Sans outil adapté, beaucoup de loueurs se retrouvent à jongler entre des relevés bancaires, des fichiers Excel mal tenus et un comptable qui reconstitue tout à la fin de l'année. Résultat : des erreurs, du temps perdu, et des décisions prises sans visibilité réelle sur la trésorerie.
+
+## Les 4 flux financiers à maîtriser
+
+### 1. Les loyers journaliers (chiffre d'affaires principal)
+
+C'est votre revenu de base : le prix par jour multiplié par le nombre de jours de location. Ce montant doit être enregistré à la date de début de location (principe de rattachement des produits à leur période). Chaque location doit être tracée avec :
+
+- Le client (nom, coordonnées)
+- Le véhicule (immatriculation)
+- La durée et les dates exactes
+- Le montant hors taxe et TTC
+
+### 2. Les cautions (dépôts de garantie)
+
+Les cautions ne sont **pas un revenu**. C'est une somme que vous détenez temporairement. Comptablement, elles doivent figurer dans un compte de tiers (dettes envers les clients), pas dans votre chiffre d'affaires. Quand vous les restituez, vous soldez ce compte. Si vous en conservez une partie suite à un sinistre, ce montant devient alors un revenu exceptionnel.
+
+Beaucoup de loueurs confondent caution encaissée et chiffre d'affaires — c'est une erreur qui fausse toute l'analyse financière.
+
+### 3. Les paiements en retard et impayés
+
+Une location terminée n'est pas forcément payée. Le suivi des **créances clients** est indispensable : qui vous doit combien, depuis quand, et quelles relances ont été faites ? Un impayé non suivi pendant 3 mois est souvent irrécupérable. Il faut donc un système de relance automatique ou semi-automatique.
+
+Au niveau comptable, les créances non recouvrées au-delà d'une certaine durée doivent être provisionnées ou passées en perte, ce qui a un impact fiscal.
+
+### 4. Les charges liées à la flotte
+
+Chaque véhicule génère des charges : assurance, entretien, carburant (si vous l'avancez), vignette Crit'Air, réparations. Ces charges sont déductibles du résultat. Il faut les enregistrer par véhicule pour connaître le **coût réel de possession** et calculer la rentabilité nette de chaque voiture.
+
+## TVA : ce que vous devez savoir
+
+Si votre agence est soumise à la TVA (ce qui est le cas dès que vous dépassez le seuil de franchise), vous devez facturer la TVA à 20 % sur vos locations. Mais attention :
+
+- La TVA sur les **véhicules de tourisme** n'est pas récupérable à l'achat (règle de l'exclusion TVA véhicules de tourisme)
+- La TVA sur le **carburant** des véhicules de tourisme n'est récupérable qu'à 20 %
+- La TVA sur l'**entretien** est récupérable à 100 %
+- La TVA sur les **véhicules utilitaires** (fourgons, camionnettes) est récupérable intégralement
+
+Ces règles varient selon la nature du véhicule et son usage. Un expert-comptable reste indispensable pour les arbitrages complexes, mais connaître ces principes vous évite des surprises.
+
+## L'amortissement des véhicules
+
+Les véhicules ne sont pas une charge immédiate — ils s'amortissent sur leur durée d'utilisation (généralement 4 à 5 ans pour une voiture en location). Cela signifie que chaque année, vous passez en charge une fraction du coût d'achat.
+
+Pour les **véhicules de tourisme**, il existe un plafond d'amortissement fiscal : en 2025, les véhicules dont le prix dépasse 18 300 € (ou 9 900 € pour les véhicules très polluants) voient leur amortissement plafonné. Le surplus n'est pas déductible.
+
+Gardez précieusement toutes vos factures d'achat et suivez le tableau d'amortissement par véhicule. Votre comptable en a besoin chaque année.
+
+## Les indicateurs financiers clés à suivre chaque mois
+
+Un loueur professionnel doit regarder ces chiffres chaque mois, sans exception :
+
+**Encaissé ce mois** : total des paiements réellement reçus (attention, différent du chiffre d'affaires facturé).
+
+**En attente** : montant des locations facturées mais pas encore payées. Si ce chiffre grossit, votre recouvrement est défaillant.
+
+**En retard** : paiements dont l'échéance est dépassée. À surveiller de très près.
+
+**Cautions détenues** : total des cautions que vous gardez en dépôt. Ce n'est pas de l'argent disponible.
+
+**Charges flotte du mois** : entretien, assurances, réparations.
+
+**Résultat net estimé** : encaissements moins charges. Un tableau de bord mensuel vous permet de prendre des décisions éclairées (renouveler un véhicule, embaucher, baisser un tarif).
+
+## L'export comptable : le pont entre votre logiciel et votre comptable
+
+La plupart des comptables travaillent avec des logiciels de comptabilité (Sage, EBP, Cegid, FEC...). Ils ont besoin que vous leur fournissiez vos données dans un format structuré, idéalement un **fichier CSV ou Excel** avec pour chaque transaction : la date, le client, le montant HT, la TVA, le TTC, et la nature de l'opération (location, caution, pénalité...).
+
+Sans export, votre comptable reconstitue tout manuellement à partir de vos relevés bancaires — ce qui coûte cher en heures et génère des erreurs.
+
+Avec **Loqar**, vous exportez en un clic l'ensemble de vos paiements au format CSV, prêt à être intégré dans n'importe quel logiciel comptable. Chaque ligne contient le client, le véhicule, les dates, le montant et le mode de règlement.
+
+## Les pièges comptables les plus fréquents chez les loueurs
+
+**Confondre encaissement et chiffre d'affaires** : une location de 5 jours payée en avance génère du CA sur 5 jours, pas sur le jour du paiement. Ce décalage crée des erreurs si vous travaillez en comptabilité de trésorerie.
+
+**Ne pas séparer les comptes** : mélanger les finances perso et pro est la première cause de redressement fiscal. Un compte bancaire dédié à l'agence est obligatoire dès que vous êtes en société, et vivement recommandé même en auto-entrepreneur.
+
+**Oublier les charges à payer** : une facture d'assurance annuelle doit être répartie sur 12 mois, pas passée en totalité le mois du paiement.
+
+**Sous-évaluer les véhicules à la revente** : si vous vendez un véhicule entièrement amorti, le prix de vente est entièrement imposable en tant que plus-value. Anticipez-le dans votre plan fiscal.
+
+## Comment Loqar vous simplifie la vie au quotidien
+
+Loqar ne remplace pas votre comptable — mais il lui facilite énormément le travail, et surtout, il vous donne une vision claire de vos finances sans attendre la clôture annuelle.
+
+- **Tableau de bord paiements** : encaissé, en attente, en retard, cautions — en temps réel
+- **Relances automatiques** : notifications pour les paiements en retard
+- **Export CSV** : un fichier structuré à envoyer directement à votre comptable
+- **Historique complet** : chaque paiement est lié à une location, un client, un véhicule
+- **Gestion des cautions** : suivi séparé du statut de chaque caution (détenue / restituée / conservée)
+
+Résultat : moins de stress en fin d'année, moins d'heures comptables facturées, et une meilleure vision de votre rentabilité au quotidien.
+    `,
+  },
 ];
 
 function BlogRouter() {
