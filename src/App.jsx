@@ -5617,6 +5617,154 @@ Loqar ne remplace pas votre comptable — mais il lui facilite énormément le t
 Résultat : moins de stress en fin d'année, moins d'heures comptables facturées, et une meilleure vision de votre rentabilité au quotidien.
     `,
   },
+  {
+    slug: "guide-demarrage-loqar",
+    title: "Prendre en main Loqar en 10 minutes : le guide pas-à-pas",
+    description: "Comment démarrer avec Loqar ? Ce guide vous explique étape par étape comment configurer votre agence, ajouter vos véhicules, créer votre première location et activer la réservation en ligne.",
+    date: "2026-04-14",
+    readTime: "10 min",
+    content: `
+## Bienvenue sur Loqar
+
+Loqar est un logiciel de gestion de location de voitures conçu pour les agences professionnelles françaises. Ce guide vous accompagne pas-à-pas pour être opérationnel en moins de 10 minutes, de la création de compte jusqu'à votre première location signée.
+
+---
+
+## Étape 1 — Créer votre compte
+
+Rendez-vous sur [loqar.fr](https://loqar.fr) et cliquez sur **Essai gratuit**. Entrez votre email et choisissez un mot de passe. Votre compte est actif immédiatement, sans carte bancaire. Vous bénéficiez de **14 jours d'essai gratuit** avec toutes les fonctionnalités débloquées.
+
+---
+
+## Étape 2 — Configurer votre profil agence
+
+Avant tout, allez dans **Paramètres** (icône engrenage en bas à gauche). Remplissez :
+
+- **Nom de l'agence** : il apparaîtra sur vos contrats PDF et vos emails clients
+- **Logo** : uploadez votre logo (PNG ou JPG recommandé). Il s'affichera en haut de vos contrats.
+- **Adresse, téléphone, email** : informations de contact visibles par vos clients
+- **SIRET** : obligatoire pour que vos contrats soient juridiquement valables
+- **Conditions générales** : vous pouvez personnaliser le texte qui apparaît en bas de chaque contrat
+
+Ces informations sont utilisées automatiquement partout dans l'application. Prenez 2 minutes pour les remplir correctement, ça évite d'avoir des contrats avec des champs vides.
+
+---
+
+## Étape 3 — Ajouter vos véhicules
+
+Dans le menu **Véhicules**, cliquez sur **+ Ajouter un véhicule**. Pour chaque voiture :
+
+- **Nom** : ex. "Renault Clio 5" — c'est ce qui apparaît sur les contrats
+- **Immatriculation** : la plaque exacte
+- **Catégorie** : citadine, SUV, utilitaire, luxe…
+- **Carburant et transmission**
+- **Kilométrage actuel**
+- **Prix par jour** : le tarif de base. Vous pouvez le modifier manuellement lors de chaque location.
+- **Photo** : uploadez une photo du véhicule pour l'identifier facilement dans la liste
+
+Le statut de chaque véhicule (disponible / en location / en entretien) se met à jour automatiquement selon vos locations.
+
+---
+
+## Étape 4 — Ajouter vos clients
+
+Dans **Clients**, cliquez sur **+ Nouveau client**. Renseignez :
+
+- Prénom, nom, email, téléphone
+- **Date d'expiration du permis** : Loqar vous alertera automatiquement si un permis est expiré ou sur le point de l'être au moment de créer une location
+
+Les clients déjà existants peuvent aussi être créés directement pendant la création d'une location, sans avoir à passer par ce menu.
+
+---
+
+## Étape 5 — Créer votre première location
+
+C'est ici que tout se passe. Dans **Locations**, cliquez sur **+ Nouvelle location**.
+
+**1. Choisissez le véhicule** : la liste n'affiche que les véhicules disponibles pour les dates sélectionnées.
+
+**2. Sélectionnez les dates** : début et fin de location. Le total est calculé automatiquement.
+
+**3. Ajoutez le client** : tapez les premières lettres du nom pour retrouver un client existant, ou créez-en un nouveau directement.
+
+**4. Ajustez si besoin** : prix par jour, caution, kilométrage de départ, notes internes.
+
+**5. Validez** : la location passe au statut **"En cours"** et le véhicule est automatiquement marqué comme indisponible pour ces dates.
+
+---
+
+## Étape 6 — Générer et faire signer le contrat
+
+Une fois la location créée, cliquez dessus pour ouvrir le détail. Vous avez deux options :
+
+**Option A — Signature sur tablette / écran** : cliquez sur **Signature** pour ouvrir l'écran de signature. Le client signe directement avec son doigt ou un stylet. Le contrat PDF est généré et sauvegardé automatiquement.
+
+**Option B — Envoi par email** : si le client n'est pas présent physiquement, envoyez-lui un lien de signature par email. Il signe depuis son smartphone, et vous recevez la confirmation instantanément.
+
+Le contrat PDF généré contient toutes les mentions légales, votre logo, les informations du véhicule, les dates, le montant, la caution et la signature du client.
+
+---
+
+## Étape 7 — Enregistrer un paiement
+
+Dans l'onglet **Paiements**, cliquez sur **+ Nouveau paiement**. Sélectionnez la location concernée, le montant, le mode de règlement (espèces, carte, virement, chèque) et la date.
+
+Loqar distingue automatiquement :
+- Les paiements **encaissés** (payés)
+- Les paiements **en attente** (à venir)
+- Les paiements **en retard** (échéance dépassée)
+
+Le tableau de bord vous donne la somme de chaque catégorie en temps réel.
+
+---
+
+## Étape 8 — Activer votre page de réservation en ligne
+
+C'est la fonctionnalité qui vous fait gagner le plus de temps : vos clients réservent eux-mêmes, 24h/24.
+
+Dans **Paramètres**, section **Page de réservation**, choisissez votre **slug** (ex. "mon-agence"). Votre page publique sera accessible à l'adresse loqar.fr/book/mon-agence.
+
+Partagez ce lien sur votre site, votre page Instagram, Google My Business ou vos emails. Quand un client remplit le formulaire :
+
+1. Vous recevez un email avec tous les détails
+2. Deux boutons vous permettent de **Confirmer** ou **Refuser** en un clic
+3. Le client reçoit automatiquement un email de confirmation
+
+La location est créée directement dans Loqar dès confirmation.
+
+---
+
+## Étape 9 — Suivre votre activité depuis le tableau de bord
+
+Le **Dashboard** (page d'accueil) résume tout :
+
+- Locations en cours aujourd'hui
+- Véhicules disponibles vs indisponibles
+- Prochaines locations à venir
+- Paiements en retard à relancer
+- Alertes (permis expiré, location se terminant demain…)
+
+C'est votre vue quotidienne. Ouvrez-la chaque matin pour savoir exactement où en est votre agence.
+
+---
+
+## Récapitulatif des 9 étapes
+
+| Étape | Action | Durée |
+|---|---|---|
+| 1 | Créer son compte | 1 min |
+| 2 | Configurer le profil agence | 3 min |
+| 3 | Ajouter les véhicules | 2 min/véhicule |
+| 4 | Ajouter les clients | 1 min/client |
+| 5 | Créer une location | 2 min |
+| 6 | Signer le contrat | 1 min |
+| 7 | Enregistrer un paiement | 30 sec |
+| 8 | Activer la réservation en ligne | 1 min |
+| 9 | Consulter le tableau de bord | quotidien |
+
+En suivant ces étapes, votre agence est entièrement opérationnelle sur Loqar en moins de 15 minutes. Pour toute question, contactez-nous à **contact@loqar.fr**.
+    `,
+  },
 ];
 
 function BlogRouter() {
