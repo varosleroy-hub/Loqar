@@ -5312,14 +5312,14 @@ function CalendarPage({ rentals = [], vehicles = [] }) {
         </div>
       ) : (
         <div style={{ overflowX:"auto" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse", minWidth: 600 }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", minWidth: 700 }}>
             <thead>
               <tr>
-                <th style={{ padding:"8px 12px", textAlign:"left", fontSize:12, fontWeight:600, color:T.muted, background:T.surface, position:"sticky", left:0, zIndex:2, borderBottom:`1px solid ${T.border}`, minWidth:120, whiteSpace:"nowrap" }}>
+                <th style={{ padding:"12px 20px", textAlign:"left", fontSize:13, fontWeight:600, color:T.muted, background:T.surface, position:"sticky", left:0, zIndex:2, borderBottom:`1px solid ${T.border}`, minWidth:180, whiteSpace:"nowrap" }}>
                   {lang === "en" ? "Vehicle" : "Véhicule"}
                 </th>
                 {days.map(d => (
-                  <th key={d} style={{ padding:"6px 2px", textAlign:"center", fontSize:11, fontWeight:isToday(d)?700:500, color:isToday(d)?T.gold:T.muted, background:T.surface, borderBottom:`1px solid ${T.border}`, minWidth:28, maxWidth:32 }}>
+                  <th key={d} style={{ padding:"10px 4px", textAlign:"center", fontSize:12, fontWeight:isToday(d)?700:500, color:isToday(d)?T.gold:T.muted, background:isToday(d)?T.goldDim:T.surface, borderBottom:`1px solid ${T.border}`, minWidth:38 }}>
                     {d}
                   </th>
                 ))}
@@ -5328,24 +5328,29 @@ function CalendarPage({ rentals = [], vehicles = [] }) {
             <tbody>
               {activeVehicles.map(v => (
                 <tr key={v.id}>
-                  <td style={{ padding:"6px 12px", fontSize:12, fontWeight:600, color:T.text, background:T.surface, position:"sticky", left:0, zIndex:1, borderBottom:`1px solid ${T.border}`, whiteSpace:"nowrap" }}>
-                    <div>{v.name}</div>
-                    <div style={{ fontSize:10, color:T.muted, fontWeight:400 }}>{v.plate}</div>
+                  <td style={{ padding:"14px 20px", fontSize:13, fontWeight:600, color:T.text, background:T.surface, position:"sticky", left:0, zIndex:1, borderBottom:`1px solid ${T.border}`, whiteSpace:"nowrap" }}>
+                    <div style={{ fontSize:14 }}>{v.name}</div>
+                    <div style={{ fontSize:11, color:T.muted, fontWeight:400, marginTop:2 }}>{v.plate}</div>
                   </td>
                   {days.map(d => {
                     const rental = getRentalForDay(v.id, d);
                     const color = rental ? (statusColor[rental.status] || T.gold) : null;
-                    const isStart = rental && rental.start_date === new Date(cur.y, cur.m, d).toISOString().split("T")[0];
+                    const dateStr = new Date(cur.y, cur.m, d).toISOString().split("T")[0];
+                    const isStart = rental && rental.start_date === dateStr;
+                    const isEnd   = rental && rental.end_date === dateStr;
                     return (
                       <td key={d} onClick={() => rental && setSel(rental)}
-                        style={{ padding:"3px 2px", textAlign:"center", borderBottom:`1px solid ${T.border}`, cursor:rental?"pointer":"default" }}>
+                        style={{ padding:"6px 3px", textAlign:"center", borderBottom:`1px solid ${T.border}`, cursor:rental?"pointer":"default", background: isToday(d) && !rental ? T.goldDim+"30" : "transparent" }}>
                         <div style={{
-                          height:22, borderRadius: isStart ? "4px 0 0 4px" : "0",
-                          background: rental ? color + "40" : isToday(d) ? T.goldDim : "transparent",
-                          border: isToday(d) && !rental ? `1px solid ${T.gold}30` : "none",
-                          position:"relative"
+                          height:36,
+                          borderRadius: isStart && isEnd ? 8 : isStart ? "8px 0 0 8px" : isEnd ? "0 8px 8px 0" : 0,
+                          background: rental ? color + "35" : "transparent",
+                          border: rental ? `1px solid ${color}50` : isToday(d) ? `1px solid ${T.gold}30` : "none",
+                          borderLeft: rental && !isStart ? "none" : undefined,
+                          borderRight: rental && !isEnd ? "none" : undefined,
+                          display:"flex", alignItems:"center", justifyContent:"center",
                         }}>
-                          {isStart && <div style={{ position:"absolute", left:2, top:"50%", transform:"translateY(-50%)", width:4, height:4, borderRadius:"50%", background:color }}/>}
+                          {isStart && <div style={{ width:6, height:6, borderRadius:"50%", background:color }}/>}
                         </div>
                       </td>
                     );
