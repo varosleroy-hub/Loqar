@@ -5385,10 +5385,10 @@ export default function PortalWrapper() {
 const ARTICLES = [
   {
     slug: "logiciel-gestion-location-voiture",
-    title: "Logiciel de gestion de location de voiture : le guide complet 2025",
+    title: "Logiciel de gestion de location de voiture : le guide complet 2026",
     description: "Tout ce qu'il faut savoir pour choisir un logiciel de gestion de location de véhicules. Fonctionnalités, prix, comparatif des solutions du marché.",
-    date: "2025-03-15",
-    readTime: "6 min",
+    date: "2026-01-15",
+    readTime: "3 min",
     content: `
 ## Pourquoi un logiciel de gestion de location de voiture ?
 
@@ -5431,8 +5431,8 @@ En 2025, vos clients veulent pouvoir réserver depuis leur smartphone. Une page 
     slug: "contrat-location-voiture-modele",
     title: "Contrat de location de voiture : modèle, mentions obligatoires et signature électronique",
     description: "Découvrez les mentions obligatoires d'un contrat de location de voiture, un modèle téléchargeable et comment passer à la signature électronique.",
-    date: "2025-03-28",
-    readTime: "5 min",
+    date: "2026-02-10",
+    readTime: "2 min",
     content: `
 ## Les mentions obligatoires d'un contrat de location de voiture
 
@@ -5475,8 +5475,8 @@ Loqar génère automatiquement vos contrats avec toutes les mentions obligatoire
     slug: "gestion-flotte-automobile-agence",
     title: "Gestion de flotte automobile pour agence de location : les meilleures pratiques",
     description: "Comment optimiser la gestion de votre parc automobile ? Suivi des entretiens, disponibilité, rentabilité par véhicule — nos conseils pour les loueurs pros.",
-    date: "2025-04-05",
-    readTime: "7 min",
+    date: "2026-03-12",
+    readTime: "3 min",
     content: `
 ## Qu'est-ce que la gestion de flotte automobile ?
 
@@ -5513,10 +5513,10 @@ Avec Loqar, vous avez une vision à 360° de votre flotte depuis un seul outil.
   },
   {
     slug: "comptabilite-agence-location-voiture",
-    title: "Comptabilité d'une agence de location de voitures : guide complet 2025",
+    title: "Comptabilité d'une agence de location de voitures : guide complet 2026",
     description: "Comment gérer la comptabilité de votre agence de location automobile ? Encaissements, TVA, cautions, export comptable — tout ce que doit savoir un loueur professionnel.",
     date: "2026-04-14",
-    readTime: "8 min",
+    readTime: "5 min",
     content: `
 ## Pourquoi la comptabilité d'une agence de location est spécifique
 
@@ -5622,7 +5622,7 @@ Résultat : moins de stress en fin d'année, moins d'heures comptables facturée
     title: "Prendre en main Loqar en 10 minutes : le guide pas-à-pas",
     description: "Comment démarrer avec Loqar ? Ce guide vous explique étape par étape comment configurer votre agence, ajouter vos véhicules, créer votre première location et activer la réservation en ligne.",
     date: "2026-04-14",
-    readTime: "10 min",
+    readTime: "6 min",
     content: `
 ## Bienvenue sur Loqar
 
