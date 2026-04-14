@@ -2755,16 +2755,43 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
   const [confirm, setConfirm] = useState(null);
   const up = (k,v) => setForm(prev=>({...prev,[k]:v}));
 
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  });
+
+  const prevMonth = (() => {
+    const [y,m] = selectedMonth.split("-").map(Number);
+    return m===1 ? `${y-1}-12` : `${y}-${String(m-1).padStart(2,"0")}`;
+  })();
+
+  const monthLabel = (() => {
+    const [y,m] = selectedMonth.split("-").map(Number);
+    return new Date(y, m-1, 1).toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+  })();
+
+  const navigateMonth = (dir) => {
+    const [y,m] = selectedMonth.split("-").map(Number);
+    const d = new Date(y, m-1+dir, 1);
+    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`);
+  };
+
+  const monthPayments   = payments.filter(p => p.paid_at?.slice(0,7) === selectedMonth);
+  const prevMonthPayments = payments.filter(p => p.paid_at?.slice(0,7) === prevMonth);
+
+  const encaisséMois    = monthPayments.filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0);
+  const encaisséPrev    = prevMonthPayments.filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0);
+  const encaisséCount   = monthPayments.filter(p=>p.status==="encaissé").length;
+  const trendPct        = encaisséPrev > 0 ? Math.round(((encaisséMois-encaisséPrev)/encaisséPrev)*100) : null;
+
+  const enAttente       = payments.filter(p=>p.status==="en attente");
+  const enRetard        = payments.filter(p=>p.status==="en retard");
+  const cautionsTotal   = payments.reduce((a,p)=>a+(p.deposit||0),0);
+
   const filtered = payments.filter(p=>
     (filter==="all"||p.status===filter) &&
     (!search || (p.client_name||"").toLowerCase().includes(search.toLowerCase()))
   );
-  const stats = [
-    {label:t.collected||"Encaissé",   value:payments.filter(p=>p.status==="encaissé").reduce((a,p)=>a+(p.amount||0),0),  color:T.success, icon:Icons.check },
-    {label:t.pending||"En attente", value:payments.filter(p=>p.status==="en attente").reduce((a,p)=>a+(p.amount||0),0),color:T.amber,   icon:Icons.clock  },
-    {label:t.late||"En retard",  value:payments.filter(p=>p.status==="en retard").reduce((a,p)=>a+(p.amount||0),0), color:T.red,     icon:Icons.alert  },
-    {label:"Cautions",   value:payments.reduce((a,p)=>a+(p.deposit||0),0),                                   color:T.blue,    icon:Icons.shield },
-  ];
 
   const openAdd = () => { setEditId(null); setForm({ clientId:"", rentalId:"", amount:"", deposit:"", method:"Espèces", status:"en attente", paidAt:"" }); setModal(true); };
   const openEdit = (p) => { setEditId(p.id); setForm({ clientId:String(p.client_id||""), rentalId:String(p.rental_id||""), amount:String(p.amount||""), deposit:String(p.deposit||""), method:p.method||"Espèces", status:p.status||"en attente", paidAt:p.paid_at||"" }); setModal(true); };
@@ -2858,10 +2885,73 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
         <button onClick={openAdd} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 18px", background:T.gold, border:"none", borderRadius:10, color:"#0F0D0B", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{Icons.plus} {lang==="en"?"New payment":"Nouveau paiement"}</button>
       </div>}>
       
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:24 }}>
-        {stats.map(s=>(
-          <StatCard key={s.label} label={s.label} value={s.value} color={s.color} icon={s.icon} money/>
-        ))}
+      {/* Month navigator */}
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+        <button onClick={()=>navigateMonth(-1)} style={{ width:30, height:30, borderRadius:8, background:T.card, border:`1px solid ${T.border}`, color:T.sub, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>‹</button>
+        <span style={{ fontSize:14, fontWeight:700, color:T.text, minWidth:160, textAlign:"center", textTransform:"capitalize" }}>{monthLabel}</span>
+        <button onClick={()=>navigateMonth(1)} style={{ width:30, height:30, borderRadius:8, background:T.card, border:`1px solid ${T.border}`, color:T.sub, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>›</button>
+      </div>
+
+      {/* Stats comptables */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:16, marginBottom:28 }}>
+        {/* Encaissé ce mois */}
+        <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:T.success, borderRadius:"16px 16px 0 0" }}/>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>Encaissé ce mois</span>
+            <div style={{ width:32, height:32, borderRadius:9, background:T.success+"20", display:"flex", alignItems:"center", justifyContent:"center", color:T.success, fontSize:15 }}>{Icons.check}</div>
+          </div>
+          <div style={{ fontSize:28, fontWeight:800, color:T.success, letterSpacing:"-0.03em", lineHeight:1 }}>{fmt(encaisséMois)} €</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:10 }}>
+            <span style={{ fontSize:12, color:T.muted }}>{encaisséCount} paiement{encaisséCount!==1?"s":""}</span>
+            {trendPct !== null && (
+              <span style={{ fontSize:11, fontWeight:700, color:trendPct>=0?T.success:T.red, background:trendPct>=0?T.success+"15":T.red+"15", padding:"2px 7px", borderRadius:20 }}>
+                {trendPct>=0?"↑":"↓"} {Math.abs(trendPct)}%
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* En attente */}
+        <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:T.amber, borderRadius:"16px 16px 0 0" }}/>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>En attente</span>
+            <div style={{ width:32, height:32, borderRadius:9, background:T.amber+"20", display:"flex", alignItems:"center", justifyContent:"center", color:T.amber, fontSize:15 }}>{Icons.clock}</div>
+          </div>
+          <div style={{ fontSize:28, fontWeight:800, color:T.amber, letterSpacing:"-0.03em", lineHeight:1 }}>{fmt(enAttente.reduce((a,p)=>a+(p.amount||0),0))} €</div>
+          <div style={{ marginTop:10 }}>
+            <span style={{ fontSize:12, color:T.muted }}>{enAttente.length} paiement{enAttente.length!==1?"s":""} à recevoir</span>
+          </div>
+        </div>
+
+        {/* En retard */}
+        <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:T.red, borderRadius:"16px 16px 0 0" }}/>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>En retard</span>
+            <div style={{ width:32, height:32, borderRadius:9, background:T.red+"20", display:"flex", alignItems:"center", justifyContent:"center", color:T.red, fontSize:15 }}>{Icons.alert}</div>
+          </div>
+          <div style={{ fontSize:28, fontWeight:800, color:T.red, letterSpacing:"-0.03em", lineHeight:1 }}>{fmt(enRetard.reduce((a,p)=>a+(p.amount||0),0))} €</div>
+          <div style={{ marginTop:10 }}>
+            {enRetard.length > 0
+              ? <span style={{ fontSize:12, color:T.red, fontWeight:600 }}>⚠ {enRetard.length} paiement{enRetard.length!==1?"s":""} en souffrance</span>
+              : <span style={{ fontSize:12, color:T.muted }}>Aucun retard</span>}
+          </div>
+        </div>
+
+        {/* Cautions */}
+        <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:T.blue, borderRadius:"16px 16px 0 0" }}/>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>Cautions détenues</span>
+            <div style={{ width:32, height:32, borderRadius:9, background:T.blue+"20", display:"flex", alignItems:"center", justifyContent:"center", color:T.blue, fontSize:15 }}>{Icons.shield}</div>
+          </div>
+          <div style={{ fontSize:28, fontWeight:800, color:T.blue, letterSpacing:"-0.03em", lineHeight:1 }}>{fmt(cautionsTotal)} €</div>
+          <div style={{ marginTop:10 }}>
+            <span style={{ fontSize:12, color:T.muted }}>Non incluses dans le CA</span>
+          </div>
+        </div>
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
