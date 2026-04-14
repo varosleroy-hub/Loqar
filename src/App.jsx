@@ -5776,37 +5776,197 @@ function BlogRouter() {
   return <BlogPage/>;
 }
 
-function BlogPage() {
+const ARTICLE_CATEGORIES = {
+  "logiciel-gestion-location-voiture": "Guide",
+  "contrat-location-voiture-modele": "Juridique",
+  "gestion-flotte-automobile-agence": "Flotte",
+  "comptabilite-agence-location-voiture": "Comptabilité",
+  "guide-demarrage-loqar": "Tutoriel",
+};
+
+function renderInline(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) =>
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={i} style={{ color:T.text, fontWeight:700 }}>{part.slice(2,-2)}</strong>
+      : part
+  );
+}
+
+function renderArticleContent(content) {
+  const lines = content.trim().split("\n");
+  const elements = [];
+  let i = 0;
+  let bulletBuffer = [];
+  let numberedBuffer = [];
+
+  const flushBullets = (key) => {
+    if (!bulletBuffer.length) return;
+    elements.push(
+      <ul key={`ul-${key}`} style={{ listStyle:"none", padding:0, margin:"0 0 22px" }}>
+        {bulletBuffer.map((item, j) => (
+          <li key={j} style={{ display:"flex", gap:12, marginBottom:10, alignItems:"flex-start" }}>
+            <span style={{ color:T.gold, flexShrink:0, marginTop:3, fontSize:14 }}>✓</span>
+            <span style={{ color:T.sub, lineHeight:1.75 }}>{renderInline(item)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+    bulletBuffer = [];
+  };
+
+  const flushNumbered = (key) => {
+    if (!numberedBuffer.length) return;
+    elements.push(
+      <ol key={`ol-${key}`} style={{ listStyle:"none", padding:0, margin:"0 0 22px" }}>
+        {numberedBuffer.map((item, j) => (
+          <li key={j} style={{ display:"flex", gap:14, marginBottom:14, alignItems:"flex-start" }}>
+            <span style={{ background:T.goldDim, border:`1px solid ${T.gold}40`, color:T.gold, fontWeight:800, fontSize:13, flexShrink:0, width:28, height:28, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>{j+1}</span>
+            <span style={{ color:T.sub, lineHeight:1.75, paddingTop:4 }}>{renderInline(item)}</span>
+          </li>
+        ))}
+      </ol>
+    );
+    numberedBuffer = [];
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (!line.trim()) {
+      flushBullets(i); flushNumbered(i);
+      i++; continue;
+    }
+
+    if (line.startsWith("## ")) {
+      flushBullets(i); flushNumbered(i);
+      elements.push(
+        <div key={i} style={{ marginTop:44, marginBottom:18 }}>
+          <div style={{ width:3, height:22, background:T.gold, borderRadius:2, display:"inline-block", verticalAlign:"middle", marginRight:12 }}/>
+          <h2 style={{ display:"inline", fontSize:22, fontWeight:800, color:T.text, letterSpacing:"-0.02em", lineHeight:1.3 }}>{line.slice(3)}</h2>
+        </div>
+      );
+      i++; continue;
+    }
+
+    if (line.startsWith("### ")) {
+      flushBullets(i); flushNumbered(i);
+      elements.push(<h3 key={i} style={{ fontSize:16, fontWeight:700, color:T.text, margin:"28px 0 10px", letterSpacing:"-0.01em" }}>{line.slice(4)}</h3>);
+      i++; continue;
+    }
+
+    if (line.trim() === "---") {
+      flushBullets(i); flushNumbered(i);
+      elements.push(<hr key={i} style={{ border:"none", borderTop:`1px solid ${T.border}`, margin:"36px 0" }}/>);
+      i++; continue;
+    }
+
+    if (line.startsWith("- ")) {
+      flushNumbered(i);
+      bulletBuffer.push(line.slice(2));
+      i++; continue;
+    }
+
+    if (/^\d+\.\s/.test(line)) {
+      flushBullets(i);
+      numberedBuffer.push(line.replace(/^\d+\.\s*/,""));
+      i++; continue;
+    }
+
+    if (line.startsWith("|")) {
+      flushBullets(i); flushNumbered(i);
+      const tableLines = [];
+      while (i < lines.length && lines[i].startsWith("|")) { tableLines.push(lines[i]); i++; }
+      const rows = tableLines.filter(l => !/^\|[\s\-|:]+\|$/.test(l));
+      elements.push(
+        <div key={`t-${i}`} style={{ overflowX:"auto", margin:"0 0 24px", borderRadius:12, border:`1px solid ${T.border}`, overflow:"hidden" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:14 }}>
+            <tbody>
+              {rows.map((row, ri) => {
+                const cells = row.split("|").slice(1,-1);
+                return (
+                  <tr key={ri} style={{ borderBottom: ri < rows.length-1 ? `1px solid ${T.border}` : "none", background: ri===0 ? T.goldDim : ri%2===0 ? T.card : "transparent" }}>
+                    {cells.map((cell, ci) => {
+                      const Tag = ri===0 ? "th" : "td";
+                      return <Tag key={ci} style={{ padding:"11px 16px", color:ri===0?T.gold:T.sub, fontWeight:ri===0?700:400, textAlign:"left", whiteSpace:"nowrap" }}>{renderInline(cell.trim())}</Tag>;
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
+    flushBullets(i); flushNumbered(i);
+    elements.push(<p key={i} style={{ margin:"0 0 18px", color:T.sub, lineHeight:1.85, fontSize:15 }}>{renderInline(line)}</p>);
+    i++;
+  }
+  flushBullets("end"); flushNumbered("end");
+  return elements;
+}
+
+function BlogNav() {
   return (
-    <div style={{ minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      {/* Nav */}
-      <div style={{ borderBottom:`1px solid ${T.border}`, padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
-          <div style={{ width:32, height:32, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>{Icons.car}</div>
-          <span style={{ fontSize:16, fontWeight:800, color:T.text }}>Loqar</span>
-        </a>
+    <div style={{ borderBottom:`1px solid ${T.border}`, padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, background:T.bg, zIndex:10 }}>
+      <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
+        <div style={{ width:32, height:32, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>{Icons.car}</div>
+        <span style={{ fontSize:16, fontWeight:800, color:T.text }}>Loqar</span>
+      </a>
+      <div style={{ display:"flex", gap:16, alignItems:"center" }}>
+        <a href="/blog" style={{ fontSize:13, color:T.muted, textDecoration:"none" }}>Blog</a>
         <a href="/" style={{ background:T.gold, color:"#0F0D0B", padding:"8px 18px", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>Essai gratuit →</a>
       </div>
+    </div>
+  );
+}
+
+function BlogPage() {
+  const [featured, ...rest] = ARTICLES.slice().reverse();
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+      <BlogNav/>
       {/* Header */}
-      <div style={{ maxWidth:760, margin:"0 auto", padding:"60px 24px 40px" }}>
-        <div style={{ fontSize:12, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:12 }}>Blog</div>
-        <h1 style={{ fontSize:36, fontWeight:800, color:T.text, margin:"0 0 12px", letterSpacing:"-0.02em" }}>Conseils pour les loueurs pro</h1>
-        <p style={{ fontSize:16, color:T.muted, margin:0 }}>Guides pratiques sur la gestion de location de véhicules, la flotte automobile et la digitalisation des agences.</p>
+      <div style={{ maxWidth:860, margin:"0 auto", padding:"56px 24px 36px" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".12em", textTransform:"uppercase", marginBottom:10 }}>Blog Loqar</div>
+        <h1 style={{ fontSize:"clamp(28px,4vw,40px)", fontWeight:800, color:T.text, margin:"0 0 12px", letterSpacing:"-0.03em" }}>Ressources pour les loueurs professionnels</h1>
+        <p style={{ fontSize:15, color:T.muted, margin:0, maxWidth:560 }}>Guides pratiques, conseils comptables, tutoriels — tout ce qu'il faut savoir pour gérer une agence de location moderne.</p>
       </div>
-      {/* Articles */}
-      <div style={{ maxWidth:760, margin:"0 auto", padding:"0 24px 80px", display:"flex", flexDirection:"column", gap:24 }}>
-        {ARTICLES.map(a => (
-          <a key={a.slug} href={`/blog/${a.slug}`} style={{ display:"block", background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"28px 32px", textDecoration:"none", transition:"border-color .15s" }}
+      {/* Featured */}
+      <div style={{ maxWidth:860, margin:"0 auto", padding:"0 24px 32px" }}>
+        <a href={`/blog/${featured.slug}`} style={{ display:"block", background:T.card, border:`1px solid ${T.border}`, borderRadius:20, padding:"36px 40px", textDecoration:"none", position:"relative", overflow:"hidden", transition:"border-color .15s" }}
+          onMouseEnter={e=>e.currentTarget.style.borderColor=T.gold}
+          onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${T.gold},${T.gold}50)` }}/>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
+            <span style={{ background:T.goldDim, color:T.gold, fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, letterSpacing:".05em", textTransform:"uppercase" }}>{ARTICLE_CATEGORIES[featured.slug]||"Article"}</span>
+            <span style={{ fontSize:12, color:T.muted }}>{new Date(featured.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+            <span style={{ fontSize:12, color:T.border2 }}>·</span>
+            <span style={{ fontSize:12, color:T.muted }}>{featured.readTime} de lecture</span>
+          </div>
+          <h2 style={{ fontSize:"clamp(18px,2.5vw,26px)", fontWeight:800, color:T.text, margin:"0 0 12px", letterSpacing:"-0.02em", lineHeight:1.3 }}>{featured.title}</h2>
+          <p style={{ fontSize:14, color:T.muted, margin:"0 0 20px", lineHeight:1.7, maxWidth:600 }}>{featured.description}</p>
+          <span style={{ fontSize:14, color:T.gold, fontWeight:700 }}>Lire l'article →</span>
+        </a>
+      </div>
+      {/* Rest */}
+      <div style={{ maxWidth:860, margin:"0 auto", padding:"0 24px 80px", display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))", gap:20 }}>
+        {rest.map(a => (
+          <a key={a.slug} href={`/blog/${a.slug}`} style={{ display:"flex", flexDirection:"column", background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"24px 28px", textDecoration:"none", transition:"border-color .15s" }}
             onMouseEnter={e=>e.currentTarget.style.borderColor=T.gold}
             onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-              <span style={{ fontSize:11, color:T.muted }}>{new Date(a.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
-              <span style={{ fontSize:11, color:T.border2 }}>·</span>
-              <span style={{ fontSize:11, color:T.muted }}>{a.readTime} de lecture</span>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+              <span style={{ background:T.goldDim, color:T.gold, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, letterSpacing:".05em", textTransform:"uppercase" }}>{ARTICLE_CATEGORIES[a.slug]||"Article"}</span>
+              <span style={{ fontSize:11, color:T.muted }}>{a.readTime}</span>
             </div>
-            <h2 style={{ fontSize:20, fontWeight:700, color:T.text, margin:"0 0 10px", letterSpacing:"-0.01em", lineHeight:1.3 }}>{a.title}</h2>
-            <p style={{ fontSize:14, color:T.muted, margin:"0 0 16px", lineHeight:1.7 }}>{a.description}</p>
-            <span style={{ fontSize:13, color:T.gold, fontWeight:600 }}>Lire l'article →</span>
+            <h2 style={{ fontSize:16, fontWeight:700, color:T.text, margin:"0 0 10px", letterSpacing:"-0.01em", lineHeight:1.4, flex:1 }}>{a.title}</h2>
+            <p style={{ fontSize:13, color:T.muted, margin:"0 0 16px", lineHeight:1.65 }}>{a.description}</p>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <span style={{ fontSize:11, color:T.muted }}>{new Date(a.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}</span>
+              <span style={{ fontSize:13, color:T.gold, fontWeight:600 }}>Lire →</span>
+            </div>
           </a>
         ))}
       </div>
@@ -5815,42 +5975,79 @@ function BlogPage() {
 }
 
 function ArticlePage({ article }) {
-  const paragraphs = article.content.trim().split("\n").filter(Boolean);
+  const h2Headings = article.content.match(/^## (.+)$/gm)?.map(l=>l.slice(3)) || [];
+  const related = ARTICLES.filter(a => a.slug !== article.slug).slice(0,2);
   return (
     <div style={{ minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      {/* Nav */}
-      <div style={{ borderBottom:`1px solid ${T.border}`, padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
-          <div style={{ width:32, height:32, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>{Icons.car}</div>
-          <span style={{ fontSize:16, fontWeight:800, color:T.text }}>Loqar</span>
-        </a>
-        <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-          <a href="/blog" style={{ fontSize:13, color:T.muted, textDecoration:"none" }}>← Blog</a>
-          <a href="/" style={{ background:T.gold, color:"#0F0D0B", padding:"8px 18px", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>Essai gratuit →</a>
+      <BlogNav/>
+      {/* Hero */}
+      <div style={{ background:`linear-gradient(180deg,${T.card} 0%,${T.bg} 100%)`, borderBottom:`1px solid ${T.border}` }}>
+        <div style={{ maxWidth:760, margin:"0 auto", padding:"48px 24px 44px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:20 }}>
+            <a href="/blog" style={{ fontSize:12, color:T.muted, textDecoration:"none" }}>← Blog</a>
+            <span style={{ color:T.border2 }}>/</span>
+            <span style={{ background:T.goldDim, color:T.gold, fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, letterSpacing:".05em", textTransform:"uppercase" }}>{ARTICLE_CATEGORIES[article.slug]||"Article"}</span>
+          </div>
+          <h1 style={{ fontSize:"clamp(24px,3.5vw,36px)", fontWeight:800, color:T.text, margin:"0 0 20px", letterSpacing:"-0.03em", lineHeight:1.2 }}>{article.title}</h1>
+          <p style={{ fontSize:15, color:T.muted, margin:"0 0 24px", lineHeight:1.7 }}>{article.description}</p>
+          <div style={{ display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:T.goldDim, border:`1px solid ${T.gold}40`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14 }}>✍</div>
+              <span style={{ fontSize:13, color:T.sub }}>Équipe Loqar</span>
+            </div>
+            <span style={{ color:T.border2 }}>·</span>
+            <span style={{ fontSize:13, color:T.muted }}>{new Date(article.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+            <span style={{ color:T.border2 }}>·</span>
+            <span style={{ fontSize:13, color:T.muted }}>{article.readTime} de lecture</span>
+          </div>
         </div>
       </div>
-      {/* Article */}
-      <div style={{ maxWidth:720, margin:"0 auto", padding:"52px 24px 80px" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-          <span style={{ fontSize:12, color:T.muted }}>{new Date(article.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
-          <span style={{ color:T.border2 }}>·</span>
-          <span style={{ fontSize:12, color:T.muted }}>{article.readTime} de lecture</span>
+      {/* Content + Sidebar */}
+      <div style={{ maxWidth:1040, margin:"0 auto", padding:"44px 24px 80px", display:"grid", gridTemplateColumns:"1fr 280px", gap:48, alignItems:"start" }}>
+        {/* Article body */}
+        <div>
+          {h2Headings.length > 2 && (
+            <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:14, padding:"20px 24px", marginBottom:36 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:14 }}>Dans cet article</div>
+              {h2Headings.map((h,i) => (
+                <div key={i} style={{ display:"flex", gap:10, marginBottom:8, alignItems:"flex-start" }}>
+                  <span style={{ color:T.gold, fontSize:12, flexShrink:0, marginTop:3 }}>→</span>
+                  <span style={{ fontSize:13, color:T.sub, lineHeight:1.5 }}>{h}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {renderArticleContent(article.content)}
+          {/* CTA */}
+          <div style={{ marginTop:52, background:`linear-gradient(135deg,${T.card},${T.goldDim})`, border:`1px solid ${T.gold}40`, borderRadius:20, padding:"36px 40px", textAlign:"center" }}>
+            <div style={{ fontSize:24, marginBottom:8 }}>🚀</div>
+            <div style={{ fontSize:20, fontWeight:800, color:T.text, marginBottom:8, letterSpacing:"-0.02em" }}>Prêt à digitaliser votre agence ?</div>
+            <div style={{ fontSize:14, color:T.muted, marginBottom:28 }}>Essai gratuit 14 jours · Sans carte bancaire · Annulable à tout moment</div>
+            <a href="/" style={{ display:"inline-block", background:T.gold, color:"#0F0D0B", padding:"14px 36px", borderRadius:12, fontSize:15, fontWeight:800, textDecoration:"none", letterSpacing:"-0.01em" }}>Démarrer gratuitement →</a>
+          </div>
         </div>
-        <h1 style={{ fontSize:32, fontWeight:800, color:T.text, margin:"0 0 32px", letterSpacing:"-0.02em", lineHeight:1.25 }}>{article.title}</h1>
-        <div style={{ fontSize:15, color:T.sub, lineHeight:1.85 }}>
-          {paragraphs.map((line, i) => {
-            if (line.startsWith("## ")) return <h2 key={i} style={{ fontSize:22, fontWeight:700, color:T.text, margin:"40px 0 16px", letterSpacing:"-0.01em" }}>{line.replace("## ","")}</h2>;
-            if (line.startsWith("### ")) return <h3 key={i} style={{ fontSize:17, fontWeight:700, color:T.text, margin:"28px 0 10px" }}>{line.replace("### ","")}</h3>;
-            if (line.startsWith("- ")) return <div key={i} style={{ display:"flex", gap:10, marginBottom:8 }}><span style={{ color:T.gold, flexShrink:0 }}>✓</span><span>{line.replace("- ","")}</span></div>;
-            if (line.startsWith("**")) return <p key={i} style={{ margin:"0 0 16px", fontWeight:600, color:T.text }}>{line.replace(/\*\*/g,"")}</p>;
-            return <p key={i} style={{ margin:"0 0 16px" }}>{line}</p>;
-          })}
-        </div>
-        {/* CTA */}
-        <div style={{ marginTop:48, background:T.card, border:`1px solid ${T.gold}30`, borderRadius:16, padding:"32px", textAlign:"center" }}>
-          <div style={{ fontSize:20, fontWeight:700, color:T.text, marginBottom:8 }}>Prêt à digitaliser votre agence ?</div>
-          <div style={{ fontSize:14, color:T.muted, marginBottom:24 }}>Essai gratuit 14 jours · Sans carte bancaire</div>
-          <a href="/" style={{ display:"inline-block", background:T.gold, color:"#0F0D0B", padding:"13px 32px", borderRadius:10, fontSize:15, fontWeight:700, textDecoration:"none" }}>Démarrer gratuitement →</a>
+        {/* Sidebar */}
+        <div style={{ position:"sticky", top:80 }}>
+          {/* Related */}
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"22px" }}>
+            <div style={{ fontSize:12, fontWeight:700, color:T.gold, letterSpacing:".08em", textTransform:"uppercase", marginBottom:16 }}>À lire aussi</div>
+            {related.map(a => (
+              <a key={a.slug} href={`/blog/${a.slug}`} style={{ display:"block", textDecoration:"none", padding:"14px 0", borderBottom:`1px solid ${T.border}` }}
+                onMouseEnter={e=>e.currentTarget.querySelector(".rtitle").style.color=T.gold}
+                onMouseLeave={e=>e.currentTarget.querySelector(".rtitle").style.color=T.text}>
+                <div style={{ fontSize:10, fontWeight:700, color:T.gold, letterSpacing:".05em", textTransform:"uppercase", marginBottom:6 }}>{ARTICLE_CATEGORIES[a.slug]||"Article"}</div>
+                <div className="rtitle" style={{ fontSize:13, fontWeight:600, color:T.text, lineHeight:1.4, transition:"color .15s" }}>{a.title}</div>
+                <div style={{ fontSize:12, color:T.muted, marginTop:4 }}>{a.readTime} de lecture</div>
+              </a>
+            ))}
+            <a href="/blog" style={{ display:"block", textAlign:"center", marginTop:16, fontSize:13, color:T.gold, fontWeight:600, textDecoration:"none" }}>Voir tous les articles →</a>
+          </div>
+          {/* Mini CTA */}
+          <div style={{ background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:16, padding:"22px", marginTop:16, textAlign:"center" }}>
+            <div style={{ fontSize:15, fontWeight:700, color:T.text, marginBottom:6 }}>Essai gratuit 14 jours</div>
+            <div style={{ fontSize:12, color:T.muted, marginBottom:16 }}>Sans carte bancaire</div>
+            <a href="/" style={{ display:"block", background:T.gold, color:"#0F0D0B", padding:"10px", borderRadius:9, fontSize:13, fontWeight:700, textDecoration:"none" }}>Démarrer →</a>
+          </div>
         </div>
       </div>
     </div>
