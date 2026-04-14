@@ -1746,6 +1746,7 @@ function LandingPage({ onGetStarted }) {
         </div>
         <span style={{ fontSize:12, color:T.muted }}>© 2025 Loqar · Logiciel de gestion de location de véhicules</span>
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          <a href="/blog" style={{ fontSize:12, color:T.muted, textDecoration:"none" }}>Blog</a>
           <a href="mailto:contact@loqar.fr" style={{ fontSize:12, color:T.gold, textDecoration:"none", fontWeight:600 }}>contact@loqar.fr</a>
           <Btn label="Se connecter" variant="secondary" onClick={onGetStarted}/>
         </div>
@@ -5314,5 +5315,228 @@ export default function PortalWrapper() {
   if (portalToken) return <ClientPortal token={portalToken}/>;
   const bookingSlug = window.location.pathname.match(/^\/book\/(.+)/)?.[1];
   if (bookingSlug) return <BookingPage slug={bookingSlug}/>;
+  if (window.location.pathname.startsWith("/blog")) return <BlogRouter/>;
   return <App/>;
+}
+
+// ─── BLOG ─────────────────────────────────────────────────────────────────────
+const ARTICLES = [
+  {
+    slug: "logiciel-gestion-location-voiture",
+    title: "Logiciel de gestion de location de voiture : le guide complet 2025",
+    description: "Tout ce qu'il faut savoir pour choisir un logiciel de gestion de location de véhicules. Fonctionnalités, prix, comparatif des solutions du marché.",
+    date: "2025-03-15",
+    readTime: "6 min",
+    content: `
+## Pourquoi un logiciel de gestion de location de voiture ?
+
+Gérer une agence de location de voitures sans outil adapté, c'est jongler entre des fichiers Excel, des contrats papier et des rappels sur Post-it. À partir de 5 véhicules dans votre flotte, cette organisation devient rapidement ingérable.
+
+Un **logiciel de gestion de location de voiture** centralise tout : contrats, clients, paiements, disponibilité des véhicules. Résultat : moins d'erreurs, plus de temps pour développer votre activité.
+
+## Les fonctionnalités indispensables
+
+### 1. Gestion de la flotte
+Le logiciel doit permettre de suivre chaque véhicule : kilométrage, statut (disponible, en location, en entretien), date de contrôle technique, historique des locations.
+
+### 2. Contrats numériques
+Fini le papier. Un bon outil génère automatiquement les contrats PDF avec vos informations d'agence, la caution, les conditions générales. La signature électronique est un plus indispensable en 2025.
+
+### 3. Gestion des clients
+Fiche client complète, historique des locations, alerte sur l'expiration du permis de conduire — autant d'éléments qui vous font gagner du temps et évitent les mauvaises surprises.
+
+### 4. Suivi des paiements
+Encaissements, cautions, paiements en retard : le logiciel doit vous donner une vision claire de votre trésorerie en temps réel.
+
+### 5. Réservation en ligne
+En 2025, vos clients veulent pouvoir réserver depuis leur smartphone. Une page de réservation publique intégrée au logiciel est devenu un standard.
+
+## Loqar : la solution tout-en-un pour les loueurs pros
+
+**Loqar** a été conçu spécifiquement pour les agences de location automobile françaises. Il intègre toutes les fonctionnalités mentionnées ci-dessus dans une interface moderne et simple à prendre en main.
+
+- ✅ Gestion de flotte illimitée
+- ✅ Contrats PDF et signatures électroniques
+- ✅ Page de réservation publique
+- ✅ Emails automatiques (confirmation, rappel J-1, contrat signé)
+- ✅ Multi-agences
+- ✅ Export comptable CSV
+
+**Essai gratuit 14 jours, sans carte bancaire.**
+    `,
+  },
+  {
+    slug: "contrat-location-voiture-modele",
+    title: "Contrat de location de voiture : modèle, mentions obligatoires et signature électronique",
+    description: "Découvrez les mentions obligatoires d'un contrat de location de voiture, un modèle téléchargeable et comment passer à la signature électronique.",
+    date: "2025-03-28",
+    readTime: "5 min",
+    content: `
+## Les mentions obligatoires d'un contrat de location de voiture
+
+Un contrat de location de véhicule doit comporter plusieurs informations pour être juridiquement valable en France.
+
+### Informations sur le loueur
+- Raison sociale et SIRET de l'agence
+- Adresse et coordonnées
+
+### Informations sur le locataire
+- Nom, prénom, adresse
+- Numéro et date de validité du permis de conduire
+
+### Informations sur le véhicule
+- Marque, modèle, immatriculation
+- Kilométrage de départ
+- État du véhicule (état des lieux)
+
+### Conditions de location
+- Dates de début et fin de location
+- Prix par jour et montant total
+- Montant de la caution (franchise dommages)
+- Conditions d'utilisation
+
+### Signature des deux parties
+Sans signature du client, le contrat n'a pas de valeur. La **signature électronique** est légalement reconnue en France depuis 2000 (loi n°2000-230).
+
+## Pourquoi passer à la signature électronique ?
+
+La signature manuscrite oblige le client à être présent physiquement. La signature électronique, elle, peut être réalisée depuis un smartphone — idéal quand le client récupère le véhicule en dehors des horaires d'agence.
+
+Avec **Loqar**, le contrat est généré automatiquement et envoyé par email au client dès que la réservation est confirmée. Le client signe depuis son téléphone, et vous recevez la signature en pièce jointe instantanément.
+
+## Modèle de contrat
+
+Loqar génère automatiquement vos contrats avec toutes les mentions obligatoires, votre logo et vos conditions générales personnalisées. Plus besoin de modèle Word à remplir à la main.
+    `,
+  },
+  {
+    slug: "gestion-flotte-automobile-agence",
+    title: "Gestion de flotte automobile pour agence de location : les meilleures pratiques",
+    description: "Comment optimiser la gestion de votre parc automobile ? Suivi des entretiens, disponibilité, rentabilité par véhicule — nos conseils pour les loueurs pros.",
+    date: "2025-04-05",
+    readTime: "7 min",
+    content: `
+## Qu'est-ce que la gestion de flotte automobile ?
+
+La **gestion de flotte automobile** désigne l'ensemble des processus permettant de suivre, maintenir et optimiser un parc de véhicules. Pour une agence de location, c'est un enjeu central : un véhicule immobilisé en panne ou mal planifié, c'est du chiffre d'affaires perdu.
+
+## Les 5 indicateurs à suivre pour votre flotte
+
+### 1. Taux d'utilisation
+Combien de jours par mois chaque véhicule est-il loué ? Un taux inférieur à 60% doit vous alerter. Soit le véhicule est mal placé, soit il faut revoir votre tarification.
+
+### 2. Kilométrage moyen
+Un suivi précis du kilométrage permet d'anticiper les entretiens et de valoriser correctement votre flotte à la revente.
+
+### 3. Revenus par véhicule
+Tous les véhicules ne se valent pas commercialement. Un tableau de bord vous permet d'identifier les plus rentables et ceux à remplacer en priorité.
+
+### 4. Coûts d'entretien
+Entretiens, réparations, assurance : le coût total de possession (TCO) doit être calculé véhicule par véhicule pour piloter votre rentabilité.
+
+### 5. Alertes CT et entretien
+Un contrôle technique expiré, c'est un véhicule immobilisé immédiatement. Un bon logiciel vous alerte à l'avance.
+
+## Comment Loqar simplifie la gestion de flotte
+
+Loqar centralise tous ces indicateurs dans un tableau de bord clair :
+
+- **Vue calendrier** : visualisez la disponibilité de chaque véhicule sur le mois
+- **Statuts en temps réel** : disponible, en location, en entretien
+- **Historique par véhicule** : toutes les locations passées et revenus générés
+- **Alertes automatiques** : notifications pour les permis expirés et locations se terminant bientôt
+
+Avec Loqar, vous avez une vision à 360° de votre flotte depuis un seul outil.
+    `,
+  },
+];
+
+function BlogRouter() {
+  const slug = window.location.pathname.match(/^\/blog\/(.+)/)?.[1];
+  if (slug) {
+    const article = ARTICLES.find(a => a.slug === slug);
+    if (article) return <ArticlePage article={article}/>;
+  }
+  return <BlogPage/>;
+}
+
+function BlogPage() {
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+      {/* Nav */}
+      <div style={{ borderBottom:`1px solid ${T.border}`, padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
+          <div style={{ width:32, height:32, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>{Icons.car}</div>
+          <span style={{ fontSize:16, fontWeight:800, color:T.text }}>Loqar</span>
+        </a>
+        <a href="/" style={{ background:T.gold, color:"#0F0D0B", padding:"8px 18px", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>Essai gratuit →</a>
+      </div>
+      {/* Header */}
+      <div style={{ maxWidth:760, margin:"0 auto", padding:"60px 24px 40px" }}>
+        <div style={{ fontSize:12, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:12 }}>Blog</div>
+        <h1 style={{ fontSize:36, fontWeight:800, color:T.text, margin:"0 0 12px", letterSpacing:"-0.02em" }}>Conseils pour les loueurs pro</h1>
+        <p style={{ fontSize:16, color:T.muted, margin:0 }}>Guides pratiques sur la gestion de location de véhicules, la flotte automobile et la digitalisation des agences.</p>
+      </div>
+      {/* Articles */}
+      <div style={{ maxWidth:760, margin:"0 auto", padding:"0 24px 80px", display:"flex", flexDirection:"column", gap:24 }}>
+        {ARTICLES.map(a => (
+          <a key={a.slug} href={`/blog/${a.slug}`} style={{ display:"block", background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"28px 32px", textDecoration:"none", transition:"border-color .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.borderColor=T.gold}
+            onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+              <span style={{ fontSize:11, color:T.muted }}>{new Date(a.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+              <span style={{ fontSize:11, color:T.border2 }}>·</span>
+              <span style={{ fontSize:11, color:T.muted }}>{a.readTime} de lecture</span>
+            </div>
+            <h2 style={{ fontSize:20, fontWeight:700, color:T.text, margin:"0 0 10px", letterSpacing:"-0.01em", lineHeight:1.3 }}>{a.title}</h2>
+            <p style={{ fontSize:14, color:T.muted, margin:"0 0 16px", lineHeight:1.7 }}>{a.description}</p>
+            <span style={{ fontSize:13, color:T.gold, fontWeight:600 }}>Lire l'article →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ArticlePage({ article }) {
+  const paragraphs = article.content.trim().split("\n").filter(Boolean);
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+      {/* Nav */}
+      <div style={{ borderBottom:`1px solid ${T.border}`, padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
+          <div style={{ width:32, height:32, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>{Icons.car}</div>
+          <span style={{ fontSize:16, fontWeight:800, color:T.text }}>Loqar</span>
+        </a>
+        <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+          <a href="/blog" style={{ fontSize:13, color:T.muted, textDecoration:"none" }}>← Blog</a>
+          <a href="/" style={{ background:T.gold, color:"#0F0D0B", padding:"8px 18px", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>Essai gratuit →</a>
+        </div>
+      </div>
+      {/* Article */}
+      <div style={{ maxWidth:720, margin:"0 auto", padding:"52px 24px 80px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+          <span style={{ fontSize:12, color:T.muted }}>{new Date(article.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+          <span style={{ color:T.border2 }}>·</span>
+          <span style={{ fontSize:12, color:T.muted }}>{article.readTime} de lecture</span>
+        </div>
+        <h1 style={{ fontSize:32, fontWeight:800, color:T.text, margin:"0 0 32px", letterSpacing:"-0.02em", lineHeight:1.25 }}>{article.title}</h1>
+        <div style={{ fontSize:15, color:T.sub, lineHeight:1.85 }}>
+          {paragraphs.map((line, i) => {
+            if (line.startsWith("## ")) return <h2 key={i} style={{ fontSize:22, fontWeight:700, color:T.text, margin:"40px 0 16px", letterSpacing:"-0.01em" }}>{line.replace("## ","")}</h2>;
+            if (line.startsWith("### ")) return <h3 key={i} style={{ fontSize:17, fontWeight:700, color:T.text, margin:"28px 0 10px" }}>{line.replace("### ","")}</h3>;
+            if (line.startsWith("- ")) return <div key={i} style={{ display:"flex", gap:10, marginBottom:8 }}><span style={{ color:T.gold, flexShrink:0 }}>✓</span><span>{line.replace("- ","")}</span></div>;
+            if (line.startsWith("**")) return <p key={i} style={{ margin:"0 0 16px", fontWeight:600, color:T.text }}>{line.replace(/\*\*/g,"")}</p>;
+            return <p key={i} style={{ margin:"0 0 16px" }}>{line}</p>;
+          })}
+        </div>
+        {/* CTA */}
+        <div style={{ marginTop:48, background:T.card, border:`1px solid ${T.gold}30`, borderRadius:16, padding:"32px", textAlign:"center" }}>
+          <div style={{ fontSize:20, fontWeight:700, color:T.text, marginBottom:8 }}>Prêt à digitaliser votre agence ?</div>
+          <div style={{ fontSize:14, color:T.muted, marginBottom:24 }}>Essai gratuit 14 jours · Sans carte bancaire</div>
+          <a href="/" style={{ display:"inline-block", background:T.gold, color:"#0F0D0B", padding:"13px 32px", borderRadius:10, fontSize:15, fontWeight:700, textDecoration:"none" }}>Démarrer gratuitement →</a>
+        </div>
+      </div>
+    </div>
+  );
 }
