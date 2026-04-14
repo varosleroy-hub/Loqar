@@ -5250,6 +5250,7 @@ function CalendarPage({ rentals = [], vehicles = [] }) {
   const today = new Date();
   const [cur, setCur] = useState({ y: today.getFullYear(), m: today.getMonth() });
   const [sel, setSel] = useState(null);
+  const [tooltip, setTooltip] = useState(null); // { rental, x, y }
 
   const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
   const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -5340,6 +5341,9 @@ function CalendarPage({ rentals = [], vehicles = [] }) {
                     const isEnd   = rental && rental.end_date === dateStr;
                     return (
                       <td key={d} onClick={() => rental && setSel(rental)}
+                        onMouseEnter={rental ? (e) => setTooltip({ rental, x: e.clientX, y: e.clientY }) : undefined}
+                        onMouseMove={rental ? (e) => setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null) : undefined}
+                        onMouseLeave={rental ? () => setTooltip(null) : undefined}
                         style={{ padding:"6px 3px", textAlign:"center", borderBottom:`1px solid ${T.border}`, cursor:rental?"pointer":"default", background: isToday(d) && !rental ? T.goldDim+"30" : "transparent" }}>
                         <div style={{
                           height:36,
@@ -5359,6 +5363,29 @@ function CalendarPage({ rentals = [], vehicles = [] }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Tooltip survol */}
+      {tooltip && (
+        <div style={{
+          position:"fixed", zIndex:600, pointerEvents:"none",
+          left: tooltip.x + 14, top: tooltip.y - 10,
+          background:T.surface, border:`1px solid ${T.border}`,
+          borderRadius:12, padding:"12px 16px", minWidth:220,
+          boxShadow:"0 8px 32px #00000050",
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:statusColor[tooltip.rental.status]||T.gold, flexShrink:0 }}/>
+            <span style={{ fontSize:13, fontWeight:700, color:T.text }}>{tooltip.rental.client_name||"—"}</span>
+          </div>
+          <div style={{ fontSize:12, color:T.muted, marginBottom:4 }}>{tooltip.rental.vehicle_name||"—"}</div>
+          <div style={{ fontSize:12, color:T.sub, marginBottom:4 }}>
+            {fmtDate(tooltip.rental.start_date)} → {fmtDate(tooltip.rental.end_date)}
+          </div>
+          {tooltip.rental.total > 0 && (
+            <div style={{ fontSize:13, fontWeight:700, color:T.gold, marginTop:6 }}>{fmt(tooltip.rental.total)} €</div>
+          )}
         </div>
       )}
 
