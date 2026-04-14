@@ -2954,6 +2954,58 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
         </div>
       </div>
 
+      {/* Graphique 6 mois + total annuel */}
+      {(() => {
+        const now = new Date();
+        const months = Array.from({length:6}, (_,i) => {
+          const d = new Date(now.getFullYear(), now.getMonth()-5+i, 1);
+          return { key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`, label:d.toLocaleDateString("fr-FR",{month:"short"}) };
+        });
+        const monthTotals = months.map(m => ({
+          ...m,
+          total: payments.filter(p=>p.status==="encaissé" && p.paid_at?.slice(0,7)===m.key).reduce((a,p)=>a+(p.amount||0),0)
+        }));
+        const maxVal = Math.max(...monthTotals.map(m=>m.total), 1);
+        const yearTotal = payments.filter(p=>p.status==="encaissé" && p.paid_at?.startsWith(`${now.getFullYear()}`)).reduce((a,p)=>a+(p.amount||0),0);
+        const currentKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+        return (
+          <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, padding:"20px 24px", marginBottom:20 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em", marginBottom:4 }}>Encaissements — 6 derniers mois</div>
+                <div style={{ fontSize:13, color:T.sub }}>Annuel {now.getFullYear()} : <strong style={{ color:T.gold }}>{fmt(yearTotal)} €</strong></div>
+              </div>
+            </div>
+            <div style={{ display:"flex", alignItems:"flex-end", gap:8, height:80 }}>
+              {monthTotals.map(m => {
+                const pct = maxVal > 0 ? (m.total / maxVal) * 100 : 0;
+                const isCurrent = m.key === currentKey;
+                const isSelected = m.key === selectedMonth;
+                return (
+                  <div key={m.key} onClick={()=>setSelectedMonth(m.key)}
+                    style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6, cursor:"pointer" }}>
+                    <div style={{ fontSize:10, fontWeight:600, color:isSelected?T.gold:T.muted, whiteSpace:"nowrap" }}>
+                      {m.total > 0 ? fmt(m.total)+"€" : ""}
+                    </div>
+                    <div style={{ width:"100%", position:"relative", height:52, display:"flex", alignItems:"flex-end" }}>
+                      <div style={{
+                        width:"100%",
+                        height:`${Math.max(pct, m.total>0?8:3)}%`,
+                        minHeight: m.total>0 ? 6 : 3,
+                        background: isSelected ? T.gold : isCurrent ? T.gold+"60" : T.border,
+                        borderRadius:"6px 6px 0 0",
+                        transition:"background .2s, height .4s",
+                      }}/>
+                    </div>
+                    <div style={{ fontSize:10, color:isSelected?T.gold:T.muted, fontWeight:isSelected?700:400, textTransform:"capitalize" }}>{m.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
         {[["all",lang==="en"?"All":"Tous"],["encaissé",t.collected||"Encaissé"],["en attente",t.pending||"En attente"],["en retard",t.late||"En retard"]].map(([k,l])=>(
           <button key={k} onClick={()=>setFilter(k)}
