@@ -2645,6 +2645,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
+  const isMobile = useIsMobile();
   const [sel,  setSel]    = useState(null);
   const [search, setSearch]= useState("");
   const [filterC, setFilterC] = useState("all");
@@ -2680,6 +2681,36 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
         })}
       </div>
 
+      {isMobile ? (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {filtered.length===0 && <div style={{ textAlign:"center", padding:"48px 0", color:T.muted, fontSize:13 }}>Aucun client</div>}
+          {filtered.map(c => {
+            const exp = isExpired(c.licenseExpiry);
+            return (
+              <div key={c.id} onClick={()=>setSel(sel?.id===c.id?null:c)}
+                style={{ background: sel?.id===c.id ? T.goldDim : T.card, border:`1px solid ${sel?.id===c.id?T.gold:T.border}`, borderRadius:14, padding:"14px 16px", cursor:"pointer" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <Avatar name={`${c.first_name} ${c.last_name}`} size={40}/>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{c.first_name} {c.last_name}</div>
+                    <div style={{ fontSize:12, color:T.muted, marginTop:1 }}>{c.email}</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:T.gold }}>{fmt(c.totalSpent)} €</div>
+                    <div style={{ fontSize:11, color:T.muted }}>{c.locations} loc.</div>
+                  </div>
+                </div>
+                {(exp || c.blacklist) && (
+                  <div style={{ display:"flex", gap:8, marginTop:8 }}>
+                    {exp && <span style={{ fontSize:11, color:T.red, fontWeight:600 }}>⚠ Permis expiré</span>}
+                    {c.blacklist && <Badge label="Liste noire" color={T.red}/>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div style={{ display:"flex", gap:20 }}>
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", minWidth:600 }}>
@@ -2738,6 +2769,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
         {sel && (
           <div style={{ width:274, flexShrink:0, animation:"slideIn .25s" }}>
             <Card>
+
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:18 }}>
                 <div style={{ fontSize:14, fontWeight:700, color:T.text }}>Fiche client</div>
                 <Btn variant="ghost" icon={Icons.x} onClick={()=>setSel(null)} style={{ padding:5 }}/>
@@ -2786,6 +2818,7 @@ function Clients({ clients, setClients, user, activeAgencyId = null, dataLoading
           </div>
         )}
       </div>
+      )}
 
       {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
       {modal && (
@@ -2843,6 +2876,7 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
+  const isMobile = useIsMobile();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [modal, setModal]   = useState(false);
@@ -3112,6 +3146,39 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
           onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>
       </div>
 
+      {isMobile ? (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {filtered.length===0 && <div style={{ textAlign:"center", padding:"48px 0", color:T.muted, fontSize:13 }}>Aucun paiement</div>}
+          {filtered.map(p => {
+            const rental = rentals.find(r=>String(r.id)===String(p.rental_id));
+            return (
+              <div key={p.id} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:14, padding:"14px 16px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <Avatar name={p.client_name||"?"} size={36}/>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{p.client_name||"—"}</div>
+                      {rental && <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>{rental.vehicle_name}</div>}
+                    </div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:17, fontWeight:800, color:T.gold }}>{fmt(p.amount)} €</div>
+                    <StatusBadge status={p.status}/>
+                  </div>
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <span style={{ fontSize:11, color:T.muted }}>{p.method} · {fmtDate(p.paid_at)}</span>
+                  <div style={{ display:"flex", gap:6 }}>
+                    {p.status!=="encaissé" && <button onClick={()=>handleEncaisser(p.id)} style={{ padding:"5px 10px", background:T.successDim, border:`1px solid ${T.success}30`, borderRadius:8, color:T.success, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Encaisser</button>}
+                    <button onClick={()=>openEdit(p)} style={{ padding:"5px 9px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, color:T.sub, cursor:"pointer", display:"flex" }}>{Icons.pen}</button>
+                    <button onClick={()=>handleDelete(p.id)} style={{ padding:"5px 9px", background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, color:T.red, cursor:"pointer", display:"flex" }}>{Icons.trash}</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflowX:"auto" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", minWidth:700 }}>
           <thead>
@@ -3182,6 +3249,7 @@ function Payments({ payments, setPayments, clients, setClients, rentals, user, u
           </tbody>
         </table>
       </div>
+      )}
 
       {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
       {modal && (
@@ -4365,6 +4433,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
   const lang = useLang();
   const t = TR[lang]||TR.fr;
   const toast = useToast();
+  const isMobile = useIsMobile();
   const [modal, setModal] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState(false);
   const [sel, setSel]     = useState(null);
@@ -4642,6 +4711,43 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
             );
           })}
         </div>
+      {isMobile ? (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {filteredRentals.length===0 && <div style={{ textAlign:"center", padding:"48px 0", color:T.muted, fontSize:13 }}>Aucune location</div>}
+          {filteredRentals.map(r => (
+            <div key={r.id} onClick={()=>setSel(sel?.id===r.id?null:r)}
+              style={{ background: sel?.id===r.id ? T.goldDim : T.card, border:`1px solid ${sel?.id===r.id ? T.gold : T.border}`, borderRadius:14, padding:"14px 16px", cursor:"pointer" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:700, color:T.text }}>{r.client_name}</div>
+                  <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>{r.vehicle_name}</div>
+                </div>
+                <div style={{ fontSize:16, fontWeight:800, color:T.gold }}>{fmt(r.total)} €</div>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:11, color:T.muted }}>{fmtDate(r.start_date)} → {fmtDate(r.end_date)}</span>
+                <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                  <select value={r.status} onClick={e=>e.stopPropagation()} onChange={e=>handleStatusChange(r.id,e.target.value)}
+                    style={{ background:T.card2, border:`1px solid ${T.border}`, borderRadius:8, padding:"4px 8px", color:statusColor[r.status]||T.text, fontSize:11, fontFamily:"inherit", outline:"none" }}>
+                    {["réservée","en cours","terminée","annulée"].map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button onClick={e=>{e.stopPropagation();handleDelete(r.id);}} style={{ padding:"5px 8px", background:T.redDim, border:`1px solid ${T.red}30`, borderRadius:8, color:T.red, cursor:"pointer", display:"flex" }}>{Icons.trash}</button>
+                </div>
+              </div>
+              {sel?.id===r.id && (
+                <div style={{ marginTop:12, paddingTop:12, borderTop:`1px solid ${T.border}` }}>
+                  {[["Prix/jour", r.price_per_day+" €"],["Caution", r.deposit+" €"],["Km départ", r.km_start?fmt(r.km_start)+" km":"—"]].map(([k,v])=>(
+                    <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", fontSize:12 }}>
+                      <span style={{ color:T.muted }}>{k}</span><span style={{ fontWeight:600, color:T.text }}>{v}</span>
+                    </div>
+                  ))}
+                  {onGenDoc && <button onClick={e=>{e.stopPropagation();onGenDoc(r);}} style={{ marginTop:10, width:"100%", padding:"9px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:9, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>📄 Générer un document</button>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
       <div style={{ display:"flex", gap:20 }}>
         <div style={{ flex:1, background:T.card, border:`1px solid ${T.border}`, borderRadius:16, overflow:"hidden" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
@@ -4736,6 +4842,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
           </div>
         )}
       </div>
+      )}
       </>}
 
       {/* Modal nouvelle location */}
