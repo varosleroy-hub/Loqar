@@ -4419,7 +4419,7 @@ function Pricing({ userPlan = "starter" }) {
         <p style={{ fontSize:13, color:T.sub, marginBottom:24, lineHeight:1.7 }}>14 jours gratuits, aucune carte bancaire requise.</p>
         <div style={{ display:"flex", gap:12, justifyContent:"center" }}>
           <Btn label={lang==="en"?"Start free":"Démarrer gratuitement"} variant="primary" size="lg"/>
-          <Btn label={lang==="en"?"See a demo":"Voir une démo"} variant="secondary" size="lg" onClick={()=>window.location.href="mailto:contact@loqar.fr?subject=Demande%20de%20d%C3%A9monstration%20Loqar"}/>
+          <Btn label={lang==="en"?"See a demo":"Voir une démo"} variant="secondary" size="lg" onClick={()=>window.open("https://loqar.fr/blog","_blank")}/>
         </div>
         <div style={{ marginTop:14, fontSize:11, color:T.muted }}>✓ 14 jours gratuits · ✓ Aucune CB · ✓ Résiliation en 1 clic</div>
       </div>
