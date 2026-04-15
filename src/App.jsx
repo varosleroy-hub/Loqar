@@ -1675,7 +1675,7 @@ function LandingPage({ onGetStarted }) {
               onMouseLeave={e=>e.currentTarget.style.background=T.gold}>
               Commencer gratuitement →
             </button>
-            <button onClick={onGetStarted} style={{ background:"transparent", color:T.sub, padding:"10px 22px", borderRadius:9, fontSize:14, fontWeight:600, border:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit" }}>
+            <button onClick={()=>document.getElementById("features-section")?.scrollIntoView({behavior:"smooth"})} style={{ background:"transparent", color:T.sub, padding:"10px 22px", borderRadius:9, fontSize:14, fontWeight:600, border:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit" }}>
               Comment ça marche ▶
             </button>
           </div>
@@ -1702,7 +1702,7 @@ function LandingPage({ onGetStarted }) {
       </div>
 
       {/* FEATURES */}
-      <div style={{ padding:"72px 24px", maxWidth:1080, margin:"0 auto" }}>
+      <div id="features-section" style={{ padding:"72px 24px", maxWidth:1080, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:44 }}>
           <div style={{ fontSize:11, fontWeight:700, color:T.gold, letterSpacing:".1em", textTransform:"uppercase", marginBottom:10 }}>Fonctionnalités</div>
           <h2 style={{ fontSize:"clamp(24px,3.5vw,36px)", fontWeight:800, letterSpacing:"-0.03em", marginBottom:10 }}>Tout ce dont vous avez besoin</h2>
@@ -4419,7 +4419,7 @@ function Pricing({ userPlan = "starter" }) {
         <p style={{ fontSize:13, color:T.sub, marginBottom:24, lineHeight:1.7 }}>14 jours gratuits, aucune carte bancaire requise.</p>
         <div style={{ display:"flex", gap:12, justifyContent:"center" }}>
           <Btn label={lang==="en"?"Start free":"Démarrer gratuitement"} variant="primary" size="lg"/>
-          <Btn label={lang==="en"?"See a demo":"Voir une démo"} variant="secondary" size="lg"/>
+          <Btn label={lang==="en"?"See a demo":"Voir une démo"} variant="secondary" size="lg" onClick={()=>window.location.href="mailto:contact@loqar.fr?subject=Demande%20de%20d%C3%A9monstration%20Loqar"}/>
         </div>
         <div style={{ marginTop:14, fontSize:11, color:T.muted }}>✓ 14 jours gratuits · ✓ Aucune CB · ✓ Résiliation en 1 clic</div>
       </div>
