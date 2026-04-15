@@ -6288,7 +6288,7 @@ function renderArticleContent(content) {
 function BlogNav() {
   return (
     <div style={{ borderBottom:`1px solid ${T.border}`, padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, background:T.bg, zIndex:10 }}>
-      <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
+      <a href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none", color:T.gold }}>
         <div style={{ width:32, height:32, background:T.goldDim, border:`1px solid ${T.gold}`, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>{Icons.car}</div>
         <span style={{ fontSize:16, fontWeight:800, color:T.text }}>Loqar</span>
       </a>
