@@ -457,13 +457,14 @@ function Input({ label, value, onChange, type="text", placeholder="", icon }) {
 }
 
 function Modal({ title, onClose, children, width=540 }) {
+  const isMobile = useIsMobile();
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:500, background:"#00000095", display:"flex", alignItems:"center", justifyContent:"center", padding:20, backdropFilter:"blur(8px)", animation:"fadeIn .15s" }}
+    <div style={{ position:"fixed", inset:0, zIndex:500, background:"#00000095", display:"flex", alignItems: isMobile ? "flex-end" : "center", justifyContent:"center", padding: isMobile ? 0 : 20, backdropFilter:"blur(8px)", animation:"fadeIn .15s" }}
       onClick={onClose}>
-      <div style={{ background:T.card, border:`1px solid ${T.border2}`, borderRadius:20, padding:30, width, maxWidth:"100%", maxHeight:"90vh", overflowY:"auto" }}
+      <div style={{ background:T.card, border:`1px solid ${T.border2}`, borderRadius: isMobile ? "20px 20px 0 0" : 20, padding: isMobile ? "24px 18px" : 30, width: isMobile ? "100%" : width, maxWidth:"100%", maxHeight: isMobile ? "92vh" : "90vh", overflowY:"auto" }}
         onClick={e=>e.stopPropagation()}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-          <h2 style={{ fontSize:18, fontWeight:700, letterSpacing:"-0.02em", color:T.text }}>{title}</h2>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: isMobile ? 18 : 24 }}>
+          <h2 style={{ fontSize: isMobile ? 16 : 18, fontWeight:700, letterSpacing:"-0.02em", color:T.text }}>{title}</h2>
           <Btn variant="ghost" icon={Icons.x} onClick={onClose} style={{ padding:6 }}/>
         </div>
         {children}
@@ -1374,15 +1375,24 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
   const [open, setOpen] = useState(false);
 
   if (isMobile && !open) return (
-    <button onClick={()=>setOpen(true)} style={{ position:"fixed", top:14, left:14, zIndex:200, background:T.gold, border:"none", borderRadius:10, width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#0F0D0B", fontSize:20, boxShadow:"0 4px 20px #00000060" }}>
-      ☰
-    </button>
+    <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:200, height:56, background:T.surface, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", padding:"0 16px", gap:12 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, flex:1 }}>
+        <div style={{ width:32, height:32, borderRadius:9, background:`linear-gradient(135deg,${T.gold},#A07840)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <Ic size={16} color="#0F0D0B" sw={2} paths={["M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3","M18 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0","M7 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0"]}/>
+        </div>
+        <span style={{ fontSize:16, fontWeight:800, color:T.text, letterSpacing:"-0.02em" }}>Loqar</span>
+      </div>
+      {unreadCount > 0 && (
+        <div style={{ width:22, height:22, borderRadius:"50%", background:T.red, fontSize:11, fontWeight:700, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center" }}>{unreadCount}</div>
+      )}
+      <button onClick={()=>setOpen(true)} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:9, width:38, height:38, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:T.text, fontSize:18 }}>☰</button>
+    </div>
   );
 
   return (
     <>
     {isMobile && <div onClick={()=>setOpen(false)} style={{ position:"fixed", inset:0, background:"#00000070", zIndex:99 }}/>}
-    <aside style={{ width:220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
+    <aside style={{ width: isMobile ? "min(85vw, 300px)" : 220, minHeight:"100vh", background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", padding:"22px 12px", position:"fixed", top:0, left:0, bottom:0, zIndex:100, overflowY:"auto" }}>
 
       {/* Logo + bell */}
       <div style={{ padding:"2px 8px 20px", borderBottom:`1px solid ${T.border}`, marginBottom:16 }}>
@@ -1394,12 +1404,15 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
             <div style={{ fontSize:17, fontWeight:700, color:T.text, letterSpacing:"-0.02em" }}>Loqar</div>
             <div style={{ fontSize:10, color:T.muted, letterSpacing:"0.04em" }}>LOCATION AUTO</div>
           </div>
-          <button onClick={onNotif} style={{ marginLeft:"auto", position:"relative", background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex", padding:6, borderRadius:8, transition:"color .15s" }}
-            onMouseEnter={e=>e.currentTarget.style.color=T.gold}
-            onMouseLeave={e=>e.currentTarget.style.color=T.muted}>
-            {Icons.bell}
-            {unreadCount>0 && <span style={{ position:"absolute", top:2, right:2, width:16, height:16, borderRadius:"50%", background:T.red, fontSize:9, fontWeight:700, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center" }}>{unreadCount}</span>}
-          </button>
+          {isMobile
+            ? <button onClick={()=>setOpen(false)} style={{ marginLeft:"auto", background:"none", border:"none", color:T.muted, cursor:"pointer", fontSize:20, padding:6 }}>✕</button>
+            : <button onClick={onNotif} style={{ marginLeft:"auto", position:"relative", background:"none", border:"none", color:T.muted, cursor:"pointer", display:"flex", padding:6, borderRadius:8, transition:"color .15s" }}
+                onMouseEnter={e=>e.currentTarget.style.color=T.gold}
+                onMouseLeave={e=>e.currentTarget.style.color=T.muted}>
+                {Icons.bell}
+                {unreadCount>0 && <span style={{ position:"absolute", top:2, right:2, width:16, height:16, borderRadius:"50%", background:T.red, fontSize:9, fontWeight:700, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center" }}>{unreadCount}</span>}
+              </button>
+          }
         </div>
       </div>
 
@@ -1430,7 +1443,7 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
         const active = page===item.id;
         const label = t?.[item.labelKey]||item.labelKey;
         return (
-          <button key={item.id} onClick={()=>onNav(item.id)}
+          <button key={item.id} onClick={()=>{ onNav(item.id); if(isMobile) setOpen(false); }}
             style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"9px 12px", borderRadius:9, marginBottom:2, background:active?T.goldDim:"transparent", border:"none", color:active?T.gold:T.sub, fontSize:13, fontWeight:active?600:400, cursor:"pointer", transition:"all .15s", position:"relative", fontFamily:"inherit" }}
             onMouseEnter={e=>{if(!active)e.currentTarget.style.background=T.card}}
             onMouseLeave={e=>{if(!active)e.currentTarget.style.background="transparent"}}>
@@ -1522,14 +1535,15 @@ function Sidebar({ page, onNav, user, onLogout, onCmd, vehicles, onNotif, unread
 
 // ─── PAGE WRAPPER ────────────────────────────────────────────────────────────
 function Page({ title, sub, actions, children }) {
+  const isMobile = useIsMobile();
   return (
-    <div style={{ padding:"36px 40px", maxWidth:1200, animation:"fadeUp .3s" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
+    <div style={{ padding: isMobile ? "16px 14px" : "36px 40px", maxWidth:1200, animation:"fadeUp .3s" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom: isMobile ? 18 : 28, flexWrap:"wrap", gap:10 }}>
         <div>
-          <h1 style={{ fontSize:26, fontWeight:700, letterSpacing:"-0.03em", color:T.text, marginBottom:4 }}>{title}</h1>
-          {sub && <p style={{ fontSize:13, color:T.sub }}>{sub}</p>}
+          <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight:700, letterSpacing:"-0.03em", color:T.text, marginBottom:4 }}>{title}</h1>
+          {sub && !isMobile && <p style={{ fontSize:13, color:T.sub }}>{sub}</p>}
         </div>
-        {actions && <div style={{ display:"flex", gap:8 }}>{actions}</div>}
+        {actions && <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>{actions}</div>}
       </div>
       {children}
     </div>
