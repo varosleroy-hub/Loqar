@@ -6148,8 +6148,14 @@ function BlogRouter() {
   const slug = window.location.pathname.match(/^\/blog\/(.+)/)?.[1];
   if (slug) {
     const article = ARTICLES.find(a => a.slug === slug);
-    if (article) return <ArticlePage article={article}/>;
+    if (article) {
+      document.title = `${article.title} — Loqar`;
+      const desc = document.querySelector('meta[name="description"]');
+      if (desc) desc.setAttribute("content", article.description);
+      return <ArticlePage article={article}/>;
+    }
   }
+  document.title = "Blog Loqar — Ressources pour les loueurs professionnels";
   return <BlogPage/>;
 }
 

@@ -12,6 +12,14 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://loqar.fr" />
 
+    <!-- Dynamic canonical: override per page -->
+    <script>
+      (function() {
+        var link = document.querySelector('link[rel="canonical"]');
+        if (link) link.setAttribute('href', 'https://loqar.fr' + window.location.pathname);
+      })();
+    </script>
+
     <!-- Open Graph (Facebook, LinkedIn) -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://loqar.fr" />
