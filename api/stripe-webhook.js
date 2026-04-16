@@ -32,6 +32,21 @@ export default async function handler(req, res) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
+
+    // ── Caution (dépôt) ─────────────────────────────────────────────────────
+    if (session.metadata?.type === "deposit") {
+      const rental_id = session.metadata.rental_id;
+      const intent_id = session.payment_intent;
+      if (rental_id && intent_id) {
+        await supabase.from("rentals")
+          .update({ stripe_deposit_intent_id: intent_id, stripe_deposit_status: "authorized" })
+          .eq("id", rental_id);
+        console.log(`🔒 Caution bloquée: rental ${rental_id} → ${intent_id}`);
+      }
+      return res.json({ received: true });
+    }
+
+    // ── Abonnement plan ──────────────────────────────────────────────────────
     const email = session.customer_details?.email;
     const paymentLink = session.payment_link;
 

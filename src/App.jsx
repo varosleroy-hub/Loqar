@@ -4828,6 +4828,63 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                   <div style={{ fontSize:12, color:T.sub }}>{sel.notes}</div>
                 </div>
               )}
+              {/* Caution Stripe */}
+              {sel.deposit > 0 && (() => {
+                const ds = sel.stripe_deposit_status;
+                const depositLoading = { loading: false };
+                if (!ds || ds === "none") return (
+                  <button onClick={async()=>{
+                    const client = clients.find(c=>String(c.id)===String(sel.client_id));
+                    const res = await fetch("/api/deposit-hold", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ rental_id: sel.id, amount: sel.deposit, client_email: client?.email, vehicle_name: sel.vehicle_name, user_id: user.id }) });
+                    const data = await res.json();
+                    if (data.url) { navigator.clipboard?.writeText(data.url); toast("Lien caution copié ! Envoyez-le au client."); setRentals(prev=>prev.map(r=>r.id===sel.id?{...r,stripe_deposit_status:"pending"}:r)); setSel(s=>({...s,stripe_deposit_status:"pending"})); }
+                    else toast(data.error||"Erreur Stripe","error");
+                  }} style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:"#5B8DB814", border:`1px solid #5B8DB8`, borderRadius:10, color:"#5B8DB8", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                    🔒 Bloquer la caution ({fmt(sel.deposit)} €)
+                  </button>
+                );
+                if (ds === "pending") return (
+                  <div style={{ marginTop:14, padding:"10px 12px", background:T.card2, border:`1px solid ${T.amber}40`, borderRadius:10, fontSize:12, color:T.amber, textAlign:"center" }}>
+                    ⏳ Lien caution envoyé — en attente du client
+                  </div>
+                );
+                if (ds === "authorized") return (
+                  <div style={{ marginTop:14 }}>
+                    <div style={{ padding:"8px 12px", background:"#6AAF7A14", border:`1px solid #6AAF7A`, borderRadius:10, fontSize:12, color:"#6AAF7A", textAlign:"center", marginBottom:8, fontWeight:700 }}>
+                      🔒 Caution bloquée — {fmt(sel.deposit)} €
+                    </div>
+                    <div style={{ display:"flex", gap:8 }}>
+                      <button onClick={async()=>{
+                        const r = await fetch("/api/deposit-action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({intent_id:sel.stripe_deposit_intent_id,action:"capture",rental_id:sel.id})});
+                        const d = await r.json();
+                        if(d.success){toast("Caution encaissée ✓");setRentals(prev=>prev.map(x=>x.id===sel.id?{...x,stripe_deposit_status:"captured"}:x));setSel(s=>({...s,stripe_deposit_status:"captured"}));}
+                        else toast(d.error||"Erreur","error");
+                      }} style={{flex:1,padding:"9px",background:"#6AAF7A",border:"none",borderRadius:9,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        💰 Encaisser
+                      </button>
+                      <button onClick={async()=>{
+                        const r = await fetch("/api/deposit-action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({intent_id:sel.stripe_deposit_intent_id,action:"cancel",rental_id:sel.id})});
+                        const d = await r.json();
+                        if(d.success){toast("Caution libérée");setRentals(prev=>prev.map(x=>x.id===sel.id?{...x,stripe_deposit_status:"released"}:x));setSel(s=>({...s,stripe_deposit_status:"released"}));}
+                        else toast(d.error||"Erreur","error");
+                      }} style={{flex:1,padding:"9px",background:T.redDim,border:`1px solid ${T.red}50`,borderRadius:9,color:T.red,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        🔓 Libérer
+                      </button>
+                    </div>
+                  </div>
+                );
+                if (ds === "captured") return (
+                  <div style={{ marginTop:14, padding:"10px 12px", background:"#6AAF7A14", border:`1px solid #6AAF7A`, borderRadius:10, fontSize:12, color:"#6AAF7A", textAlign:"center", fontWeight:700 }}>
+                    ✅ Caution encaissée ({fmt(sel.deposit)} €)
+                  </div>
+                );
+                if (ds === "released") return (
+                  <div style={{ marginTop:14, padding:"10px 12px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:10, fontSize:12, color:T.muted, textAlign:"center" }}>
+                    🔓 Caution libérée
+                  </div>
+                );
+                return null;
+              })()}
               <button onClick={()=>sendPortalLink(sel)}
                 style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:10, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
                 {Icons.mail} Envoyer le lien portail
