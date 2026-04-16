@@ -4741,6 +4741,34 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                       <span style={{ color:T.muted }}>{k}</span><span style={{ fontWeight:600, color:T.text }}>{v}</span>
                     </div>
                   ))}
+                  {/* Caution Stripe mobile */}
+                  {r.deposit > 0 && (() => {
+                    const ds = r.stripe_deposit_status;
+                    if (!ds || ds === "none") return (
+                      <button onClick={async e=>{e.stopPropagation();
+                        const client = clients.find(c=>String(c.id)===String(r.client_id));
+                        const resp = await fetch("/api/deposit-hold",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rental_id:r.id,amount:r.deposit,client_email:client?.email,vehicle_name:r.vehicle_name,user_id:user.id})});
+                        const d = await resp.json();
+                        if(d.url){navigator.clipboard?.writeText(d.url);toast("Lien caution copié ! Envoyez-le au client.");setRentals(prev=>prev.map(x=>x.id===r.id?{...x,stripe_deposit_status:"pending"}:x));}
+                        else toast(d.error||"Erreur Stripe","error");
+                      }} style={{marginTop:10,width:"100%",padding:"10px",background:"#5B8DB814",border:`1px solid #5B8DB8`,borderRadius:9,color:"#5B8DB8",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        🔒 Bloquer la caution ({fmt(r.deposit)} €)
+                      </button>
+                    );
+                    if (ds === "pending") return <div style={{marginTop:10,padding:"10px",background:T.card2,border:`1px solid ${T.amber}50`,borderRadius:9,fontSize:12,color:T.amber,textAlign:"center"}}>⏳ En attente du client</div>;
+                    if (ds === "authorized") return (
+                      <div style={{marginTop:10}}>
+                        <div style={{padding:"8px",background:"#6AAF7A14",border:`1px solid #6AAF7A`,borderRadius:9,fontSize:12,color:"#6AAF7A",textAlign:"center",marginBottom:8,fontWeight:700}}>🔒 Caution bloquée — {fmt(r.deposit)} €</div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={async e=>{e.stopPropagation();const resp=await fetch("/api/deposit-action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({intent_id:r.stripe_deposit_intent_id,action:"capture",rental_id:r.id})});const d=await resp.json();if(d.success){toast("Caution encaissée ✓");setRentals(prev=>prev.map(x=>x.id===r.id?{...x,stripe_deposit_status:"captured"}:x));}else toast(d.error||"Erreur","error");}} style={{flex:1,padding:"9px",background:"#6AAF7A",border:"none",borderRadius:9,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>💰 Encaisser</button>
+                          <button onClick={async e=>{e.stopPropagation();const resp=await fetch("/api/deposit-action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({intent_id:r.stripe_deposit_intent_id,action:"cancel",rental_id:r.id})});const d=await resp.json();if(d.success){toast("Caution libérée");setRentals(prev=>prev.map(x=>x.id===r.id?{...x,stripe_deposit_status:"released"}:x));}else toast(d.error||"Erreur","error");}} style={{flex:1,padding:"9px",background:T.redDim,border:`1px solid ${T.red}50`,borderRadius:9,color:T.red,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🔓 Libérer</button>
+                        </div>
+                      </div>
+                    );
+                    if (ds === "captured") return <div style={{marginTop:10,padding:"10px",background:"#6AAF7A14",border:`1px solid #6AAF7A`,borderRadius:9,fontSize:12,color:"#6AAF7A",textAlign:"center",fontWeight:700}}>✅ Caution encaissée</div>;
+                    if (ds === "released") return <div style={{marginTop:10,padding:"10px",background:T.card2,border:`1px solid ${T.border}`,borderRadius:9,fontSize:12,color:T.muted,textAlign:"center"}}>🔓 Caution libérée</div>;
+                    return null;
+                  })()}
                   {onGenDoc && <button onClick={e=>{e.stopPropagation();onGenDoc(r);}} style={{ marginTop:10, width:"100%", padding:"9px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:9, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>📄 Générer un document</button>}
                 </div>
               )}
