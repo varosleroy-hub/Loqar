@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       customer_email: client_email || undefined,
       metadata: { type: "deposit", rental_id: String(rental_id), user_id: String(user_id) },
       success_url: `https://loqar.fr?caution=ok`,
-      cancel_url:  `https://loqar.fr?caution=annulée`,
+      cancel_url:  `https://loqar.fr?caution=annulee`,
     });
 
     // Marquer la caution comme "en attente de paiement"
