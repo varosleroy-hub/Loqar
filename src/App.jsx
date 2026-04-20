@@ -4446,6 +4446,19 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
   const [depositLink, setDepositLink] = useState(null);
   const up = (k,v) => { setForm(prev=>({...prev,[k]:v})); setFormErrors(prev=>({...prev,[k]:""})); };
 
+  const handleDepositHold = async (rental) => {
+    const client = clients.find(c=>String(c.id)===String(rental.client_id));
+    const resp = await fetch("/api/deposit-hold", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ rental_id: rental.id, amount: rental.deposit, client_email: client?.email, vehicle_name: rental.vehicle_name, user_id: user.id }) });
+    const data = await resp.json();
+    if (data.url) {
+      setDepositLink({ url: data.url, rental, client });
+      setRentals(prev=>prev.map(r=>r.id===rental.id?{...r,stripe_deposit_status:"pending"}:r));
+      if (rental.id === sel?.id) setSel(s=>({...s,stripe_deposit_status:"pending"}));
+    } else {
+      toast(data.error||"Erreur Stripe","error");
+    }
+  };
+
   const filteredRentals = rentals.filter(r => {
     if (filterStatus !== "all" && r.status !== filterStatus) return false;
     if (searchR && !r.client_name?.toLowerCase().includes(searchR.toLowerCase()) && !r.vehicle_name?.toLowerCase().includes(searchR.toLowerCase())) return false;
@@ -4756,7 +4769,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                         🔒 Bloquer la caution ({fmt(r.deposit)} €)
                       </button>
                     );
-                    if (ds === "pending") return <div style={{marginTop:10,padding:"10px",background:T.card2,border:`1px solid ${T.amber}50`,borderRadius:9,fontSize:12,color:T.amber,textAlign:"center"}}>⏳ En attente du client</div>;
+                    if (ds === "pending") return <div style={{marginTop:10}}><div style={{padding:"8px 10px",background:T.card2,border:`1px solid ${T.amber}50`,borderRadius:9,fontSize:12,color:T.amber,textAlign:"center",marginBottom:6}}>⏳ En attente du client</div><button onClick={async e=>{e.stopPropagation();await handleDepositHold(r);}} style={{width:"100%",padding:"8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:9,color:T.muted,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>🔁 Renvoyer le lien</button></div>;
                     if (ds === "authorized") return (
                       <div style={{marginTop:10}}>
                         <div style={{padding:"8px",background:"#6AAF7A14",border:`1px solid #6AAF7A`,borderRadius:9,fontSize:12,color:"#6AAF7A",textAlign:"center",marginBottom:8,fontWeight:700}}>🔒 Caution bloquée — {fmt(r.deposit)} €</div>
@@ -4862,19 +4875,14 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                 const ds = sel.stripe_deposit_status;
                 const depositLoading = { loading: false };
                 if (!ds || ds === "none") return (
-                  <button onClick={async()=>{
-                    const client = clients.find(c=>String(c.id)===String(sel.client_id));
-                    const res = await fetch("/api/deposit-hold", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ rental_id: sel.id, amount: sel.deposit, client_email: client?.email, vehicle_name: sel.vehicle_name, user_id: user.id }) });
-                    const data = await res.json();
-                    if (data.url) { const client = clients.find(c=>String(c.id)===String(sel.client_id)); setDepositLink({url:data.url,rental:sel,client}); setRentals(prev=>prev.map(r=>r.id===sel.id?{...r,stripe_deposit_status:"pending"}:r)); setSel(s=>({...s,stripe_deposit_status:"pending"})); }
-                    else toast(data.error||"Erreur Stripe","error");
-                  }} style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:"#5B8DB814", border:`1px solid #5B8DB8`, borderRadius:10, color:"#5B8DB8", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                  <button onClick={()=>handleDepositHold(sel)} style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:"#5B8DB814", border:`1px solid #5B8DB8`, borderRadius:10, color:"#5B8DB8", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
                     🔒 Bloquer la caution ({fmt(sel.deposit)} €)
                   </button>
                 );
                 if (ds === "pending") return (
-                  <div style={{ marginTop:14, padding:"10px 12px", background:T.card2, border:`1px solid ${T.amber}40`, borderRadius:10, fontSize:12, color:T.amber, textAlign:"center" }}>
-                    ⏳ Lien caution envoyé — en attente du client
+                  <div style={{ marginTop:14 }}>
+                    <div style={{ padding:"10px 12px", background:T.card2, border:`1px solid ${T.amber}40`, borderRadius:10, fontSize:12, color:T.amber, textAlign:"center", marginBottom:6 }}>⏳ En attente du client</div>
+                    <button onClick={()=>handleDepositHold(sel)} style={{ width:"100%", padding:"8px", background:"transparent", border:`1px solid ${T.border}`, borderRadius:9, color:T.muted, fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>🔁 Renvoyer le lien</button>
                   </div>
                 );
                 if (ds === "authorized") return (
