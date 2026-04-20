@@ -4443,6 +4443,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
   const [form, setForm]   = useState({ clientId:"", vehicleId:"", startDate:"", endDate:"", pricePerDay:"", deposit:"", km:"", notes:"" });
   const [formErrors, setFormErrors] = useState({});
   const [confirm, setConfirm] = useState(null);
+  const [depositLink, setDepositLink] = useState(null);
   const up = (k,v) => { setForm(prev=>({...prev,[k]:v})); setFormErrors(prev=>({...prev,[k]:""})); };
 
   const filteredRentals = rentals.filter(r => {
@@ -4749,7 +4750,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                         const client = clients.find(c=>String(c.id)===String(r.client_id));
                         const resp = await fetch("/api/deposit-hold",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rental_id:r.id,amount:r.deposit,client_email:client?.email,vehicle_name:r.vehicle_name,user_id:user.id})});
                         const d = await resp.json();
-                        if(d.url){navigator.clipboard?.writeText(d.url);toast("Lien caution copié ! Envoyez-le au client.");setRentals(prev=>prev.map(x=>x.id===r.id?{...x,stripe_deposit_status:"pending"}:x));}
+                        if(d.url){setDepositLink({url:d.url,rental:r,client:clients.find(c=>String(c.id)===String(r.client_id))});setRentals(prev=>prev.map(x=>x.id===r.id?{...x,stripe_deposit_status:"pending"}:x));}
                         else toast(d.error||"Erreur Stripe","error");
                       }} style={{marginTop:10,width:"100%",padding:"10px",background:"#5B8DB814",border:`1px solid #5B8DB8`,borderRadius:9,color:"#5B8DB8",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                         🔒 Bloquer la caution ({fmt(r.deposit)} €)
@@ -4865,7 +4866,7 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
                     const client = clients.find(c=>String(c.id)===String(sel.client_id));
                     const res = await fetch("/api/deposit-hold", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ rental_id: sel.id, amount: sel.deposit, client_email: client?.email, vehicle_name: sel.vehicle_name, user_id: user.id }) });
                     const data = await res.json();
-                    if (data.url) { navigator.clipboard?.writeText(data.url); toast("Lien caution copié ! Envoyez-le au client."); setRentals(prev=>prev.map(r=>r.id===sel.id?{...r,stripe_deposit_status:"pending"}:r)); setSel(s=>({...s,stripe_deposit_status:"pending"})); }
+                    if (data.url) { const client = clients.find(c=>String(c.id)===String(sel.client_id)); setDepositLink({url:data.url,rental:sel,client}); setRentals(prev=>prev.map(r=>r.id===sel.id?{...r,stripe_deposit_status:"pending"}:r)); setSel(s=>({...s,stripe_deposit_status:"pending"})); }
                     else toast(data.error||"Erreur Stripe","error");
                   }} style={{ marginTop:14, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"10px", background:"#5B8DB814", border:`1px solid #5B8DB8`, borderRadius:10, color:"#5B8DB8", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
                     🔒 Bloquer la caution ({fmt(sel.deposit)} €)
@@ -4929,6 +4930,34 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
       </div>
       )}
       </>}
+
+      {/* Modal lien caution */}
+      {depositLink && (
+        <Modal title="🔒 Lien de caution généré" onClose={()=>setDepositLink(null)} width={480}>
+          <p style={{ fontSize:13, color:T.sub, marginBottom:16, lineHeight:1.6 }}>
+            Envoyez ce lien à <strong style={{ color:T.text }}>{depositLink.client?.first_name} {depositLink.client?.last_name}</strong> pour bloquer la caution de <strong style={{ color:T.gold }}>{fmt(depositLink.rental?.deposit)} €</strong> sur sa carte.
+          </p>
+          <div style={{ display:"flex", gap:8, marginBottom:16 }}>
+            <input readOnly value={depositLink.url} style={{ flex:1, background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, padding:"9px 12px", color:T.text, fontSize:12, fontFamily:"monospace", outline:"none" }}/>
+            <button onClick={()=>{ navigator.clipboard?.writeText(depositLink.url); toast("Lien copié !"); }} style={{ padding:"9px 14px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:9, color:T.gold, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>📋 Copier</button>
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            {depositLink.client?.email && (
+              <button onClick={async()=>{
+                const client = depositLink.client;
+                await fetch("/api/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ to: client.email, subject: `Votre caution — ${depositLink.rental?.vehicle_name}`, html: `<p>Bonjour ${client.first_name},</p><p>Veuillez bloquer votre caution de <strong>${fmt(depositLink.rental?.deposit)} €</strong> pour la location du véhicule <strong>${depositLink.rental?.vehicle_name}</strong>.</p><p><a href="${depositLink.url}" style="background:#C8A96E;color:#0F0D0B;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:16px 0;">Bloquer ma caution →</a></p><p style="color:#888;font-size:12px">Ce montant sera bloqué sur votre carte mais non débité. Il sera libéré à la restitution du véhicule.</p>` }) });
+                toast(`Email envoyé à ${client.email}`);
+                setDepositLink(null);
+              }} style={{ flex:1, padding:"10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:9, color:T.gold, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+                ✉ Envoyer par email
+              </button>
+            )}
+            <button onClick={()=>{ if(navigator.share) navigator.share({title:"Caution location",text:`Bloquez votre caution de ${fmt(depositLink.rental?.deposit)}€`,url:depositLink.url}); else { navigator.clipboard?.writeText(depositLink.url); toast("Lien copié — collez-le dans WhatsApp ou SMS"); } }} style={{ flex:1, padding:"10px", background:T.card2, border:`1px solid ${T.border}`, borderRadius:9, color:T.text, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+              📤 Partager (SMS/WhatsApp)
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {/* Modal nouvelle location */}
       {confirm && <ConfirmModal message={confirm.message} onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }} onCancel={()=>setConfirm(null)}/>}
