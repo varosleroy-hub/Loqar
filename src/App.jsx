@@ -4953,7 +4953,8 @@ function Rentals({ rentals, setRentals, vehicles, setVehicles, clients, setClien
             {depositLink.client?.email && (
               <button onClick={async()=>{
                 const client = depositLink.client;
-                await fetch("/api/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ to: client.email, subject: `Votre caution — ${depositLink.rental?.vehicle_name}`, html: `<p>Bonjour ${client.first_name},</p><p>Veuillez bloquer votre caution de <strong>${fmt(depositLink.rental?.deposit)} €</strong> pour la location du véhicule <strong>${depositLink.rental?.vehicle_name}</strong>.</p><p><a href="${depositLink.url}" style="background:#C8A96E;color:#0F0D0B;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:16px 0;">Bloquer ma caution →</a></p><p style="color:#888;font-size:12px">Ce montant sera bloqué sur votre carte mais non débité. Il sera libéré à la restitution du véhicule.</p>` }) });
+                const r = await fetch("/api/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ type:"deposit", to: client.email, data:{ clientName:`${client.first_name} ${client.last_name}`, vehicle: depositLink.rental?.vehicle_name, amount: depositLink.rental?.deposit, depositUrl: depositLink.url } }) });
+                if (!r.ok) { toast("Erreur envoi email","error"); return; }
                 toast(`Email envoyé à ${client.email}`);
                 setDepositLink(null);
               }} style={{ flex:1, padding:"10px", background:T.goldDim, border:`1px solid ${T.gold}40`, borderRadius:9, color:T.gold, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>

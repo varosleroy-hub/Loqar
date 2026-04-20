@@ -200,6 +200,21 @@ export default async function handler(req, res) {
       `, { accentColor: "#E8746A", footerNote: "Si vous pensez avoir déjà réglé ce montant, ignorez ce message." })
     },
 
+    deposit: {
+      subject: `Caution à bloquer — ${data?.vehicle || "Location Loqar"}`,
+      html: wrap(`
+        ${hero("Bloquez votre caution", "Un montant sera réservé sur votre carte, non débité.", "#5B8DB8")}
+        <p style="color:#B0A898;font-size:14px;line-height:1.8;margin:0 0 24px;">Bonjour <strong style="color:#E8E4DF;">${data?.clientName || ""}</strong>,</p>
+        <p style="color:#B0A898;font-size:14px;line-height:1.8;margin:0 0 24px;">Votre agence vous demande de bloquer une caution pour la location du véhicule <strong style="color:#E8E4DF;">${data?.vehicle || ""}</strong>. Ce montant sera <strong style="color:#E8E4DF;">simplement réservé</strong> sur votre carte et libéré automatiquement à la restitution du véhicule.</p>
+        ${infoCard([
+          infoRow("Véhicule", data?.vehicle || "—"),
+          infoRow("Montant caution", `${data?.amount || "—"} €`, true),
+        ].join(""))}
+        ${cta("Bloquer ma caution →", data?.depositUrl || "#", "#5B8DB8", "#fff")}
+        <p style="color:#3A3530;font-size:11px;text-align:center;margin:16px 0 0;">🔒 Ce montant ne sera <strong>pas débité</strong> sauf en cas de dommage constaté.</p>
+      `, { accentColor: "#5B8DB8" })
+    },
+
     booking_request: {
       subject: `Nouvelle demande de réservation — ${data?.vehicleName || "Véhicule"}`,
       html: wrap(`
